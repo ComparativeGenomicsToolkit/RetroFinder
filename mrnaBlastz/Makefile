@@ -12,7 +12,3 @@ all: mrnaGet mrnaAlign
 
 include ${ROOT}/rules/mrnaAlign.mk
 include ${ROOT}/rules/mrnaGet.mk
-#include ${ROOT}/rules/genesGet.mk
-#include ${ROOT}/rules/mrnaBlastz.mk
-#include ${ROOT}/rules/retro.mk
-#include ${ROOT}/rules/ortho.mk
