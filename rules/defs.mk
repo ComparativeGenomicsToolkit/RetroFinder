@@ -21,6 +21,7 @@ wwwDir=www/${db}/${set}
 retroDb=retro
 
 #retroData=${setDir}/${db}
+genomeDir=/scratch/data/${db}/nib
 mrnaAlignDir=${tmpDir}/align
 retroGp = ${retroData}/retro.${db}.gp.gz
 retroInfo = ${retroData}/retro.${db}.info.gz
@@ -37,10 +38,12 @@ splitSize = 1000000
 retroBed = ${hgData}/retroMrna.bed.gz
 
 retroBin=/cluster/home/baertsch/bin/x86_64
+scripts=/cluster/home/baertsch/bin/scripts
 gbBin=/cluster/data/genbank/bin/x86_64
 gbRoot=/cluster/data/genbank
 
-tmpExt = $(shell echo $$PPID).${HOST}.tmp
+#tmpExt = $(shell echo $$PPID).${HOST}.tmp
+tmpExt = $(shell echo "1728").${HOST}.tmp
 
 export PATH:=:${ROOT}/bin:${PATH}
 

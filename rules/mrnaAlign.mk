@@ -1,10 +1,12 @@
 
 DEF=${mrnaAlignDir}/DEF
+SED=${mrnaAlignDir}/sed.sh
 
-mrnaAlign: ${mrnaAlignDir}/ma.jobs.done
+mrnaAlign: ${mrnaAlignDir}/ma.jobs.done ${mrnaAlignDir}/out2lav.jobs.done ${mrnaAlignDir}/sed.done
 
 # run parasol jobs (don't check clusterDir dependences if done file exists)
 alignParaDir = para.ma.${tmpExt}
+out2lavParaDir = run.1.${tmpExt}
 #runMrnaAlignJobs: ${mrnaAlignDir}/ma.jobs.done
 
 ${DEF}:
@@ -44,12 +46,45 @@ ${alignParaDir}/jobs.para: ${DEF}
 	bash ${mrnaAlignDir}/xdir.sh
 	mv -f $@.${tmpExt} $@
 
-${mrnaAlignDir}/ma.jobs.done: ${alignParaDir}/jobs.para
+
+${alignParaDir}/batch: ${alignParaDir}/jobs.para ${DEF}
+	ssh ${paraHost} cd `pwd`/${alignParaDir} \; para create jobs.para < /dev/null
+
+${mrnaAlignDir}/ma.jobs.done: ${alignParaDir}/batch
 	@mkdir -p ${dir $@}
 	${MAKE} makeMaJobs
 	touch $@
+
 makeMaJobs: ${alignParaDir}/jobs.para
-	ssh ${paraHost} cd `pwd`/${alignParaDir} \; para make jobs.para < /dev/null
+	ssh ${paraHost} cd `pwd`/${alignParaDir} \; para push < /dev/null
+
+
+${out2lavParaDir}/jobs.para: ${DEF}
+	@mkdir -p ${dir $@}
+	@rm -f $@ $@.${tmpExt}
+	rm -rf ${mrnaAlignDir}/lav
+	${scripts}/do.out2lav ${DEF} >$@.${tmpExt}
+	mv -f $@.${tmpExt} $@
+
+
+${out2lavParaDir}/batch: ${out2lavParaDir}/jobs.para ${DEF}
+	ssh ${paraHost} cd `pwd`/${out2lavParaDir} \; para create jobs.para < /dev/null
+
+${mrnaAlignDir}/out2lav.jobs.done: ${out2lavParaDir}/batch
+	@mkdir -p ${dir $@}
+	${MAKE} makeOut2LavJobs
+	touch $@
+
+makeOut2LavJobs: ${out2lavParaDir}/jobs.para
+	ssh ${paraHost} cd `pwd`/${out2lavParaDir} \; para push < /dev/null
+
+${mrnaAlignDir}/sed.done: 
+	${scripts}/sed.sh ${mrnaAlignDir} ${db}
+	touch $@
+
+${mrnaAlignDir}/chainFilter/%.chain: ${mrnaAlignDir}/pslRaw/%.psl
+	doSortFilterChain.sh $c ${mrnaAlignDir} ${DB} ${trimSeq}
+
 # combine all chroms:
 cgCombined: ${cleanGenesAnalDir}/summary.tsv ${cleanGenesAnalDir}/details.tsv
 

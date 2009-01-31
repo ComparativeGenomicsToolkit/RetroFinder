@@ -1,5 +1,5 @@
 ROOT = ..
-
+SHELL = /bin/bash
 db=hg18
 ncbiBuild=36.3
 retroDate=20081004
