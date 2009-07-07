@@ -1,29 +1,79 @@
-cd /cluster/data/hg18/bed
-mkdir pseudo
-cd pseudo
-hgsql hg18 -N -B < mrna.sql > all_mrna.psl 
-hgsql hg18 -N -B < refSeqAli.sql >> all_mrna.psl
+mkdir -p /hive/users/baertsch/retro/hg18
+cd /hive/users/baertsch/retro/hg18
+mkdir result
+mkdir result/axt
+mkdir log
+mkdir out
+
+hgsql hg18 -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from all_mrna" > all_mrna.psl 
+hgsql hg18 -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from refSeqAli" >> all_mrna.psl
 gzip all_mrna.psl
-cat /cluster/data/hg18/rmsk/*.out |awk '{OFS="\t";print $5,$6,$7}' | grep -v position|grep -v sequence | tawk 'length($0)>2{print $0}' > rmsk.bed
-hgsql hg18 -N -B < dogNet.sql >dogNet.txt
-hgsql hg18 -N -B < rhesusNet.sql > rhesusNet.txt 
-hgsql hg18 -N -B < mouseNet.sql > mouseNet.txt 
-hgsql hg18 -N -B < simple.sql > simpleRepeat.bed 
-hgsql hg18 -N -B < refGene.sql > refGene.tab 
-hgsql hg18 -N -B < knownGene.sql > knownGene.tab 
-hgsql hg18 -N -B < mgcGene.sql > mgcGene.tab 
-sort -k2,2 -k4,4n knownGene.tab > sortedKnownGene.tab
-ls /scratch/hg/gs.19/build36/bothMaskedNibs/*.nib > S1.lst
-gzip *.tab
-gzip *.bed
-gzip *.txt
-cp -p *.gz /san/sanvol1/scratch/pseudo/hg18
-cp -p S1.lst /san/sanvol1/scratch/pseudo/hg18
+cat /hive/data/genomes/hg18/rmsk/*.out |awk '{OFS="\t";print $5,$6,$7}' | grep -v position|grep -v sequence | tawk 'length($0)>2{print $0}' > rmsk.bed
+hgsql hg18 -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN from netCanFam2 where type <> 'gap' or (type = 'gap' and qN*100/(qEnd-qStart) > 75)" > \
+dogNet.txt
+hgsql hg18 -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN from netRheMac2 where type <> 'gap' or (type = 'gap' and qN*100/(qEnd-qStart) > 75)" > \
+rhesusNet.txt 
+hgsql hg18 -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN from netMm8 where type <> 'gap' or (type = 'gap' and qN*100/(qEnd-qStart) > 75)" > \
+mouseNet.txt 
+hgsql hg18 -N -B -e "select chrom, chromStart, chromEnd from simpleRepeat" > simpleRepeat.bed 
+hgsql hg18 -N -B -e "select * from knownGene order by chrom, txStart, txEnd" | sort -k2,2 -k4,4n > sortedKnownGene.tab
+hgsql hg18 -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from refGene" > refGene.tab 
+hgsql hg18 -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from mgcGenes" > mgcGene.tab 
+hgsql hg18 -N -B -e "select acc, version, name, type from refSeqAli a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" > cds.tab
+hgsql hg18 -N -B -e "select acc, version, name, type from all_mrna a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" >> cds.tab
+ls /scratch/data/hg18/nib/*.nib > S1.lst
+cp /hive/data/genomes/hg18/chrom.sizes .
+gzip *.tab &
+gzip *.txt &
+gzip *.bed 
+#cp -p *.gz /san/sanvol1/scratch/retro/hg18
+#cp -p S1.lst /san/sanvol1/scratch/retro/hg18
+
+#filter mrna and est with pslCDnaGenomeMatch
+mkdir -p /san/sanvol1/scratch/est/mrna
+
+cp ~/hg18/mrnaBlastz/mrna.2bit .
+#gbGetSeqs genbank mrna mrna.fa -native -db=hg18 -get=seq -gbRoot=/cluster/data/genbank &
+#faToTwoBit mrna.fa /san/sanvol1/scratch/est/mrna/mrna.2bit
+#/cluster/data/genbank/bin/x86_64/gbGetSeqs -db=hg -inclVersion -native -gbRoot=/cluster/data/genbank \
+#   genbank mrna stdout | tr acgt ACGT > mrna.fa 
+#/cluster/data/genbank/bin/x86_64/gbGetSeqs -db=hg -inclVersion -native -gbRoot=/cluster/data/genbank \
+#   refSeq mrna stdout | tr acgt ACGT > refseq.fa 
+#gbGetSeqs refSeq  mRNA refSeq.fa -native -db=hg18 -get=seq -gbRoot=/cluster/data/genbank &
+#gbGetSeqs refSeq  mRNA refSeqVers.fa -inclVersion -native -db=hg18 -get=seq -gbRoot=/cluster/data/genbank
+hgsql hg18 -N -B -e "select concat(acc,'.',version) as acc, r.qStart, r.qEnd from gbCdnaInfo i, cds c, refSeqAli r  where i.cds = c.id  and acc like 'NM%' and acc = r.qName" > refSeqCds.bed
+faToTwoBit refSeq.fa refSeq.2bit
+hgsql hg18 -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from refSeqAli" > refSeqAli.psl
+nohup nice pslCDnaGenomeMatch refSeqAli.new.psl /cluster/data/hg18/chrom.sizes refSeq.2bit  /cluster/data/hg18/nib/ refSeqAli.filter.psl -score=refSeq.tab -bedOut=refSeqMis.bed -passthru &
+gzip refSeqAli.filter.psl
+
+hgsql hg18 -N -B -e "select * from all_mrna" | cut -f2-22 > all_mrnaNew.psl
+nohup nice pslCDnaGenomeMatch all_mrnaNew.psl /cluster/data/hg18/chrom.sizes mrna.2bit  /cluster/data/hg18/nib/ all_mrnaFiltered.psl -score=mrna.tab -bedOut=rmrnaMis.bed -passthru &
+gzip all_mrnaFiltered.psl
+zcat all_mrnaFiltered.psl.gz refSeqAli.filter.psl.gz > all_mrnaRefSeq.psl
+sort -k10 all_mrnaFiltered.psl.gz > all_mrnaNew.qName.psl
+gzip all_mrnaNew.qName.psl
+pslSplit nohead  /san/sanvol1/scratch/est/mrna/input/ all_mrnaNew.qName.psl.gz -chunkSize=2000
+cd run.mrna
+ls /san/sanvol1/scratch/est/mrna/input/*.psl > list
+gensub2 list single gsub spec
+para make
+cat /san/sanvol1/scratch/est/mrna/output/*.psl > all_mrnaFiltered.psl
+
+####
+# run retro pipeine on cluster
+####
 ssh pk
-cd /cluster/data/hg18/bed/pseudo
+cd /hive/genomes/data/hg18/bed/retro
 mkdir run.0
 cd run.0
-doMakelist
+wc -l ../split/* |grep -v total | grep -v acc.lst| sort -nr | awk '{print $2}' |sed -e 's,../split/tmp,,'|sed -e 's/.psl//' > list
+cat << '_EOF_' > gsub
+#LOOP
+doBuildpk.sh $(path1) {check out exists /hive/users/baertsch/retro/hg18/result/pseudoGeneLink$(path1).bed}
+#ENDLOOP
+'_EOF_'
+
 gensub2 list single gsub spec
 para push
 1190 jobs in batch
@@ -42,32 +92,6 @@ Submission to last job:          1345s      22.42m     0.37h    0.02d
 ssh kkstore02
 cd /cluster/data/hg18/bed/pseudo
 buildSort.sh
-
-
-#filter mrna and est with pslCDnaGenomeMatch
-mkdir -p /san/sanvol1/scratch/est/mrna
-gbGetSeqs genbank mrna mrna.fa -native -db=hg18 -get=seq -gbRoot=/cluster/data/genbank &
-faToTwoBit mrna.fa /san/sanvol1/scratch/est/mrna/mrna.2bit
-gbGetSeqs refSeq  mRNA refSeq.fa -native -db=hg18 -get=seq -gbRoot=/cluster/data/genbank &
-gbGetSeqs refSeq  mRNA refSeqVers.fa -inclVersion -native -db=hg18 -get=seq -gbRoot=/cluster/data/genbank
-hgsql hg18 -N -B < refSeqCdsBed.sql > refSeqCds.bed
-faToTwoBit refSeq.fa refSeq.2bit
-hgsql hg18 -N -B < refSeqAli.sql > refSeqAli.psl
-nohup nice pslCDnaGenomeMatch refSeqAli.new.psl /cluster/data/hg18/chrom.sizes refSeq.2bit  /cluster/data/hg18/nib/ refSeqAli.filter.psl -score=refSeq.tab -bedOut=refSeqMis.bed -passthru &
-gzip refSeqAli.filter.psl
-
-hgsql hg18 -N -B -e "select * from all_mrna" | cut -f2-22 > all_mrnaNew.psl
-nohup nice pslCDnaGenomeMatch all_mrnaNew.psl /cluster/data/hg18/chrom.sizes mrna.2bit  /cluster/data/hg18/nib/ all_mrnaFiltered.psl -score=mrna.tab -bedOut=rmrnaMis.bed -passthru &
-gzip all_mrnaFiltered.psl
-zcat all_mrnaFiltered.psl.gz refSeqAli.filter.psl.gz > all_mrnaRefSeq.psl
-sort -k10 all_mrnaFiltered.psl.gz > all_mrnaNew.qName.psl
-gzip all_mrnaNew.qName.psl
-pslSplit nohead  /san/sanvol1/scratch/est/mrna/input/ all_mrnaNew.qName.psl.gz -chunkSize=2000
-cd run.mrna
-ls /san/sanvol1/scratch/est/mrna/input/*.psl > list
-gensub2 list single gsub spec
-para make
-cat /san/sanvol1/scratch/est/mrna/output/*.psl > all_mrnaFiltered.psl
 
 hgsql hg18 -N -B < est.sql > est.psl
 sort -k10 est.psl > est.qName.psl
@@ -193,4 +217,7 @@ pushd /san/sanvol1/scratch/pseudo/results/axt
 zcat *.axt.gz > all.axt
 popd
 cat /san/sanvol1/scratch/pseudo/hg18/result/axt/all.axt | axtSplitByTarget stdin frames/maf
+
+hgsql hg18 -N -B -e "select * from kgTxInfo t, knownGene k where k.name = t.name and category = 'coding'" > kgCoding.gp
+hgsql hg18 -N -B -e "select * from kgTxInfo t, knownGene k where k.name = t.name and category <> 'coding'" > kgNotCoding.gp
 
