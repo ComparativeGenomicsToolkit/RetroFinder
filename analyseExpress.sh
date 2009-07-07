@@ -1,8 +1,24 @@
 #!/bin/bash -e
-overlapSelect refGeneMultiCds.bed retroMrnaInfo650.fix.bed pseudoRefGeneCds.bed
+DB=$1
+TABLE=$2
+VERSION=$3
+echo '-------- script analyseExpress.sh -------------------'
+overlapSelect refGeneMultiCds.bed retroMrnaInfo650.bed pseudoRefGeneCds.bed
 overlapSelect refGeneMultiCds.bed retroMrnaInfo.12.bed -statsOutput pseudoRefGeneCds.out
 overlapSelect refGeneMultiCds.bed retroMrnaInfo.12.bed pseudoRefGeneCds50.bed -overlapThreshold=0.50
-makeHtmlRight.sh $DB shufflingAnalysis134.bed shuffle/orig134 orig134;
+#regenerate gene predictions from expressed retros
+tawk '$5 > 600 {$2=$2-25; $3=$3+25;print $0}' ../retroMrnaInfo$VERSION.bed > pseudoExpressed.bed
+orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp >borf.out
+genePredSingleCover pseudoExpressed.gp pseudoExpressed.single.gp
+awk '{print "mrna."$1}' pseudoExpressed.single.gp |sort > pseudoExpressed.ids
+
+overlapSelect estFiltered.psl.gz $TABLE.bed -idOutput stdout | sort > est.id
+overlapSelect estFiltered.psl.gz $TABLE.bed -statsOutput stdout | sort > stat.out
+overlapSelect all_mrna.psl.gz ucscRetroInfo4.bed -statsOutput stdout |sort > mrna.out
+awk '{print $1}' est10Mrna.out |sort |uniq> est10Mrna.id
+
+
+#makeHtmlRight.sh $DB shufflingAnalysis134.bed shuffle/orig134 orig134;
 makeHtmlRight.sh $DB pseudoRefGeneCds.bed shuffle/shuffle refSeqShuffle;
 #makeHtmlRight.sh $DB pseudoRefGeneCdsAll.bed shuffle/all refSeqExpressed;
 makeHtmlRight.sh $DB pseudoRefGeneCds50.bed shuffle/shuffle refSeq50%Shuffle;
@@ -61,4 +77,5 @@ makeHtmlRight.sh $DB pseudoApe.bed kass/ape apeSpecific;
 makeHtmlRight.sh $DB apeNotKass.bed kass/apeNotK apeSpecificNotKaess;
 
 cp  finalType1Header.html /usr/local/apache/htdocs/retro/final/index.html
-makeHtmlRight.sh hg18 table2.long.bed final/type1 type1shuffleTable2
+makeHtmlRight.sh $DB table2.long.bed final/type1 type1shuffleTable2
+echo '-------- END script analyseExpress.sh -------------------'
