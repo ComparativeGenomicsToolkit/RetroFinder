@@ -1,0 +1,5 @@
+#
+hgsql hg18 < updateExp.sql
+hgsql hg18 < updateExp5.sql
+hgsql hg18 < updateBad.sql
+hgsql hg18 < updateBad5.sql

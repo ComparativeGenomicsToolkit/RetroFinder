@@ -1,0 +1,396 @@
+#!/usr/bin/env tclsh
+
+set usage {
+
+bedToHtmlDir [options] db bed outDir
+
+Create an HTML frameset for browsing a set of items in a BED file.
+The frameset will contain a browser frame and sidebar with links
+for each item in the BED.
+
+Options and defaults:
+  -page-size 50 - entries per directory page; 0 == one page (not implemented)
+  -browser-url http://hgwdev.cse.ucsc.edu/
+  -custom-track {} - URL of custom track
+  -title {} - Title to add to directory page.
+  -colors file - tab seperated pairs of names and values maybe repeated
+   These are used to color the BED entries entries with matching names.
+  -labels file - tab seperated file with the first column being 
+   the name and remaining forming columns in directory table. 
+   The name column is not include in the label. Maybe repeated.
+  -label-tsv file - tab seperated file with the first column being 
+   the name and remaining forming columns in directory table.   The
+   first line must contain column labels. The name column is not include
+   in the label. Maybe repeated.
+  -context-bases n - add n bases of context in the browser window for
+   each sequence.
+  -sort-by-name - sort entries by name
+  -sort-by-loc - sort entries by location
+  -next-prev - only create next/previous links, not links to each page.
+  -pack-track track - set this track to pack (maybe repeated).
+  -dir-frame-per 15 - percent of frameset occupied by directories
+  -dir-below - Place directory below the browsers instead of on the left.
+  -dir-right - Place directory on the right the browsers instead of on the left.
+  -dir-style cssFile - Add a link to an external style sheet.
+   If specified, the following identifiers are added for linking to
+   the CSS:
+     o <table> id on directory table is set to "dir"
+     o <th>/<td> in directory are assigned classes based on their zero-based
+       column index, in the form "col0", "col1", etc.  Useful for controlling
+       text wrapping.
+}
+
+set gDebug 0
+
+proc cmdlinePop {} {
+    set opt [lindex $::argv 0]
+    set ::argv [lreplace $::argv 0 0]
+    return $opt
+}
+
+proc cmdlinePopVal {opt} {
+    if {[llength $::argv] == 0} {
+        error "opt requires an argument"
+    }
+    return [cmdlinePop]
+}
+
+# load tab file, skipping blank or # lines
+proc loadTabFile {fname} {
+    set rows {}
+    set fh [open $fname]
+    while {[gets $fh line] >= 0} {
+        if {!(([llength $line] == 0) || [string match \#* $line])} {
+            lappend rows [split $line \t]
+        }
+    }
+    close $fh
+    return $rows
+}
+
+# load a file of names and associated values into the named array.  If isTsv
+# is 1, then returns the header as a list.
+proc loadNameVals {fname tblVar {isTsv 0}} {
+    upvar $tblVar tbl
+    set rows [loadTabFile $fname]
+    set hdr {}
+    if {$isTsv} {
+        set hdr [lrange [lindex $rows 0] 1 end]
+        set rows [lreplace $rows 0 0]
+    }
+    foreach row $rows {
+        set tbl([lindex $row 0]) [lrange $row 1 end]
+    }
+    return $hdr
+}
+
+# format: title dirPer browserPer browserUrl
+set gFrameSetLeft {<html><head><title>%s</title></head>
+<FRAMESET cols="%d%%,%d%%">
+    <FRAME name="dir" src="dir1.html">
+    <FRAME name="browser" src="%s">
+</FRAMESET>
+</html>
+}
+set gFrameSetRight {<html><head><title>%s</title></head>
+<FRAMESET cols="%d%%,%d%%">
+    <FRAME name="browser" src="%s">
+    <FRAME name="dir" src="dir1.html">
+</FRAMESET>
+</html>
+}
+# format: title browserPer dirPer browserUrl
+set gFrameSetBelow {<html><head><title>%s</title></head>
+<FRAMESET rows="%d%%,%d%%">
+    <FRAME name="browser" src="%s">
+    <FRAME name="dir" src="dir1.html">
+</FRAMESET>
+</html>
+}
+
+# write frameset
+proc writeFrameSet {outDir} {
+    global gFrameSetLeft gFrameSetBelow gFrameSetRight gTitle gBrowserUrl gDirFramePer gDirBelow gDirRight
+    set browserPer [expr 100-$gDirFramePer]
+    set fh [open $outDir/index.html w]
+    if {$gDirBelow} {
+        puts $fh [format $gFrameSetBelow $gTitle $browserPer $gDirFramePer $gBrowserUrl]
+    } elseif {$gDirRight} {
+        puts $fh [format $gFrameSetRight $gTitle $gDirFramePer  $browserPer $gBrowserUrl]
+    } else {
+        puts $fh [format $gFrameSetLeft $gTitle $gDirFramePer $browserPer $gBrowserUrl]
+    }
+    close $fh
+}
+
+proc getPageLinks {pageNum numPages} {
+    global gJustNextPrev
+    if {$pageNum > 1} {
+        append html "<a href=\"dir[expr ${pageNum}-1].html\">prev</a>"
+    } else {
+        append html "prev"
+    }
+    if {$gJustNextPrev} {
+        append html " $pageNum of $numPages "
+    } else {
+        append html ", "
+        for {set p 1} {$p <= $numPages} {incr p} {
+            if {$p != $pageNum} {
+                append html "<a href=\"dir[expr ${p}].html\">$p</a>, "
+            } else {
+                append html "\[$p\], "
+            }
+        }
+    }
+    if {$pageNum < $numPages} {
+        append html "<a href=\"dir[expr ${pageNum}+1].html\">next</a>"
+    } else {
+        append html "next"
+    }
+}
+
+# output a dir table row
+proc writeDirRow {fh cell row {trAttrs {}}} {
+    global gDirStyle
+    if {$trAttrs != ""} {
+        set tr "<tr $trAttrs>"
+    } else {
+        set tr "<tr>"
+    }
+    if {$gDirStyle == ""} {
+        set tag "<$cell nowrap>"
+        puts $fh "$tr$tag[join $row $tag]</tr>"
+    } else {
+        # leave wrapping to style sheet, adding class
+        set tblRow "$tr"
+        set iCol 0
+        foreach col $row {
+            append tblRow "<$cell class=\"col$iCol\">$col"
+        }
+        append tblRow "</tr>"
+        puts $fh $tblRow
+    }
+}
+
+# generate browser-stule position range
+proc mkPos {bedRec} {
+    global gContextBases
+    set chr [lindex $bedRec 0]
+    set start [expr [lindex $bedRec 1]-$gContextBases]
+    if {$start < 0} {
+        set start 0
+    }
+    set end [expr [lindex $bedRec 2]+$gContextBases]
+    return "$chr:$start-$end"
+}
+
+# create a row of a file
+proc writeDirItemRow {fh db bedRec} {
+    global gTitle gBrowserUrl gCustomTrack gColorTbl gLabelTbl gPackTrack
+
+    set pos [mkPos $bedRec]
+    set url "$gBrowserUrl/cgi-bin/hgTracks?position=$pos&db=${db}"
+    foreach tr $gPackTrack {
+        append url &${tr}=pack
+    }
+    if {[llength $gCustomTrack] != 0} {
+        append url &hgt.customText=$gCustomTrack
+    }
+    set name [lindex $bedRec 3]
+    if {$name == ""} {
+        set name $pos
+    }
+    if {[info exists gLabelTbl($name)]} {
+        set labels $gLabelTbl($name)
+    } else {
+        set labels [list $name]
+    }
+    set rowBg ""
+    if {[info exists gColorTbl($name)]} {
+        set rowBg "bgcolor=$gColorTbl($name)"
+    }
+
+    set row [list "<a href=\"$url\" target=browser>[lindex $labels 0]</a>"]
+    set row [concat $row [lrange $labels 1 end]]
+    writeDirRow $fh td $row $rowBg
+}
+
+# write dirN.html
+proc writeDirPage {outDir db pageNum numPages beds} {
+    global gTitle gBrowserUrl gCustomTrack gColHeaders gDirStyle
+
+    set pageLinks [getPageLinks $pageNum $numPages]
+
+    set fh [open $outDir/dir${pageNum}.html w]
+    puts $fh {<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">}
+    puts $fh {<html><head>}
+    puts $fh "<title>$gTitle</title>"
+    if {$gDirStyle != ""} {
+        puts $fh "<LINK href=\"$gDirStyle\" rel=\"stylesheet\" type=\"text/css\">"
+    }
+    puts $fh {</head>}
+    puts $fh {<body>}
+    if {$gTitle != ""} {
+        puts $fh "<h3>$gTitle</h3>"
+    }
+
+    puts $fh $pageLinks
+    if {$gDirStyle == ""} {
+        puts $fh "<table border=2>"
+    } else {
+        # leave border to style sheet
+        puts $fh "<table id=\"dir\">"
+    }
+    
+    if {[info exists gColHeaders]} {
+        writeDirRow $fh th $gColHeaders
+    }
+
+    foreach row $beds {
+        writeDirItemRow $fh $db $row
+    }
+
+    puts $fh "</table>"
+    puts $fh $pageLinks
+    puts $fh "</body></html>"
+    close $fh
+}
+
+proc bedLocCmp {bed1 bed2} {
+    set dif [string compare [lindex $bed1 0] [lindex $bed2 0]]
+    if {$dif == 0} {
+        set dif [expr [lindex $bed1 1]-[lindex $bed2 1]]
+    }
+    if {$dif == 0} {
+        set dif [expr [lindex $bed1 2]-[lindex $bed2 2]]
+    }
+    return $dif
+}
+
+# write dir pages
+proc writeDir {outDir db beds} {
+    global gPageSize gSortEntries
+    set numPages [expr ([llength $beds]+$gPageSize-1)/$gPageSize]
+
+    if {$gSortEntries == "name"} {
+        set beds [lsort -index 3 $beds]
+    } elseif {$gSortEntries == "loc"} {
+        set beds [lsort -command bedLocCmp $beds]
+    } elseif {$gSortEntries == "col4"} {
+        set beds [lsort -index 58 $beds]
+    }
+
+    if {[llength $beds] == 0} {
+        # special case, no beds, create a empty dir page to prevent
+        # error in frame
+        writeDirPage $outDir $db 1 1 {}
+    } else {
+        set idx 0
+        for {set pageNum 1} {$pageNum <= $numPages} {incr pageNum} {
+            writeDirPage $outDir $db $pageNum $numPages [lrange $beds $idx [expr $idx+($gPageSize-1)]]
+            incr idx $gPageSize
+        }
+    }
+}
+
+# main program
+proc bedToHtml {} {
+    global argv
+    global gTitle gBrowserUrl gCustomTrack gPageSize gColorTbl gLabelTbl gColHeaders gLabelTbl
+    global gDirFramePer gDirBelow gDirRight gSortEntries gDirStyle gContextBases gJustNextPrev gPackTrack
+
+    set gTitle {}
+    set gBrowserUrl {http://hgwdev.cse.ucsc.edu}
+    set gCustomTrack {}
+    set gPageSize 50
+    set gDirFramePer 15
+    set gDirBelow 0
+    set gDirRight 0
+    set gSortEntries no
+    set gDirStyle {}
+    set gContextBases 0
+    set gJustNextPrev 0
+    set gPackTrack {}
+    while {[string match -* [lindex $argv 0]]} {
+        set opt [cmdlinePop]
+        switch -exact -- $opt {
+            -browser-url {
+                set gBrowserUrl [cmdlinePopVal $opt]
+            }
+            -custom-track {
+                set gCustomTrack [cmdlinePopVal $opt]
+            }
+            -title {
+                set gTitle [cmdlinePopVal $opt]
+            }
+            -colors {
+                loadNameVals [cmdlinePopVal $opt] gColorTbl
+            }
+            -labels {
+                loadNameVals [cmdlinePopVal $opt] gLabelTbl
+            }
+            -label-tsv {
+                set gColHeaders [loadNameVals [cmdlinePopVal $opt] gLabelTbl 1]
+            }
+            -context-bases {
+                set gContextBases [cmdlinePopVal $opt]
+            }
+            -page-size {
+                set gPageSize [cmdlinePopVal $opt]
+            }
+            -next-prev {
+                set gJustNextPrev 1
+            }
+            -pack-track {
+                lappend gPackTrack [cmdlinePopVal $opt]
+            }
+            -dir-frame-per {
+                set gDirFramePer [cmdlinePopVal $opt]
+            }
+            -dir-below {
+                set gDirBelow 1
+            }
+            -dir-right {
+                set gDirRight 1
+            }
+            -dir-style {
+                set gDirStyle [cmdlinePopVal $opt]
+            }
+            -sort-by-name {
+                set gSortEntries name
+            }
+            -sort-by-loc {
+                set gSortEntries loc
+            }
+            -sort-by-col4 {
+                set gSortEntries col4
+            }
+            default {
+                error "invalid option: $opt\n $::usage"
+            }
+        }
+    }
+    if {[llength $argv] != 3} {
+        error "wrong \# args: $::usage"
+    }
+    set db [lindex $argv 0]
+    set bedFile [lindex $argv 1]
+    set outDir [lindex $argv 2]
+
+    file mkdir $outDir
+
+    writeDir $outDir $db [loadTabFile $bedFile]
+    writeFrameSet $outDir
+
+}
+
+if {[catch {
+    bedToHtml
+} msg]} {
+    puts stderr "Error: $msg"
+    if {$gDebug} {
+        puts stderr $errorInfo
+    }
+    exit 1
+
+}
