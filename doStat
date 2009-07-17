@@ -1,7 +1,6 @@
 #
-DB=$1
-TABLE=$2
-echo "------------- script doStat - TABLE = $TABLE --------------------"
+source $1
+echo "------------- script doStat - TABLE = $TABLE DB=$DB --------------------"
 #tawk '{print $3-$2}' ../pseudoGeneLinkNoOverlapFilter.bed > lengthAll.txt
 #tawk '{print $4"."$1"."$2,$0}' ../pseudoGeneLinkNoOverlapFilter.bed > pseudoJoin.bed
 #tawk '$14 == "expressed"{print $3-$2}' ../pseudoGeneLinkNoOverlapFilter.bed > lengthExp.txt
@@ -66,11 +65,12 @@ wc -l pseudoExpressed.bed
 echo orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp 
 orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp > borf.out
 echo ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab
+echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
 ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab
 #overlapSelect -idOutput indelibleNew.bed pseudoExpressed.bed ids.txt
 
 #set of 5000 with 1 or more EST (tight)
-tawk '{$2=$2-50; $3=$3+50;print $0}' ../pseudoEstAll.bed > pseudoEstAll.bed
+tawk '$2>50{$2=$2-50; $3=$3+50;print $0}$2<=50{$3=$3+50;print $0}' ../pseudoEstAll.bed > pseudoEstAll.bed
 echo "orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp to borfEst.out"
 orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp > borfEst.out
 echo gene-check  -nib-dir /cluster/data/$DB/nib pseudoEstAll.gp checkEst.rdb
@@ -80,6 +80,8 @@ fgrep -f goodOrf.list pseudoEstAll.out > pseudoEstAll.good.out
 #histogram of best.orf scores
 awk '{print $55}' pseudoEstAll.good.out |textHistogram stdin -maxBinCount=40 -binSize=10
 awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed weak\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEstAll.good.out > updateExp.sql
+head updateExp.sql
+echo "hgsql $DB updateExp.sql"
 hgsql $DB < updateExp.sql
 #set with 5Est and 1spliced mRNA
 tawk '{$2=$2-50; $3=$3+50;print $0}' ../pseudoEst5AndMrna.bed > pseudoEst5AndMrna.bed
@@ -90,6 +92,8 @@ tawk '$7=="ok" && $25=="noStart" || $25==""{print $1}' checkEst5AndMrna.rdb > go
 #tawk '$6=="ok"&& $7=="ok"{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
 fgrep -f goodOrf5AndMrna.list pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
 awk '{print "update $TABLE set thickStart = "$7", thickEnd = "$8" , type = \"expressed strong\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEst5AndMrna.good.out > updateExp5.sql
+head updateExp5.sql
+echo "hgsql $DB  updateExp5.sql"
 hgsql $DB < updateExp5.sql
 #bad orfs
 awk '$6!="ok"|| $7!="ok" || ($7=="ok" && $25!="noStart"&& $25!=""){print $1}' checkEst.rdb > badOrf.list
@@ -100,7 +104,7 @@ awk '{print "update $TABLE set type = \"expressed strong noOrf\" where name = \"
 hgsql $DB < updateBad5.sql
 
 fgrep -f goodOrf.list pseudoEstAll.gp > pseudoExpressed.gp
-echo ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab
+echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
 ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab
 genePredToBed pseudoExpressed.gp > pseudoExpressed.bed
 #length histogram of coding region
