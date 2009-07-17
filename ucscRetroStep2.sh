@@ -1,10 +1,9 @@
-#align human mrnas to hg18 using lastz
-DB=hg18
-
-cd /san/sanvol1/scratch/mrnaBlastz/$DB/
-
+#!/bin/bash 
+source $1
+#align human mrnas to $DB using lastz
+cd $TMPMRNA
+echo "working directory is $TMPMRNA."
 #concatenate, sort (by name, score) and de-dup psls by chrom
-
 mkdir -p pslFilter
 for i in `awk '{print $1}' S1.len` ; do echo $i ; cat lastz/$i/*.psl | awk '{print $0, $1*3-$2}' | \
  sort -k 10,10 -k 22nr -T /scratch | awk '{OFS=" "; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21}' | \
@@ -12,11 +11,11 @@ for i in `awk '{print $1}' S1.len` ; do echo $i ; cat lastz/$i/*.psl | awk '{pri
 
 #chain blocks
 
+ls $NIB/*.nib > nib.lst
 mkdir -p psl
 for i in `awk '{print $1}' S1.len` ; do nohup doChain $i ; done 
 
 #convert chains to psl
-ls /scratch/data/$DB/nib/*.nib > nib.lst
 #for i in `awk '{print $1}' S1.len`; do chainToPsl chainFilter/$i.chain S1.len S2.len nib.lst trim.fa psl/$i.psl; done
 
 
@@ -24,8 +23,8 @@ ls /scratch/data/$DB/nib/*.nib > nib.lst
 mkdir -p pslLift
 for i in `awk '{print $1}' S1.len` ; do liftUp pslLift/$i.psl mrna.lft warn psl/$i.psl -pslQ -nohead ; done
 
-cd /cluster/data/$DB/bed/mrnaBlastz
-pslCat -nohead /san/sanvol1/scratch/mrnaBlastz/$DB/pslLift/*psl > mrnaBlastz.psl
+cd $MRNABASE
+pslCat -nohead $TMPMRNA/pslLift/*psl > mrnaBlastz.psl
 
 sort -k10,10 -k14,14 -k16,16n -k12,12n mrnaBlastz.psl > mrnaBlastz.sort.psl
 #pslCDnaFilter -minCover=0.05 -minId=0.65 mrnaBlastz.sort.psl mrnaBlastz.65.psl
@@ -42,9 +41,11 @@ sort -k10,10 -k14,14 -k16,16n -k12,12n mrnaBlastz.psl > mrnaBlastz.sort.psl
 #              kept:     223112  6998275
 
 pslCDnaFilter -minCover=0.10 -minId=0.62 mrnaBlastz.sort.psl mrnaBlastz.psl
+rm -f mrnaBlastz.sort.psl.gz
+gzip mrnaBlastz.sort.psl &
 
 #load mrna alignment track into browser
-awk -f ~baertsch/bin/scripts/stripversion.awk mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrnaBlastz2
+awk -f $SCRIPT/stripversion.awk mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrnaBlastz
 #rm -f mrnaBlastz.strip.psl 
 
 #grep -v random mrnaBlastz.psl > mrnaBlastz.norand.psl
@@ -55,18 +56,24 @@ awk -f ~baertsch/bin/scripts/stripversion.awk mrnaBlastz.psl | hgLoadPsl $DB std
 #awk -f missingChain.awk mrnaBlastz.dups.psl > mrnaBlastz.missing.psl
 
 #split for pipeline cluster run 
-mkdir -p /hive/users/baertsch/retro/$DB/split
-pslSplit nohead /hive/users/baertsch/retro/$DB/split mrnaBlastz.psl -chunkSize=120
-cd /hive/users/baertsch/retro/$DB/split
-for i in `ls tmp*.psl` ; do ~baertsch/bin/scripts/pslQueryUniq $i > temp.psl ; mv temp.psl $i ;echo $i; done
+mkdir -p $OUTDIR/split
+pslSplit nohead $OUTDIR/split mrnaBlastz.psl -chunkSize=120
+cd $OUTDIR/split
+for i in `ls tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > temp.psl ; mv temp.psl $i ;echo $i; done
 grep chr tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'|uniq  > acc.lst
 
 #load mrna sequences into browser (with version numbers)
-#cp mrna.fa /hive/data/genomes/$DB/bed/mrnaBlastz/mrna.fa
+#cp mrna.fa $MRNABASE/mrna.fa
 mkdir -p /gbdb/$DB/blastzRetro
-rm -f /gbdb/hg18/blastzRetro/mrna.fa 
-rm -f /gbdb/hg18/blastzRetro/refseq.fa 
-ln /hive/data/genomes/$DB/bed/mrnaBlastz/mrna.fa /gbdb/$DB/blastzRetro/ -s
-ln /hive/data/genomes/$DB/bed/mrnaBlastz/refseq.fa /gbdb/$DB/blastzRetro/ -s
+rm -f /gbdb/$DB/blastzRetro/mrna.fa 
+rm -f /gbdb/$DB/blastzRetro/refseq.fa 
+ln $MRNABASE/mrna.fa /gbdb/$DB/blastzRetro/ -s
+ln $MRNABASE/refseq.fa /gbdb/$DB/blastzRetro/ -s
 hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/refseq.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
 hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/mrna.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
+
+echo "ucscRetroStep2.sh mrna alignments complete"
+cp $TMPMRNA/DEF $OUTDIR
+cd $OUTDIR
+pwd
+echo "run ucscRetroStep3.sh DEF to run retro pipeline"

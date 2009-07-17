@@ -1,15 +1,12 @@
-## called from ~baertsch/baertsch/scripts/buildSort.sh
-RESULT=$1
-DB=$2
-BASE=$3
-SCRIPT=$4
-VERSION=4
-TABLE=retroMrnaInfo$VERSION
+#!/bin/bash 
+source $1
+CWD=`pwd`
+## called from ~baertsch/baertsch/scripts/ucscRetroStep4.sh
 echo "---------------------------"
-echo "Starting buildSort.part2.sh"
+echo "Starting ucscRetroStep5.sh"
 echo "---------------------------"
 date
-cd $BASE
+cd $OUTDIR
 pwd
 echo cat chr*_NoOverlap.bed to pseudoGeneLinkNoOverlap.bed
 cat chr*_NoOverlap.bed > pseudoGeneLinkNoOverlap.bed
@@ -44,30 +41,33 @@ hgsql $DB -N -B -e "select  k.name, chrom, strand, txStart, txEnd, cdsStart, cds
         );" > zincKg.gp
 cut -f 1 zincKg.gp |sort | uniq > zincKg.lst
 
-zcat sortedKnownGene.tab.gz > sortedKnownGene.tab
-#fgrep -w -f bothZnf.lst sortedKnownGene.tab > kgZnf.gp
+zcat $GENE1.tab.gz > $GENE1.tab
+#fgrep -w -f bothZnf.lst $GENE1.tab > kgZnf.gp
 #grep -v -F -f bothZnf.lst retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
-fgrep -w -f zincKg.lst sortedKnownGene.tab > kgZnf.gp
+fgrep -w -f zincKg.lst $GENE1.tab > kgZnf.gp
 grep -v -F -f zincKg.lst retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
-cp retroMrnaInfoLessZnf.bed retroMrnaInfo$VERSION.bed
-textHistogram -col=5 retroMrnaInfo4.bed -binSize=50 -maxBinCount=50
-wc -l retroMrnaInfo.raw.bed pseudoGeneLink425.bed retroMrnaInfo$VERSION.bed
-echo creating retroMrnaAli.psl
-awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' retroMrnaInfo$VERSION.bed > pseudoGeneLinkSelect.tab
-pslSelect -qtStart=pseudoGeneLinkSelect.tab pseudo.psl retroMrnaAli$VERSION.psl
-wc -l retroMrnaAli$VERSION.psl pseudoGeneLinkSelect.tab
+cp retroMrnaInfoLessZnf.bed $TABLE.bed
+textHistogram -col=5 $TABLE.bed -binSize=50 -maxBinCount=50
+wc -l retroMrnaInfo.raw.bed pseudoGeneLink425.bed $TABLE.bed
+echo creating $ALIGN.psl
+awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $TABLE.bed > pseudoGeneLinkSelect.tab
+pslSelect -qtStart=pseudoGeneLinkSelect.tab pseudo.psl $ALIGN.psl
+wc -l $ALIGN.psl pseudoGeneLinkSelect.tab
 #echo Loading Bed
 #hgLoadBed $DB pseudoGeneLink pseudoGeneLinkNoOverlap.bed -hasBin -sqlTable=/cluster/home/baertsch/kent/src/hg/lib/pseudoGeneLink.sql
 ##hgLoadBed $DB pseudoGeneLink pseudoGeneLink425.bed -hasBin -sqlTable=/cluster/home/baertsch/kent/src/hg/lib/pseudoGeneLink.sql
 ##echo Loading Psl
 ##hgLoadPsl $DB pseudoMrna2.psl
-hgLoadBed $DB -noBin retroMrnaInfoXX -sqlTable=/cluster/home/baertsch/kent/src/hg/lib/retroMrnaInfo.sql retroMrnaInfo$VERSION.bed
+hgLoadBed $DB -noBin retroMrnaInfoXX -sqlTable=/cluster/home/baertsch/kent/src/hg/lib/retroMrnaInfo.sql $TABLE.bed
 hgsql $DB -e "drop table $TABLE;"
 hgsql $DB -e "alter table retroMrnaInfoXX rename $TABLE;"
-hgLoadPsl $DB retroMrnaAli$VERSION.psl
+hgLoadPsl $DB $ALIGN.psl
+#load retro coding annotation
+zcat cds.tab.gz | tawk '{print $1"."$2,$3}' > ucscRetroCds.tab
+hgLoadSqlTab $DB ucscRetroCds ~/kent/src/hg/lib/ucscRetroCds.sql ucscRetroCds.tab
 
 #make exon list
-cd $BASE
+cd $OUTDIR
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from refGene where exonCount > 1" > refGeneMultiExon.genePred
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from knownGene where exonCount > 1" > kgMultiExon.genePred
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from mgcGenes where exonCount > 1" > mgcMultiExon.genePred
@@ -116,8 +116,8 @@ $SCRIPT/makeRetroExtraAttr.sh $DB $TABLE
 echo "overlapSelect estFiltered.psl.gz retroMrnaInfoLessZnf.bed pseudoEstAll.bed"
 overlapSelect estFiltered.psl.gz retroMrnaInfoLessZnf.bed pseudoEstAll.bed
 wc -l retroMrnaInfoLessZnf.bed pseudoEstAll.bed
-echo "grep -F -f bothZnf.lst retroMrnaInfo$VERSION.bed to retroZnf.bed"
-grep -F -f bothZnf.lst retroMrnaInfo$VERSION.bed > retroZnf.bed
+echo "grep -F -f bothZnf.lst $TABLE.bed to retroZnf.bed"
+grep -F -f bothZnf.lst $TABLE.bed > retroZnf.bed
 #hgsql $DB -N -B < bothZnf.sql > zincFinger.psl
 
 cp all_mrna.psl.gz all_mrnaFiltered.psl.gz
@@ -128,11 +128,11 @@ mrnaToGene all_mrnaFiltered.psl.gz -cdsMergeSize=10 -utrMergeSize=10 all_mrna_ut
 awk '$8>1{print }' all_mrna.gp > all_mrna_multiExon.gp
 awk '$8>1{print }' all_mrna_utr.gp > all_mrna_multiExonUTR.gp
 
-mkdir -p type1
-cd type1
+mkdir -p exp
+cd exp
 echo pwd
 pwd
-$SCRIPT/analyseExpress.sh $DB $TABLE $VERSION
+$SCRIPT/analyseExpress.sh ../$1
 cd ..
 #nice -4 zcat pseudoMrnaLink*.txt.gz | awk '$28 == 1 && $23 < 50 {print $0}' | 
 #awk 'NF==47{$37=$37" -1 0";print $0}NF==48{$37=$37" 0"; print $0}' pseudoGeneLinkSort.bed > pseudoGeneLinkSort.bed
@@ -141,9 +141,13 @@ cd ..
 #    hgsql $DB -B < export.sql > export.txt
 #    awk -f pseudoToHtml.awk < export.txt  > pseudoMrna.html
 
-mkdir -p stats
-cd stats
-$SCRIPT/doStat $DB $TABLE
+#mkdir -p stats
+#cd stats
+#$SCRIPT/doStat ../$1
+
+exit 
+
+# the rest of this script is obselete
 cd ..
 cd frames
 
@@ -182,14 +186,14 @@ cat mafFrames/$DB.*.maf.mafFrames > mafFrames/$DB.mafFrames
 
 #get gene preds for parent genes
 
-hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,1)-1 as cdsStart, substring(c.name,4,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, retroMrnaInfo p where cds = c.id and substring(c.name,2,2) = '..' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,4,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version " >mrnaGene.gp
-hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,2)-1 as cdsStart, substring(c.name,5,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, retroMrnaInfo p where cds = c.id and substring(c.name,3,2) = '..' and substring(c.name,1,1) != '<' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,5,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version " >>mrnaGene.gp
-hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,3)-1 as cdsStart, substring(c.name,6,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, retroMrnaInfo p where cds = c.id and substring(c.name,4,2) = '..' and substring(c.name,1,1) != '<' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,6,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version " >>mrnaGene.gp
+hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,1)-1 as cdsStart, substring(c.name,4,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, $TABLE p where cds = c.id and substring(c.name,2,2) = '..' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,4,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version " >mrnaGene.gp
+hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,2)-1 as cdsStart, substring(c.name,5,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, $TABLE p where cds = c.id and substring(c.name,3,2) = '..' and substring(c.name,1,1) != '<' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,5,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version " >>mrnaGene.gp
+hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,3)-1 as cdsStart, substring(c.name,6,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, $TABLE p where cds = c.id and substring(c.name,4,2) = '..' and substring(c.name,1,1) != '<' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,6,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version " >>mrnaGene.gp
 
 #get gene preds for refSeq genes
-hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,1)-1 as cdsStart, substring(c.name,4,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, retroMrnaInfo p where cds = c.id and substring(c.name,2,2) = '..' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,4,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version and name like 'NM%'" >refGene.gp
-hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,2)-1 as cdsStart, substring(c.name,5,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, retroMrnaInfo p where cds = c.id and substring(c.name,3,2) = '..' and substring(c.name,1,1) != '<' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,5,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version and name like 'NM%'" >>refGene.gp
-hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,3)-1 as cdsStart, substring(c.name,6,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, retroMrnaInfo p where cds = c.id and substring(c.name,4,2) = '..' and substring(c.name,1,1) != '<' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,6,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version and name like 'NM%'" >>refGene.gp
+hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,1)-1 as cdsStart, substring(c.name,4,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, $TABLE p where cds = c.id and substring(c.name,2,2) = '..' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,4,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version and name like 'NM%'" >refGene.gp
+hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,2)-1 as cdsStart, substring(c.name,5,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, $TABLE p where cds = c.id and substring(c.name,3,2) = '..' and substring(c.name,1,1) != '<' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,5,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version and name like 'NM%'" >>refGene.gp
+hgsql $DB -N -B -e "select p.name, p.name as chrom, '+', 0 as txStart ,gEnd-gStart as txEnd,substring(c.name,1,3)-1 as cdsStart, substring(c.name,6,10) as cdsEnd,1 as exonCount, 0 as exonStarts, gEnd-gStart as exonEnds from cds c, gbCdnaInfo g, $TABLE p where cds = c.id and substring(c.name,4,2) = '..' and substring(c.name,1,1) != '<' and acc = substring(p.name,1,instr(p.name,'.')-1) and substring(c.name,6,1) != '>' and substring(p.name,instr(p.name,'.')+1,1) = version and name like 'NM%'" >>refGene.gp
 #calculate frames for parent genes 
 for i in `ls maf` ; do genePredToMafFrames $DB maf/$i mafFrames/mrna.$i.mafFrames mrna mrnaGene.gp ; echo $i ;done
 cat mafFrames/mrna.*.maf.mafFrames > mafFrames/mrna.mafFrames
