@@ -1,9 +1,8 @@
 #!/bin/bash 
-echo $BASH_ARGC
+set -beEu -o pipefail
 if [ $BASH_ARGC ]; then
-        echo "got argc"
-fi
-if [ $BASH_ARGC != 1 ]; then
+       echo "Parameter file is $1"
+else
        echo "usage $0 DEF"
        exit 3
 fi
@@ -15,13 +14,26 @@ mkdir -p $MRNABASE
 cd $MRNABASE
 
 #pull latest mrna and refseq from genbank 
-/cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
-   genbank mrna stdout | tr acgt ACGT > mrna.fa 
-/cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
-   refSeq mrna stdout | tr acgt ACGT > refseq.fa 
+if [[ -s mrna.fa ]] ; then
+    echo "mrna.fa exists, extraction from genbank skipped"
+else
+    echo "extracting mRNA and reqseq from Genbank "
+    echo "/cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
+       genbank mrna stdout | tr acgt ACGT "
+    /cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
+       genbank mrna stdout | tr acgt ACGT > tmp.fa ; mv tmp.fa mrna.fa 
+fi
+if [[ -s refseq.fa ]] ; then
+    echo "refseq.fa exists, extraction from genbank skipped"
+else
+    /cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
+       refSeq mrna stdout | tr acgt ACGT > refseq.fa 
+fi
+echo "cat mrna.fa refseq.fa output-to raw.fa"
 cat mrna.fa refseq.fa > raw.fa
 
-#remmove polyA tail before aligning
+#remove polyA tail before aligning
+echo "faTrimPolyA raw.fa trim.fa "
 faTrimPolyA raw.fa trim.fa 
 mkdir -p $TMPMRNA 
 cp -p trim.fa $TMPMRNA 
@@ -70,7 +82,7 @@ echo "#ENDLOOP" >> template
 cp ../S1.lst .
 cp ../S2.lst .
 gensub2 S1.lst S2.lst template jobList
-ssh -T pk "cd $TMPMRNA/run.0 ; para make jobList"
+ssh -T $CLUSTER "cd $TMPMRNA/run.0 ; para make jobList"
 #    para create jobList
 #    para try
 #    para check
