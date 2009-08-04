@@ -1,9 +1,12 @@
 #!/bin/bash
+set -beEu -o pipefail
 source $1
 echo '-------- script analyseExpress.sh -------------------'
-overlapSelect ../refGeneMultiCds.bed ../retroMrnaInfo650.bed pseudoRefGeneCds.bed
-overlapSelect ../refGeneMultiCds.bed ../retroMrnaInfo.12.bed -statsOutput pseudoRefGeneCds.out
-overlapSelect ../refGeneMultiCds.bed ../retroMrnaInfo.12.bed pseudoRefGeneCds50.bed -overlapThreshold=0.50
+overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo650.bed pseudoRefGeneCds.bed
+overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed -statsOutput pseudoRefGeneCds.out
+overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed pseudoRefGeneCds50.bed -overlapThreshold=0.50
+overlapSelect -selectFmt=genePred ../$GENE2.tab.gz pseudoRefGeneCds.bed shuffleEns.bed
+overlapSelect -selectFmt=genePred ../$GENE2.multiCDSExon.genePred pseudoRefGeneCds.bed shuffleEnsMulti.bed
 echo "overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -idOutput stdout | sort to est.id"
 overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -idOutput stdout |awk '{print $1}' | sort |uniq> est.id
 overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -statsOutput stdout | sort > stat.out
@@ -141,16 +144,16 @@ tawk '$7=="ok" && $25=="noStart" || $25==""{print $1}' checkEst5AndMrna.rdb > go
 #tawk '$6=="ok"&& $7=="ok"{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
 #fgrep -f goodOrf5AndMrna.list pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
 $SCRIPT/selectById -tsv 1 goodOrf5AndMrna.list 1 pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
-awk '{print "update $TABLE set thickStart = "$7", thickEnd = "$8" , type = \"expressed strong\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEst5AndMrna.good.out > updateExp5.sql
+awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed strong\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEst5AndMrna.good.out > updateExp5.sql
 head updateExp5.sql
 echo "hgsql $DB  updateExp5.sql"
 hgsql $DB < updateExp5.sql
 #bad orfs
 awk '$6!="ok"|| $7!="ok" || ($7=="ok" && $25!="noStart"&& $25!=""){print $1}' checkEst.rdb > badOrf.list
-awk '{print "update $TABLE set type = \"expressed weak noOrf\" where name = \""$1"\" ;"}' badOrf.list> updateBad.sql
+awk '{print "update '$TABLE' set type = \"expressed weak noOrf\" where name = \""$1"\" ;"}' badOrf.list> updateBad.sql
 hgsql $DB < updateBad.sql
 awk '$6!="ok"|| $7!="ok" || ($7=="ok" && $25!="noStart"&& $25!=""){print $1}' checkEst5AndMrna.rdb > badOrf5.list
-awk '{print "update $TABLE set type = \"expressed strong noOrf\" where name = \""$1"\" ;"}' badOrf5.list> updateBad5.sql
+awk '{print "update '$TABLE' set type = \"expressed strong noOrf\" where name = \""$1"\" ;"}' badOrf5.list> updateBad5.sql
 hgsql $DB < updateBad5.sql
 
 #fgrep -f goodOrf.list pseudoEstAll.gp > pseudoExpressed.gp
@@ -165,6 +168,9 @@ tawk '($8-$7)>300{print }' pseudoExpressed.bed> pseudoEst100AA.bed
 echo tawk '$8-$7>300{print }' pseudoExpressed.bed redirect pseudoEst100AA.bed
 wc -l pseudoExpressed.bed pseudoEst100AA.bed goodOrf.list pseudoEst5AndMrna.bed pseudoEst5AndMrna.good.out
 
+echo '-------- END script analyseExpress.sh -------------------'
+echo '-------- run script ucscRetroStep6.sh to make Html pages -------------------'
+exit
 echo "$SCRIPT/makeHtmlRightDb.sh $DB pseudoRefGeneCds.bed shuffle/shuffle refSeqShuffle;"
 #$SCRIPT/makeHtmlRightDb.sh $DB shufflingAnalysis134.bed shuffle/orig134 orig134;
 $SCRIPT/makeHtmlRightDb.sh $DB pseudoRefGeneCds.bed shuffle/shuffle refSeqShuffle;
@@ -226,4 +232,3 @@ $SCRIPT/makeHtmlRightDb.sh $DB apeNotKass.bed kass/apeNotK apeSpecificNotKaess;
 
 #cp  finalType1Header.html /usr/local/apache/htdocs/retro/final/index.html
 $SCRIPT/makeHtmlRightDb.sh $DB table2.long.bed final/type1 type1shuffleTable2
-echo '-------- END script analyseExpress.sh -------------------'

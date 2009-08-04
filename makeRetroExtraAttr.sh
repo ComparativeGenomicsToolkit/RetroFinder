@@ -1,9 +1,13 @@
 #
-DB=$1
-TABLE=$2
+set -beEu -o pipefail
+source $1
+#DB=$1
+#TABLE=$2
 echo "-------- script makeRetroExtraAttr.sh ------------"
 echo "extract genbank names"
-hgsql $DB -N -B -e "select gb.acc, n.name from gbCdnaInfo gb, geneName n, organism o where gb.geneName = n.id and type = 'mRNA' and organism = o.id and o.name = 'Homo sapiens'" > genBankName.txt
+SQLNAME="select gb.acc, n.name from gbCdnaInfo gb, geneName n, organism o where gb.geneName = n.id and type = 'mRNA' and organism = o.id and o.name = '$GENOMENAME'"
+echo "SQL=" $SQLNAME
+hgsql $DB -N -B -e "$SQLNAME" > genBankName.txt
 echo "drop rbGenBankName"
 hgsql $DB -e "drop table rbGenBankName "
 echo "create rbGenBankName"
