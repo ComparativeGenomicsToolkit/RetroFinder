@@ -1,4 +1,5 @@
 #!/bin/bash 
+set -beEu -o pipefail
 source $1
 echo "starting ucscRetroStep3.sh $1 for $DB"
 mkdir -p $OUTDIR
@@ -17,7 +18,9 @@ rm -f all_mrna.psl.gz
 gzip all_mrna.psl
 #cat $RMSK/*.out |awk '{OFS="\t";print $5,$6,$7}' | grep -v position|grep -v sequence | tawk 'length($0)>2{print $0}' > rmsk.bed
 rm -f rmsk.bed
-for i in `cut -f 1 chrom.sizes` ;do hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from ${i}_rmsk" >> rmsk.bed ; done
+if [ $RMSK == "rmsk" ]; then hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from rmsk" >> rmsk.bed ;
+else 
+for i in `cut -f 1 chrom.sizes` ;do hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from ${i}_rmsk" >> rmsk.bed ; done  ; fi
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN from $NET1 where type <> 'gap' or (type = 'gap' and qN*100/(qEnd-qStart) > 75)" > \
 $NET1.txt
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN from $NET2 where type <> 'gap' or (type = 'gap' and qN*100/(qEnd-qStart) > 75)" > \
@@ -86,7 +89,7 @@ echo "#ENDLOOP" >> gsub
 gensub2 list single gsub jobList
 echo "Job Count"
 wc -l spec
-ssh -T pk "cd $OUTDIR/run.0 ; para make jobList"
+ssh -T $CLUSTER "cd $OUTDIR/run.0 ; para make jobList"
 #1190 jobs in batch
 #2098 jobs (including everybody's) in Parasol queue.
 #Checking finished jobs
@@ -101,22 +104,25 @@ ssh -T pk "cd $OUTDIR/run.0 ; para make jobList"
 
 #post process
 #cd /cluster/data/$DB/bed/pseudo
-pwd
 echo "check parasol status and then run ucscRetroStep4.sh DEF"
+cd ..
 
 ######################
 # get ests and filter
 ######################
-hgsql $DB -N -B -e "show tables like 'chr%est'" > est.lst
+hgsql $DB -N -B -e "show tables like '%est'" > est.lst
 
 rm -f est.psl est.psl.gz
 for i in `cat est.lst` ; do hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from ${i}" >> est.psl ; done
 gzip est.psl
 rm -f splicedEst.psl splicedEst.psl.gz
-hgsql $DB -N -B -e "show tables like 'chr%intronEst'" > splicedEst.lst
+hgsql $DB -N -B -e "show tables like '%intronEst'" > splicedEst.lst
 for i in `cat splicedEst.lst` ; do hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from ${i}" >> splicedEst.psl ; done
 gzip splicedEst.psl
+ln est.psl.gz estFiltered.psl.gz -s
+
 exit
+
 sort -k10 est.psl > est.qName.psl
 gbGetSeqs genbank est est.fa -native -db=$DB -get=seq -gbRoot=/cluster/data/genbank 
 faToTwoBit -stripVersion -ignoreDups est.fa est.2bit
