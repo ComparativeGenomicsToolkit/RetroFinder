@@ -1,0 +1,27 @@
+Here are the steps for running the retro pipeline. Let me know if you have questions about the settings in the DEF file.
+
+
+mkdir /hive/users/$HOME/mrnaBlastz/
+cp /hive/users/$HOME/mrnaBlastz/
+cp /cluster/home/baertsch/baertsch/scripts/DEF  .
+
+edit DEF file (any name is fine) and change organism, location of gene annotations, net files for orthology, location of repeats, etc
+
+If genbank is not available for the genome, create  $MRNABASE/mrna.fa (sequences for all mRNAs) and 
+ $MRNABASE/refseq.fa (mrna transcripts from best available gene annotation from target genome or closely related genome) 
+ from other sources and the genbank step will be skipped.
+
+nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep1.sh DEF
+
+check cluster run (mrna alignment)
+
+nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep2.sh DEF
+
+nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep3.sh DEF
+check cluster run (retros)
+
+nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep4.sh DEF
+check cluster run (remove overlapping retros)
+
+nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep5.sh DEF (post process and mysql load)
+nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep6.sh DEF (optiional web pages)
