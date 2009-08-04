@@ -1,5 +1,6 @@
 #!/bin/bash 
 # post process retro scores
+set -beEu -o pipefail
 source $1
 echo "------------------------------------------------------------------------------"
 echo "Starting ucscRetroStep4.sh $1 - catting output from retro pipeline cluster run"
@@ -27,14 +28,17 @@ cat pseudo[0-9]*.psl > $OUTDIR/pseudo.psl & #;/bin/rm $OUT/pseudo[0-9]*.psl &
 popd
 echo Removing Overlaps
 echo splitting
-$SCRIPT/doSplit $OUTDIR
+RESULTSPLIT=$OUTDIR/resultSplit
+rm -rf $RESULTSPLIT
+bedSplitOnChrom pseudoGeneLinkSortFilter.bed.gz $RESULTSPLIT
+#$SCRIPT/doSplit $OUTDIR
 rm -f pseudoGeneLinkSortFilter.bed.gz
 gzip pseudoGeneLinkSortFilter.bed &
 pushd $OUTDIR
 mkdir -p $OVERLAPDIR
 cd $OVERLAPDIR
 
-ls $OUTDIR/*.raw.bed | grep -v random > results.lst
+ls $RESULTSPLIT/*.bed | grep -v random > results.lst
 echo "#LOOP" > template
 echo "bedOverlap -noBin \$(path1) {check out exists ../\$(root1)_NoOverlap.bed}" >> template
 echo "#ENDLOOP" >> template
@@ -44,7 +48,7 @@ echo clean up old files
 rm ../chr*_NoOverlap.bed
 echo "start cluster job"
 echo "end of ucscRetroStep4.sh , check parasol status then run ucscRetroStep5.sh"
-ssh -T pk "cd $OVERLAPDIR ; para make jobList "
+ssh -T $CLUSTER "cd $OVERLAPDIR ; para make jobList "
 popd
 pwd
 $SCRIPT/ucscRetroStep5.sh $1
