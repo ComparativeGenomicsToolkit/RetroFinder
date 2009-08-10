@@ -2,9 +2,9 @@
 # post process retro scores
 set -beEu -o pipefail
 source $1
-echo "------------------------------------------------------------------------------"
-echo "Starting ucscRetroStep4.sh $1 - catting output from retro pipeline cluster run"
-echo "------------------------------------------------------------------------------"
+echo "---------------------------------------------------------------------------------------"
+echo "Starting ucscRetroStep4.sh $1 on $HOST- catting output from retro pipeline cluster run"
+echo "---------------------------------------------------------------------------------------"
 wc -l run.0/jobList | awk '{print $1}'> jobs.cnt
 pushd $RESULT ; ls pseudoGeneLink[0-9]*.bed | wc -l | awk '{print $1}'> $OUTDIR/jobs.lst
 popd

@@ -3,9 +3,9 @@ source $1
 #set -beEu -o pipefail
 CWD=`pwd`
 ## called from ~baertsch/baertsch/scripts/ucscRetroStep4.sh
-echo "---------------------------"
-echo "Starting ucscRetroStep5.sh"
-echo "---------------------------"
+echo "-----------------------------------"
+echo "Starting ucscRetroStep5.sh on $HOST"
+echo "-----------------------------------"
 date
 cd $OUTDIR
 pwd
@@ -33,14 +33,11 @@ cat kgZnf.lst refZnf.lst kgImmuno.lst > bothZnf.lst
 
 # grap genes with pfam domains (zinc finger, immunoglobin, NBPF, and olfactory receptor
 hgsql $DB -N -B -e "select  k.name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENEPFAM k, $PFAM p \
-            where k.name = p.$PFAMIDFIELD and p.$PFAMDOMAIN in (
-        'PF00096',
-        'PF01352',
-        'PF06758',
-        'PF00047',
-        'PF07654'  
-        );" > zincKg.gp
+            where k.name = p.$PFAMIDFIELD and p.$PFAMDOMAIN in (\
+        'PF00096', 'PF01352', 'PF06758', 'PF00047', 'PF07654'  );" > zincKg.gp
 cut -f 1 zincKg.gp |sort | uniq > zincKg.lst
+echo "Zinc fingers excluded"
+wc -l zincKg.gp zincKg.lst
 
 echo zcat $GENEPFAM.tab.gz to  $GENEPFAM.tab
 zcat $GENEPFAM.tab.gz > $GENEPFAM.tab

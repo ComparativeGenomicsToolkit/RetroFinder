@@ -12,7 +12,7 @@ for i in `awk '{print $1}' S1.len` ; do echo $i ; cat lastz/$i/*.psl | awk '{pri
 
 #chain blocks
 
-ls $NIB/*.nib > nib.lst
+ls $NIB > nib.lst
 mkdir -p psl
 for i in `awk '{print $1}' S1.len` ; do nohup doChain $i ; done 
 

@@ -127,9 +127,9 @@ gene-check  -nib-dir $NIB pseudoEstAll.gp checkEst.rdb
 awk '$7=="ok"&& $25=="noStart" || $25==""{print $1}' checkEst.rdb > goodOrf.list
 
 #fgrep -f goodOrf.list pseudoEstAll.out > pseudoEstAll.good.out
-$SCRIPT/selectById -tsv 1 goodOrf.list 1 pseudoEstAll.out > pseudoEstAll.good.out
+$SCRIPT/selectById -tsv 1 goodOrf.list 4 pseudoEstAll.out > pseudoEstAll.good.out
 
-#histogram of best.orf scores
+echo "histogram of best.orf scores"
 awk '{print $55}' pseudoEstAll.good.out |textHistogram stdin -maxBinCount=40 -binSize=10
 awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed weak\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEstAll.good.out > updateExp.sql
 head updateExp.sql
@@ -143,7 +143,7 @@ gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 tawk '$7=="ok" && $25=="noStart" || $25==""{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
 #tawk '$6=="ok"&& $7=="ok"{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
 #fgrep -f goodOrf5AndMrna.list pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
-$SCRIPT/selectById -tsv 1 goodOrf5AndMrna.list 1 pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
+$SCRIPT/selectById -tsv 1 goodOrf5AndMrna.list 4 pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
 awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed strong\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEst5AndMrna.good.out > updateExp5.sql
 head updateExp5.sql
 echo "hgsql $DB  updateExp5.sql"
@@ -161,8 +161,8 @@ $SCRIPT/selectById -tsv 1 goodOrf.list 1 pseudoEstAll.gp > pseudoExpressed.gp
 echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
 ldHgGene $DB ucscRetroExpressed pseudoExpressed.gp -genePredExt -predTab
 genePredToBed pseudoExpressed.gp > pseudoExpressed.bed
-#length histogram of coding region
-awk '{print $7-$6}' pseudoExpressed.gp|textHistogram stdin -maxBinCount=35 -binSize=50
+echo "length histogram of coding region"
+awk '{print $7-$6}' pseudoExpressed.gp|textHistogram stdin -maxBinCount=100 -binSize=50
 
 tawk '($8-$7)>300{print }' pseudoExpressed.bed> pseudoEst100AA.bed
 echo tawk '$8-$7>300{print }' pseudoExpressed.bed redirect pseudoEst100AA.bed

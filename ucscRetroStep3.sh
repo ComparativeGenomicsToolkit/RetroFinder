@@ -9,7 +9,7 @@ mkdir -p result/axt
 mkdir -p log
 mkdir -p out
 
-ls $NIB/*.nib > $OUTDIR/S1.lst
+ls $NIB/ > $OUTDIR/S1.lst
 cp $GENOME/$DB/chrom.sizes .
 
 hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from all_mrna" > all_mrna.psl 
