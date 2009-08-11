@@ -19,41 +19,51 @@ tawk '$5>=650{print $0}' pseudoGeneLinkNoOverlap.bed > retroMrnaInfo650.bed
 cut -f 1-12 retroMrnaInfo650.bed > retroMrnaInfo.12.bed
 wc -l pseudoGeneLinkNoOverlap.bed pseudoGeneLinkNoOverlapFilter.bed pseudoGeneLink425.bed retroMrnaInfo.raw.bed retroMrnaInfo650.bed retroMrnaInfo.12.bed
 
-#remove immunoglobin
-hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where (a1.alias like 'IGH%' or a1.alias like 'IGK%' or a1.alias like 'IGL%') and a1.kgID = a2.kgID"  > kgImmuno.lst
-hgsql $DB -N -B -e "     select gbCdnaInfo.acc
-      from gbCdnaInfo, geneName, description 
-         where gbCdnaInfo.geneName=geneName.id and gbCdnaInfo.description = description.id and (geneName.name like 'IGH%' or geneName.name like 'IKL%' or geneName.name like 'IGL%')" >> kgImmuno.lst
-hgsql $DB -N -B -e "select name from knownGene where proteinID like 'IGH%' or proteinID like 'IKL%' or proteinID like 'IGL%'" >> kgImmuno.lst
+if [[ -n $PFAM ]] 
+then
+   #remove immunoglobin
+    hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where (a1.alias like 'IGH%' or a1.alias like 'IGK%' or a1.alias like 'IGL%') and a1.kgID = a2.kgID"  > kgImmuno.lst
+    hgsql $DB -N -B -e "     select gbCdnaInfo.acc
+          from gbCdnaInfo, geneName, description 
+             where gbCdnaInfo.geneName=geneName.id and gbCdnaInfo.description = description.id and (geneName.name like 'IGH%' or geneName.name like 'IKL%' or geneName.name like 'IGL%')" >> kgImmuno.lst
+    hgsql $DB -N -B -e "select name from knownGene where proteinID like 'IGH%' or proteinID like 'IKL%' or proteinID like 'IGL%'" >> kgImmuno.lst
 #remove znf and NBPF
-hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where a1.alias like 'ZNF%' and a1.kgID = a2.kgID" |sort -u > kgZnf.lst
-hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where a1.alias like 'NBPF%' and a1.kgID = a2.kgID" |sort -u >> kgZnf.lst
+    hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where a1.alias like 'ZNF%' and a1.kgID = a2.kgID" |sort -u > kgZnf.lst
+    hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where a1.alias like 'NBPF%' and a1.kgID = a2.kgID" |sort -u >> kgZnf.lst
 
-cat kgZnf.lst refZnf.lst kgImmuno.lst > bothZnf.lst
+    cat kgZnf.lst refZnf.lst kgImmuno.lst > bothZnf.lst
 
 # grap genes with pfam domains (zinc finger, immunoglobin, NBPF, and olfactory receptor
-hgsql $DB -N -B -e "select  k.name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENEPFAM k, $PFAM p \
-            where k.name = p.$PFAMIDFIELD and p.$PFAMDOMAIN in (\
-        'PF00096', 'PF01352', 'PF06758', 'PF00047', 'PF07654'  );" > zincKg.gp
-cut -f 1 zincKg.gp |sort | uniq > zincKg.lst
-echo "Zinc fingers excluded"
-wc -l zincKg.gp zincKg.lst
+    hgsql $DB -N -B -e "select  k.name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENEPFAM k, $PFAM p \
+                where k.name = p.$PFAMIDFIELD and p.$PFAMDOMAIN in (\
+            'PF00096', 'PF01352', 'PF06758', 'PF00047', 'PF07654'  );" > zincKg.gp
+    cut -f 1 zincKg.gp |sort | uniq > zincKg.lst
+    echo "Zinc fingers excluded"
+    wc -l zincKg.gp zincKg.lst
 
-echo zcat $GENEPFAM.tab.gz to  $GENEPFAM.tab
-zcat $GENEPFAM.tab.gz > $GENEPFAM.tab
+    echo zcat $GENEPFAM.tab.gz to  $GENEPFAM.tab
+    zcat $GENEPFAM.tab.gz > $GENEPFAM.tab
 #fgrep -w -f bothZnf.lst $GENE1.tab > kgZnf.gp
 #grep -v -F -f bothZnf.lst retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
-#$SCRIPT/selectById -tsv 1 est5Mrna.id 4 ../ucscRetroInfo.bed > pseudoEst5AndMrna.bed
-echo "$SCRIPT/selectById -tsv 1 zincKg.lst 4 $GENEPFAM.tab to kgZnf.gp"
-$SCRIPT/selectById -tsv 1 zincKg.lst 4 $GENEPFAM.tab > kgZnf.gp
+#$SCRIPT/selectById 1 est5Mrna.id 4 ../ucscRetroInfo.bed > pseudoEst5AndMrna.bed
+    echo "$SCRIPT/selectById 1 zincKg.lst 4 $GENEPFAM.tab to kgZnf.gp"
+    $SCRIPT/selectById 1 zincKg.lst 1 $GENEPFAM.tab > kgZnf.gp
 #grep -v -F -f zincKg.lst retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
-echo "$SCRIPT/selectById -not -tsv 1 zincKg.lst 4 retroMrnaInfo.raw.bed to retroMrnaInfoLessZnf.bed"
-$SCRIPT/selectById -not -tsv 1 zincKg.lst 4 retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
+#echo "$SCRIPT/selectById -not 1 zincKg.lst 4 retroMrnaInfo.raw.bed to retroMrnaInfoLessZnf.bed"
+#$SCRIPT/selectById -not 1 zincKg.lst 4 retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
+else
+echo "xxx" > zincKg.lst
+echo "skipping zinc finger and immunoglobin filtering"
+fi
+
+
+grep -v -F -f zincKg.lst retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
+echo "before and after zinc finger filtering"
 cp retroMrnaInfoLessZnf.bed $TABLE.bed
+wc -l retroMrnaInfo.raw.bed retroMrnaInfoLessZnf.bed $TABLE.bed
 #echo "grep -F -f bothZnf.lst $TABLE.bed to retroZnf.bed"
 #grep -F -f bothZnf.lst $TABLE.bed > retroZnf.bed
 textHistogram -col=5 $TABLE.bed -binSize=50 -maxBinCount=50
-wc -l retroMrnaInfo.raw.bed pseudoGeneLink425.bed $TABLE.bed
 echo creating $ALIGN.psl
 awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $TABLE.bed > pseudoGeneLinkSelect.tab
 pslSelect -qtStart=pseudoGeneLinkSelect.tab pseudo.psl $ALIGN.psl
