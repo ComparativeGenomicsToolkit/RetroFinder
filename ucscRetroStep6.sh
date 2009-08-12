@@ -40,6 +40,7 @@ $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5.bed type1_2009/est5 expressedEst5orMo
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5AndMrna.bed type1_2009/est5AndMrna expressedEst5orMoreAndMrna;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst100AA.bed type1_2009/estOrf100 estGoodOrfBigger100aa.score600;
 $SCRIPT/makeHtmlRightDb.sh $DEF retroArray.bed type1_2009/gnfAtlas2 gnfAtlas2;
+$SCRIPT/makeHtmlRightDb.sh $DEF retroSplice.bed type1_2009/retroSplice Splice;
 echo "</tbody>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</table>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</body>" >> $ROOTDIR/retro/type1_2009/index.html
