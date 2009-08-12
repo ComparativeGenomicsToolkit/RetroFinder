@@ -168,6 +168,17 @@ tawk '($8-$7)>300{print }' pseudoExpressed.bed> pseudoEst100AA.bed
 echo tawk '$8-$7>300{print }' pseudoExpressed.bed redirect pseudoEst100AA.bed
 wc -l pseudoExpressed.bed pseudoEst100AA.bed goodOrf.list pseudoEst5AndMrna.bed pseudoEst5AndMrna.good.out
 
+if [[ -n $ALTSPLICE ]] 
+then
+echo "hgsql $DB -N -B -e select * from $ALTSPLICE " 
+hgsql $DB -N -B -e "select * from $ALTSPLICE " |cut -f2-19 | agxToBed stdin altSplice.bed
+fi
+if [ -f altSplice.bed ] 
+then
+ echo "overlapSelect altSplice.bed ../$TABLE.bed retroSplice.bed"
+ overlapSelect altSplice.bed ../$TABLE.bed retroSplice.bed
+fi
+
 echo '-------- END script analyseExpress.sh -------------------'
 echo '-------- run script ucscRetroStep6.sh to make Html pages -------------------'
 exit
@@ -218,6 +229,8 @@ $SCRIPT/makeHtmlRightDb.sh $DB pseudoEst5MrnaOrf100Spliced.bed type1/5estmrna100
 $SCRIPT/makeHtmlRightDb.sh $DB pseudoEst10Mrna.bed type1/est10Mrna expressedEst10orMoreOrMrna;
 $SCRIPT/makeHtmlRightDb.sh $DB pseudoEst10.bed type1/est10 expressedEst10orMore;
 $SCRIPT/makeHtmlRightDb.sh $DB pseudoEst10AndMrna.bed type1/est10AndMrna expressedEst10orMoreAndMrna;
+$SCRIPT/makeHtmlRightDb.sh $DB retroSplice.bed type1/retroSplice retroSplice;
+
 $SCRIPT/makeHtmlRightDb.sh $DB matchKass.bed kass/matchMrna MatchingMrna;
 $SCRIPT/makeHtmlRightDb.sh $DB matchEst.bed kass/matchEst MatchingEst;
 $SCRIPT/makeHtmlRightDb.sh $DB stillExpMiss.bed kass/notK MissingFromMyExpSet;
