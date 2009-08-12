@@ -16,6 +16,7 @@ if [ $? != 0 ]; then
 fi
 cp $GENOME/$DB/chrom.sizes $OUTDIR/S1.len
 
+rm -f pseudoGeneLinkSortFilter.bed.gz
 echo catting Sorting and Filtering pseudoGeneLinkSortFilter.bed
 #pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk '$5 > 10 && $15 > 10000 && $35 > 650 {OFS="\t";print $0}'| sort -k1,1 -k2,3n -k4,4 > $BASE/pseudoGeneLinkSortFilter.bed ; #/bin/rm $RESULT/pseudoGeneLink[0-9]*.bed
 echo "pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk 'col5 > 10 && (col14 > 10000 || col14 == -1) && col35 > 620 {OFS="\t";print $0}'| sort -k1,1 -k2,3n -k4,4 to  $OUTDIR/pseudoGeneLinkSortFilter.bed; "
@@ -29,11 +30,10 @@ popd
 echo Removing Overlaps
 echo splitting
 RESULTSPLIT=$OUTDIR/resultSplit
+gzip pseudoGeneLinkSortFilter.bed
 rm -rf $RESULTSPLIT
 bedSplitOnChrom pseudoGeneLinkSortFilter.bed.gz $RESULTSPLIT
 #$SCRIPT/doSplit $OUTDIR
-rm -f pseudoGeneLinkSortFilter.bed.gz
-gzip pseudoGeneLinkSortFilter.bed &
 pushd $OUTDIR
 mkdir -p $OVERLAPDIR
 cd $OVERLAPDIR
