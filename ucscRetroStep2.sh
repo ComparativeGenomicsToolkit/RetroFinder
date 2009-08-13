@@ -47,14 +47,6 @@ gzip mrnaBlastz.sort.psl &
 
 #load mrna alignment track into browser
 awk -f $SCRIPT/stripversion.awk mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrnaBlastz
-#rm -f mrnaBlastz.strip.psl 
-
-#grep -v random mrnaBlastz.psl > mrnaBlastz.norand.psl
-
-#awk '{print $10,$14,$9}' mrnaBlastz.psl| sort|  uniq -c > qName.count &
-#nice awk '$1>1{print $0}' qName.count > qName.countDups 
-#select.awk qName.countDups mrnaBlastz.psl > mrnaBlastz.dups.psl 
-#awk -f missingChain.awk mrnaBlastz.dups.psl > mrnaBlastz.missing.psl
 
 #split for pipeline cluster run 
 mkdir -p $OUTDIR/split
@@ -64,7 +56,6 @@ for i in `ls tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > temp.psl ; mv temp.psl $i 
 grep chr tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'|uniq  > acc.lst
 
 #load mrna sequences into browser (with version numbers)
-#cp mrna.fa $MRNABASE/mrna.fa
 mkdir -p /gbdb/$DB/blastzRetro
 rm -f /gbdb/$DB/blastzRetro/mrna.fa 
 rm -f /gbdb/$DB/blastzRetro/refseq.fa 

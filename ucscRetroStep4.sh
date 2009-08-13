@@ -18,7 +18,6 @@ cp $GENOME/$DB/chrom.sizes $OUTDIR/S1.len
 
 rm -f pseudoGeneLinkSortFilter.bed.gz
 echo catting Sorting and Filtering pseudoGeneLinkSortFilter.bed
-#pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk '$5 > 10 && $15 > 10000 && $35 > 650 {OFS="\t";print $0}'| sort -k1,1 -k2,3n -k4,4 > $BASE/pseudoGeneLinkSortFilter.bed ; #/bin/rm $RESULT/pseudoGeneLink[0-9]*.bed
 echo "pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk 'col5 > 10 && (col14 > 10000 || col14 == -1) && col35 > 620 {OFS="\t";print $0}'| sort -k1,1 -k2,3n -k4,4 to  $OUTDIR/pseudoGeneLinkSortFilter.bed; "
 pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk '$5 > 10 && ($14 > 10000 || $14 == -1) && $35 > 620 {OFS="\t";print $0}'| sort -k1,1 -k2,3n -k4,4 -T /scratch > $OUTDIR/pseudoGeneLinkSortFilter.bed; #/bin/rm $RESULT/pseudoGeneLink[0-9]*.bed
 popd
@@ -33,6 +32,9 @@ RESULTSPLIT=$OUTDIR/resultSplit
 gzip pseudoGeneLinkSortFilter.bed
 rm -rf $RESULTSPLIT
 bedSplitOnChrom pseudoGeneLinkSortFilter.bed.gz $RESULTSPLIT
+#speed up bedOverlap on chr19 (human) by splittting at the centromere
+#tawk '$2 < 28500000{print $0}' chr19.bed > chr19p.bed &
+#tawk '$2 >= 28500000{print $0}' chr19.bed > chr19q.bed 
 #$SCRIPT/doSplit $OUTDIR
 pushd $OUTDIR
 mkdir -p $OVERLAPDIR
@@ -52,8 +54,3 @@ ssh -T $CLUSTER "cd $OVERLAPDIR ; para make jobList "
 popd
 pwd
 $SCRIPT/ucscRetroStep5.sh $1
-#echo $SCRIPT/buildSort.part2.sh $RESULT $DB $OUTDIR $SCRIPT
-#$SCRIPT/buildSort.part2.sh $RESULT $DB $OUTDIR $SCRIPT 
-#buildSort.part2.sh /hive/users/baertsch/retro/hg18/result/ hg18 /hive/users/baertsch/retro/hg18/ ~baertsch/baertsch/scripts
-
-
