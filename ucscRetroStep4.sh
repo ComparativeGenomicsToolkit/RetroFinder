@@ -1,5 +1,7 @@
 #!/bin/bash 
-# post process retro scores
+#
+# runs small cluster job to remove overlaps by picking highest scoring retro in each locus
+#
 set -beEu -o pipefail
 source $1
 echo "---------------------------------------------------------------------------------------"
