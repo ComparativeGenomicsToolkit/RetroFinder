@@ -20,6 +20,9 @@ nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep2.sh DEF
 nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep3.sh DEF
 check cluster run (retros)
 
+nohup run /cluster/home/baertsch/baertsch/scripts/filterEst.sh DEF 
+    (creates estFilter.psl.gz by extracting and filters est alignments - can be run at anytime)
+
 nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep4.sh DEF
 check cluster run (remove overlapping retros)
 
