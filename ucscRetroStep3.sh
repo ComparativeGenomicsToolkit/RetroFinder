@@ -69,17 +69,3 @@ ssh -T $CLUSTER "cd $OUTDIR/run.0 ; para make jobList"
 echo "check parasol status and then run ucscRetroStep4.sh DEF"
 cd ..
 
-######################
-# get est alignments
-######################
-hgsql $DB -N -B -e "show tables like '%est'" > est.lst
-
-rm -f est.psl est.psl.gz
-for i in `cat est.lst` ; do hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from ${i}" >> est.psl ; done
-gzip est.psl
-rm -f splicedEst.psl splicedEst.psl.gz
-hgsql $DB -N -B -e "show tables like '%intronEst'" > splicedEst.lst
-for i in `cat splicedEst.lst` ; do hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from ${i}" >> splicedEst.psl ; done
-gzip splicedEst.psl
-ln est.psl.gz estFiltered.psl.gz -s
-
