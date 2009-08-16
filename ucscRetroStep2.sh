@@ -41,7 +41,7 @@ sort -k10,10 -k14,14 -k16,16n -k12,12n mrnaBlastz.psl > mrnaBlastz.sort.psl
 #     drop minCover:     52526   567156
 #              kept:     223112  6998275
 
-pslCDnaFilter -minCover=0.10 -minId=0.62 mrnaBlastz.sort.psl mrnaBlastz.psl
+pslCDnaFilter -minCover=0.05 -minId=0.58 mrnaBlastz.sort.psl mrnaBlastz.psl
 rm -f mrnaBlastz.sort.psl.gz
 gzip mrnaBlastz.sort.psl &
 
