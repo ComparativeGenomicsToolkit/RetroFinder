@@ -17,15 +17,19 @@ mkdir -p out
 ls $NIB/ > $OUTDIR/S1.lst
 cp $GENOME/$DB/chrom.sizes .
 
-hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from all_mrna" > all_mrna.psl 
-hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from refSeqAli" >> all_mrna.psl
-rm -f all_mrna.psl.gz
-gzip all_mrna.psl
+if [[ -s all_mrna.psl.gz ]] ; then
+    echo "all_mrna.psl.gz not refreshed"
+else
+    hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from all_mrna" > all_mrna.psl 
+    hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from refSeqAli" >> all_mrna.psl
+    rm -f all_mrna.psl.gz
+    gzip all_mrna.psl
+fi
 #cat $RMSK/*.out |awk '{OFS="\t";print $5,$6,$7}' | grep -v position|grep -v sequence | tawk 'length($0)>2{print $0}' > rmsk.bed
 rm -f rmsk.bed
 if [ $RMSK == "rmsk" ]; then hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from rmsk" >> rmsk.bed ;
 else 
-for i in `cut -f 1 chrom.sizes` ;do hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from ${i}_rmsk" >> rmsk.bed ; done  ; fi
+    for i in `cut -f 1 chrom.sizes` ;do hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from ${i}_rmsk" >> rmsk.bed ; done  ; fi
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN from $NET1 where type <> 'gap' or (type = 'gap' and qN*100/(qEnd-qStart) > 75)" > \
 $NET1.txt
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN from $NET2 where type <> 'gap' or (type = 'gap' and qN*100/(qEnd-qStart) > 75)" > \
