@@ -1,0 +1,85 @@
+#!/usr/bin/awk -f
+
+function mungeId(id) {
+    if (noUniq) {
+        sub(/-[.0-9]+$/, "", id);
+    }
+    if (noVers) {
+        sub(/\..+$/, "", id);
+    }
+    return id;
+}
+
+BEGIN {
+    usage = "selectById [options] idCol idfile selCol [selFile] ..\n\n" \
+        " id columns are 1-based\n" \
+        "   -tsv - TSV file, copy header\n" \
+        "   -rdb - RDB file, copy headers\n" \
+        "   -not - select non-matching lines\n" \
+        "   -novers - drop NCBI-style version numbers, or anything else following\n" \
+        "             a dot\n" \
+        "   -nouniq - drop `-[.0-9]+$' extension used to make ids unique.\n"
+
+    FS = "\t";
+    OFS = "\t";
+    argi = 1;
+    isTsv = 0
+    isRdb = 0;
+    selHave = 1;
+    noVers = 0;
+    noUniq = 0;
+    while ((argi < ARGC) && (ARGV[argi] ~ /^-.*/)) {
+        if (ARGV[argi] == "-not") {
+            selHave = 0;
+        } else if (ARGV[argi] == "-novers") {
+            noVers = 1;
+        } else if (ARGV[argi] == "-nouniq") {
+            noUniq = 1;
+        } else if (ARGV[argi] == "-tsv") {
+            isTsv = 1;
+        } else if (ARGV[argi] == "-rdb") {
+            isRdb = 1;
+        } else {
+            print "invalid option:",ARGV[argi]  > "/dev/stderr";
+            exit(1)
+        }
+        ARGV[argi] = "";
+        argi++
+    }
+    if ((ARGC-argi) < 3) {
+        print "wrong # args: " usage > "/dev/stderr";
+        exit(1);
+    }
+    idCol = ARGV[argi]
+    ARGV[argi] = "";
+
+    idFile = ARGV[argi+1];
+    ARGV[argi+1] = "";
+
+    selCol = ARGV[argi+2]
+    ARGV[argi+2] = "";
+
+    ERRNO = 0;
+    while ((getline <idFile) > 0) {
+        idTbl[mungeId($idCol)] = 1;
+    }
+    close(idFile);
+    if (ERRNO != 0) {
+        print "Error: " idFile ": " ERRNO >"/dev/stderr";
+        exit(1);
+    }
+}
+
+isTsv && (NR == 1) {
+    print $0;
+    next;
+}
+
+isRdb && (NR <= 2) {
+    print $0;
+    next;
+}
+
+(idTbl[mungeId($selCol)] != "") == selHave {
+    print $0;
+}
