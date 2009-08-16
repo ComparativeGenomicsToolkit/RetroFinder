@@ -29,6 +29,7 @@ GENE3=sgpGene
 CLUSTER=pk
 SPECIES="hg18 rheMac2 mm9 rn4 canFam2"
 ROOTDIR="/usr/local/apache/htdocs"
+EXPDIR=exp
 GENEPFAM=knownGene
 PFAM=knownToPfam
 PFAMIDFIELD=name
