@@ -1,3 +1,5 @@
+#!/bin/bash
+set -beEu -o pipefail
 
 #$SCRIPT/makeHtmlRightDb.sh $DEF shufflingAnalysis134.bed shuffle/orig134 orig134;
 #$SCRIPT/makeHtmlRightDb.sh $DEF pseudoRefGeneCdsAll.bed shuffle/all refSeqExpressed;

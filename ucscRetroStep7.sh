@@ -1,3 +1,6 @@
+#!/bin/bash
+set -beEu -o pipefail
+
 #calc expression 
 source $1
 #hgsql $DB -N -B -e "select * from gnfAtlas2Distance" > gnfAtlas2Distance.tab
