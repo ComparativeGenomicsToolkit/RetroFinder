@@ -14,7 +14,7 @@ mkdir -p result/axt
 mkdir -p log
 mkdir -p out
 
-ls $NIB/ > $OUTDIR/S1.lst
+ls $NIB/*.nib > $OUTDIR/S1.lst
 cp $GENOME/$DB/chrom.sizes .
 
 if [[ -s all_mrna.psl.gz ]] ; then
