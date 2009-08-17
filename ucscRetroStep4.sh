@@ -18,10 +18,11 @@ if [ $? != 0 ]; then
 fi
 cp $GENOME/$DB/chrom.sizes $OUTDIR/S1.len
 
+# filter out low scoring hits as defined by retroscore and alignment score to parent gene
 rm -f pseudoGeneLinkSortFilter.bed.gz
 echo catting Sorting and Filtering pseudoGeneLinkSortFilter.bed
-echo "pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk 'col5 > 10 && (col14 > 10000 || col14 == -1) && col35 > 620 {OFS="\t";print $0}'| sort -k1,1 -k2,3n -k4,4 to  $OUTDIR/pseudoGeneLinkSortFilter.bed; "
-pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk '$5 > 10 && ($14 > 10000 || $14 == -1) && $35 > 620 {OFS="\t";print $0}'| sort -k1,1 -k2,3n -k4,4 -T /scratch > $OUTDIR/pseudoGeneLinkSortFilter.bed; #/bin/rm $RESULT/pseudoGeneLink[0-9]*.bed
+echo "pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk 'score > 400 && (axtScore > 10000 || axtScore == -1) {OFS="\t";print $0}'| $SCRIPT/removeTandemDups | sort -k1,1 -k2,3n -k4,4 to  $OUTDIR/pseudoGeneLinkSortFilter.bed; "
+pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk '$5 > 400 && ($14 > 10000 || $14 == -1) {OFS="\t";print $0}'| $SCRIPT/removeTandemDups | sort -k1,1 -k2,3n -k4,4 -T /scratch > $OUTDIR/pseudoGeneLinkSortFilter.bed; #/bin/rm $RESULT/pseudoGeneLink[0-9]*.bed
 popd
 wc -l pseudoGeneLinkSortFilter.bed
 pushd $OUT
@@ -49,7 +50,7 @@ echo "#ENDLOOP" >> template
 gensub2 results.lst single template jobList
 
 echo clean up old files
-rm ../chr*_NoOverlap.bed
+rm -f ../chr*_NoOverlap.bed
 echo "start cluster job"
 echo "end of ucscRetroStep4.sh , check parasol status then run ucscRetroStep5.sh"
 ssh -T $CLUSTER "cd $OVERLAPDIR ; para make jobList "

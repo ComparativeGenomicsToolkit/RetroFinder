@@ -1,0 +1,4 @@
+#
+#remove retros that have parents on the same chromosome that are within 200k bp of the retro. 
+#
+tawk '$1==$16{g=($17+$18)/2;d=$3-g;dd=sqrt(d*d)}$1!=$16 || ($1==$16 && dd > 200000){print dd}' 
