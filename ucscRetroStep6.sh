@@ -4,12 +4,13 @@ source $1
 DEF=$1
 echo "-------- script ucscRetroStep6.sh make retro webpages for $SPECIES -------------------"
 #extract extra columns for html pages
-$SCRIPT/makeRetroExtraAttr.sh $DEF $EXPDIR
+/hive/users/hartera/GencodeWG/pseudogenes/retroFinder/baertsch/scripts/makeRetroExtraAttr.sh $DEF $OUTDIR/$EXPDIR
 for i in `echo $SPECIES` ; do echo "make html $i"; done
 
-cp $DEF $EXPDIR
-cd $EXPDIR
+cp $DEF $OUTDIR/$EXPDIR
+cd $OUTDIR/$EXPDIR
 #web pages for shuffling events
+mkdir -p $ROOTDIR/retro/shuffle2009
 cp $SCRIPT/header.html $ROOTDIR/retro/shuffle2009/index.html
 echo "<TR><TH>data set</TH>" >> $ROOTDIR/retro/shuffle2009/index.html
 for db in `echo $SPECIES` ; do echo "<TH>$db</TH>" >> $ROOTDIR/retro/shuffle2009/index.html ; done
@@ -26,6 +27,7 @@ echo "</body>" >> $ROOTDIR/retro/shuffle2009/index.html
 echo "</html>" >> $ROOTDIR/retro/shuffle2009/index.html
 
 #web pages for duplication (type1) events
+mkdir -p $ROOTDIR/retro/type1_2009
 cp $SCRIPT/header.html $ROOTDIR/retro/type1_2009/index.html
 echo "<TR><TH>data set</TH>" >> $ROOTDIR/retro/type1_2009/index.html
 for db in `echo $SPECIES` ; do echo "<TH>$db</TH>" >> $ROOTDIR/retro/type1_2009/index.html ; done
@@ -46,4 +48,4 @@ echo "</table>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</body>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</html>" >> $ROOTDIR/retro/type1_2009/index.html
 
-echo '-------- END script analyseExpress.sh -------------------'
+echo '-------- END script ucscRetroStep6.sh -------------------'
