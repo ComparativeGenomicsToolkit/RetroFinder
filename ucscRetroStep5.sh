@@ -67,11 +67,13 @@ awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $TABLE.bed > pseudoGeneLinkSelect.tab
 pslSelect -qtStart=pseudoGeneLinkSelect.tab pseudo.psl $ALIGN.psl
 wc -l $ALIGN.psl pseudoGeneLinkSelect.tab
 hgLoadBed $DB -verbose=9 -allowNegativeScores -noBin retroMrnaInfoXX -sqlTable=/cluster/home/baertsch/kent/src/hg/lib/retroMrnaInfo.sql $TABLE.bed
-hgsql $DB -e "drop table $TABLE;"
+hgsql $DB -e "drop table if exists $TABLE;"
+# kaku is no longer being used and some values are not loaded correctly
+# as represented in exponential notation so they get replaced by inf.
+hgsql $DB -e "alter table retroMrnaInfoXX set kaku = 0;"
 hgsql $DB -e "alter table retroMrnaInfoXX rename $TABLE;"
 hgLoadPsl $DB $ALIGN.psl
-#load retro coding annotation
-zcat cds.tab.gz | tawk '{print $1"."$2,$3}' > ucscRetroCds.tab
+
 hgLoadSqlTab $DB ucscRetroCds ~/kent/src/hg/lib/ucscRetroCds.sql ucscRetroCds.tab
 
 ####################
@@ -83,11 +85,11 @@ hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE2 where exonCount > 1" > $GENE2.multiExon.genePred
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE3 where exonCount > 1" > $GENE3.multiExon.genePred
 echo "genePredFilter $GENE1.multiExon.genePred $GENE1.multiCDSExon.genePred -cdsExons=2"
-genePredFilter $GENE1.multiExon.genePred $GENE1.multiCDSExon.genePred -cdsExons=2
+/cluster/home/baertsch/bin/x86_64/genePredFilter $GENE1.multiExon.genePred $GENE1.multiCDSExon.genePred -cdsExons=2
 echo "genePredFilter $GENE2.multiExon.genePred $GENE2.multiCDSExon.genePred -cdsExons=2"
-genePredFilter $GENE2.multiExon.genePred $GENE2.multiCDSExon.genePred -cdsExons=2
+/cluster/home/baertsch/bin/x86_64/genePredFilter $GENE2.multiExon.genePred $GENE2.multiCDSExon.genePred -cdsExons=2
 echo "genePredFilter $GENE3.multiExon.genePred $GENE3.multiCDSExon.genePred -cdsExons=2"
-genePredFilter $GENE3.multiExon.genePred $GENE3.multiCDSExon.genePred -cdsExons=2
+/cluster/home/baertsch/bin/x86_64/genePredFilter $GENE3.multiExon.genePred $GENE3.multiCDSExon.genePred -cdsExons=2
 wc -l $GENE1.multiCDSExon.genePred $GENE2.multiCDSExon.genePred $GENE1.multiCDSExon.genePred
 echo "cat $GENE1.multiCDSExon.genePred $GENE2.multiCDSExon.genePred $GENE3.multiCDSExon.genePred to  all.multiCds.gp"
 cat $GENE1.multiCDSExon.genePred $GENE2.multiCDSExon.genePred $GENE3.multiCDSExon.genePred > all.multiCds.gp
@@ -101,7 +103,6 @@ featureBits $DB $GENE2;
 #54738314 bases of 2881515245 (1.900%) in intersection
 featureBits $DB rbRefGeneMulti $GENE2.cds.bed -bed=$GENE2.multiCds.bed 
 #29845142 bases of 2881515245 (1.036%) in intersection
-
 
 pwd
 ls -l retroMrnaInfoLessZnf.bed 
