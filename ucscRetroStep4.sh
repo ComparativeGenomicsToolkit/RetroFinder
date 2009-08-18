@@ -7,6 +7,7 @@ source $1
 echo "---------------------------------------------------------------------------------------"
 echo "Starting ucscRetroStep4.sh $1 on $HOST- catting output from retro pipeline cluster run"
 echo "---------------------------------------------------------------------------------------"
+cd $OUTDIR
 wc -l run.0/jobList | awk '{print $1}'> jobs.cnt
 pushd $RESULT ; ls pseudoGeneLink[0-9]*.bed | wc -l | awk '{print $1}'> $OUTDIR/jobs.lst
 popd
@@ -16,7 +17,7 @@ if [ $? != 0 ]; then
   echo missing jobs aborting
   exit 3
 fi
-cp $GENOME/$DB/chrom.sizes $OUTDIR/S1.len
+cp $LOCAL/chrom.sizes $OUTDIR/S1.len
 
 # filter out low scoring hits as defined by retroscore and alignment score to parent gene
 rm -f pseudoGeneLinkSortFilter.bed.gz
@@ -24,6 +25,7 @@ echo catting Sorting and Filtering pseudoGeneLinkSortFilter.bed
 echo "pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk 'score > 400 && (axtScore > 10000 || axtScore == -1) {OFS="\t";print $0}'| $SCRIPT/removeTandemDups | sort -k1,1 -k2,3n -k4,4 to  $OUTDIR/pseudoGeneLinkSortFilter.bed; "
 pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk '$5 > 400 && ($14 > 10000 || $14 == -1) {OFS="\t";print $0}'| $SCRIPT/removeTandemDups | sort -k1,1 -k2,3n -k4,4 -T /scratch > $OUTDIR/pseudoGeneLinkSortFilter.bed; #/bin/rm $RESULT/pseudoGeneLink[0-9]*.bed
 popd
+echo "Line count:"
 wc -l pseudoGeneLinkSortFilter.bed
 pushd $OUT
 echo creating pseudo.psl
@@ -49,11 +51,11 @@ echo "bedOverlap -noBin \$(path1) {check out exists ../\$(root1)_NoOverlap.bed}"
 echo "#ENDLOOP" >> template
 gensub2 results.lst single template jobList
 
-echo clean up old files
-rm -f ../chr*_NoOverlap.bed
+#echo clean up old files
+#rm ../chr*_NoOverlap.bed
 echo "start cluster job"
 echo "end of ucscRetroStep4.sh , check parasol status then run ucscRetroStep5.sh"
-ssh -T $CLUSTER "cd $OVERLAPDIR ; para make jobList "
+ssh -T $CLUSTER "cd $OVERLAPDIR ; /parasol/bin/para make jobList "
 popd
 pwd
-$SCRIPT/ucscRetroStep5.sh $1
+#$SCRIPT/ucscRetroStep5.sh $1
