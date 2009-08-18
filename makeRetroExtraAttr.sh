@@ -1,4 +1,4 @@
-#
+#!/bin/bash
 set -beEu -o pipefail
 source $1
 #DB=$1
@@ -10,7 +10,7 @@ SQLNAME="select gb.acc, n.name from gbCdnaInfo gb, geneName n, organism o where 
 echo "SQL=" $SQLNAME
 hgsql $DB -N -B -e "$SQLNAME" > genBankName.txt
 echo "drop rbGenBankName"
-hgsql $DB -e "drop table rbGenBankName "
+hgsql $DB -e "drop table if exists rbGenBankName "
 echo "create rbGenBankName"
 hgsql $DB -e "create table rbGenBankName (acc varchar(255), name varchar(255), PRIMARY KEY(acc));"
 echo "load rbGenBankName"
