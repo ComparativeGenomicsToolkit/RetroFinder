@@ -51,7 +51,7 @@ wc -l *.id |sort -n
 wc -l ../pseudoEstAll.bed
 tawk '$5 > 600 && $2 > 25{$2=$2-25; $3=$3+25;print $0}$5 > 600 && $2 <= 25{ $3=$3+25;print $0}' pseudoEstOrMrna.bed > pseudoExpressed.bed
 echo "orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp to borf.out"
-#orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp >borf.out
+/cluster/home/baertsch/bin/i386/orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp >borf.out
 echo "genePredSingleCover pseudoExpressed.gp pseudoExpressed.single.gp"
 genePredSingleCover pseudoExpressed.gp pseudoExpressed.single.gp
 awk '{print "mrna."$1}' pseudoExpressed.single.gp |sort > pseudoExpressed.ids
@@ -123,7 +123,7 @@ tawk '$2>50{$2=$2-50; $3=$3+50;print $0}$2<=50{$3=$3+50;print $0}' ../pseudoEstA
 echo "orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp to borfEst.out"
 orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp > borfEst.out
 echo gene-check  -nib-dir $NIB pseudoEstAll.gp checkEst.rdb
-gene-check  -nib-dir $NIB pseudoEstAll.gp checkEst.rdb
+~markd/compbio/genefinding/GeneTools/bin/x86_64/opt/gene-check  -genome-seqs $NIB pseudoEstAll.gp checkEst.rdb
 awk '$7=="ok"&& $25=="noStart" || $25==""{print $1}' checkEst.rdb > goodOrf.list
 
 #fgrep -f goodOrf.list pseudoEstAll.out > pseudoEstAll.good.out
@@ -139,7 +139,7 @@ hgsql $DB < updateExp.sql
 tawk '$2>50{$2=$2-50; $3=$3+50;print $0}$2<=50{$3=$3+50;print $0}' pseudoEst5AndMrna.bed > pseudoEst5AndMrna.window.bed
 orfBatch $DB pseudoEst5AndMrna.window.bed pseudoEst5AndMrna.out pseudoEst5AndMrna.gp > borfEst5AndMrna.out
 echo gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
-gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
+~markd/compbio/genefinding/GeneTools/bin/x86_64/opt/gene-check  -genome-seqs $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 tawk '$7=="ok" && $25=="noStart" || $25==""{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
 #tawk '$6=="ok"&& $7=="ok"{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
 #fgrep -f goodOrf5AndMrna.list pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
