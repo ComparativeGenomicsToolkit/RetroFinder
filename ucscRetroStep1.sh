@@ -40,7 +40,7 @@ cp -p trim.fa $TMPMRNA
 faToTwoBit raw.fa mrna.2bit
 twoBitToFa mrna.2bit stdout |faToTwoBit stdin -stripVersion mrnaNoversion.2bit
 faSize trim.fa -detailed > trim.len
-grep -v chrM $GENOME/$DB/chrom.sizes > S1.len
+grep -v chrM $LOCAL/chrom.sizes > S1.len
 cp trim.len S2.len
 faSize raw.fa -detailed > raw.len
 sort raw.len > x
@@ -82,7 +82,8 @@ echo "#ENDLOOP" >> template
 cp ../S1.lst .
 cp ../S2.lst .
 gensub2 S1.lst S2.lst template jobList
-ssh -T $CLUSTER "cd $TMPMRNA/run.0 ; para make jobList"
+
+ssh -T $CLUSTER "cd $TMPMRNA/run.0 ; /parasol/bin/para make jobList"
 #    para create jobList
 #    para try
 #    para check
