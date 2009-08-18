@@ -8,13 +8,13 @@ echo "working directory is $TMPMRNA."
 mkdir -p pslFilter
 for i in `awk '{print $1}' S1.len` ; do echo $i ; cat lastz/$i/*.psl | awk '{print $0, $1*3-$2}' | \
  sort -k 10,10 -k 22nr -T /scratch | awk '{OFS=" "; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21}' | \
- pslFilterDups stdin pslFilter/$i.psl  ; done 
+ /cluster/home/baertsch/bin/x86_64/pslFilterDups stdin pslFilter/$i.psl  ; done 
 
 #chain blocks
 
-ls $NIB > nib.lst
+ls $NIB/* > nib.lst
 mkdir -p psl
-for i in `awk '{print $1}' S1.len` ; do nohup doChain $i ; done 
+for i in `awk '{print $1}' S1.len` ; do nohup $TMPMRNA/doChain $i ; done 
 
 #convert chains to psl
 #for i in `awk '{print $1}' S1.len`; do chainToPsl chainFilter/$i.chain S1.len S2.len nib.lst trim.fa psl/$i.psl; done
@@ -50,7 +50,8 @@ awk -f $SCRIPT/stripversion.awk mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrna
 
 #split for pipeline cluster run 
 mkdir -p $OUTDIR/split
-pslSplit nohead $OUTDIR/split mrnaBlastz.psl -chunkSize=120
+/cluster/home/baertsch/bin/x86_64/pslSplit nohead $OUTDIR/split mrnaBlastz.psl -chunkSize=120
+
 cd $OUTDIR/split
 for i in `ls tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > temp.psl ; mv temp.psl $i ;echo $i; done
 grep chr tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'|uniq  > acc.lst
@@ -65,7 +66,8 @@ hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/refseq.fa  -seqTbl=ucscRetroSeq -ex
 hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/mrna.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
 
 echo "ucscRetroStep2.sh mrna alignments complete"
-cp $TMPMRNA/DEF $OUTDIR
+cd $TMPMRNA
+cp ../DEF $OUTDIR
 cd $OUTDIR
 pwd
 echo "run ucscRetroStep3.sh DEF to run retro pipeline"
