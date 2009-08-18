@@ -54,7 +54,7 @@ rm -f mrna.2bit
 ln $MRNABASE/mrna.2bit . -s
 
 ####
-# run retro pipeine on cluster
+# run retro pipeline on cluster
 ####
 mkdir -p $RETRODIR
 cd $OUTDIR
@@ -69,7 +69,6 @@ echo "#ENDLOOP" >> gsub
 gensub2 list single gsub jobList
 echo "Job Count"
 wc -l jobList
-ssh -T $CLUSTER "cd $OUTDIR/run.0 ; para make jobList"
+ssh -T $CLUSTER "cd $OUTDIR/run.0 ; /parasol/bin/para make jobList"
 echo "check parasol status and then run ucscRetroStep4.sh DEF"
 cd ..
-
