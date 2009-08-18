@@ -1,0 +1,35 @@
+track ucscRetroAli
+shortLabel Retroposed Genes 1.0
+longLabel Retroposed Genes, Including Pseudogenes August 2009 [ucscRetroAli]
+group genes
+type psl
+priority 37.14
+color 20,0,250
+visibility pack
+nextItemButton on 
+retroMrnaInfo ucscRetroInfo
+#transMapTypeDesc UCSC retrocopies
+baseColorDefault diffCodons
+baseColorUseCds table ucscRetroCds
+baseColorUseSequence extFile ucscRetroSeq ucscRetroExtFile 
+indelDoubleInsert on
+indelQueryInsert on
+showDiffBasesAllScales .
+showDiffBasesMaxZoom 10000.0
+showCdsAllScales .
+showCdsMaxZoom 10000.0
+
+track ucscRetroExpressed
+shortLabel Expressed Retro
+longLabel Expressed retroGenes with orf 
+group genes
+priority 37.9
+visibility pack
+color 120,120,170
+type genePred
+
+searchTable ucscRetroInfo
+searchType bed
+searchMethod prefix
+searchPriority 3.5
+
