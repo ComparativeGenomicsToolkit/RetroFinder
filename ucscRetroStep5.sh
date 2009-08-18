@@ -16,7 +16,7 @@ date
 cd $OUTDIR
 pwd
 echo cat chr*_NoOverlap.bed to pseudoGeneLinkNoOverlap.bed
-cat chr*_NoOverlap.bed > pseudoGeneLinkNoOverlap.bed
+cat chr*_NoOverlap.bed | $SCRIPT/removeTandemDups > pseudoGeneLinkNoOverlap.bed
 wc -l chr*_NoOverlap.bed
 tawk '$5>=350{print $0}' pseudoGeneLinkNoOverlap.bed > pseudoGeneLinkNoOverlapFilter.bed                       
 tawk '$5>=425{print $0}' pseudoGeneLinkNoOverlap.bed > pseudoGeneLink425.bed
@@ -111,7 +111,6 @@ echo "overlapSelect estFiltered.psl.gz retroMrnaInfoLessZnf.bed pseudoEstAll.bed
 overlapSelect estFiltered.psl.gz retroMrnaInfoLessZnf.bed pseudoEstAll.bed
 wc -l retroMrnaInfoLessZnf.bed pseudoEstAll.bed
 
-cp all_mrna.psl.gz all_mrnaFiltered.psl.gz
 echo "mrnaToGene all_mrnaFiltered.psl.gz -cdsMergeSize=10 all_mrna.gp -cdsDb=$DB -keepInvalid "
 mrnaToGene all_mrnaFiltered.psl.gz -cdsMergeSize=10 all_mrna.gp -cdsDb=$DB -keepInvalid > all_mrna.log 2> all_mrna.err
 mrnaToGene all_mrnaFiltered.psl.gz -cdsMergeSize=10 -utrMergeSize=10 all_mrna_utr.gp -cdsDb=$DB -keepInvalid > all_mrna_utr.log 2> all_mrna_utr.err
