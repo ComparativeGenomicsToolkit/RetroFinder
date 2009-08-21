@@ -47,9 +47,6 @@ gzip *.tab &
 gzip *.txt &
 gzip *.bed 
 
-#filter mrna and est with pslCDnaGenomeMatch
-mkdir -p $TMPEST/mrna
-
 rm -f mrna.2bit
 ln $MRNABASE/mrna.2bit . -s
 
