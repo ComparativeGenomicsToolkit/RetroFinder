@@ -33,17 +33,14 @@ join -1 5 -2 1 x gnfProb.tab|uniq |awk '{OFS="\t";$1=$1;print}'> retroTissueFina
 
 
 #tissue specific analysis
-cut -f 1-6,15 retroTissue.ok.bed > retroTissueExtract.bed
+cut -f 1-6,15 retroTissue.ok.bed |tawk '{print $1,$2,$3,$4,$5,$6,","$7}'> retroTissueExtract.bed
 awk -F, '{print $1,$96}' retroTissue.ok.bed > retroFetal.bed
 hgsql hgFixed -N -B -e "select name from hgFixed.gnfHumanAtlas2MedianExps " |sed -e "s/ /_/g"|sed -e "s/+//g" |sed -e "s/(/_/g"|sed -e "s/)//g" > expName.tab
-hgsql hgFixed -N -B -e "select id+1, name from hgFixed.gnfHumanAtlas2MedianExps " |sed -e "s/ /_/g"|sed -e "s/+//g" |sed -e "s/(/_/g"|sed -e "s/)//g" > expName.tab
+hgsql hgFixed -N -B -e "select id+2, name from hgFixed.gnfHumanAtlas2MedianExps " |sed -e "s/ /_/g"|sed -e "s/+//g" |sed -e "s/(/_/g"|sed -e "s/)//g" > expName.tab
 # id is col offset into tissue table
-tawk '{print "awk -F, xx{print $1, tt\$"$1"}xx retroTissueExtract.bed > retroTissue."$2".bed"} ' expName.tab |sed -e "s/xx/'/g" |sed -e 's/tt/"\t"/' > buildTissues.sh
-
-tawk '{print "awk -F, xx{print $1, tt\$"$1"}xx retroTissueExtract.bed |tawk xx{\$8\=\(\$8\+5)\*10;print}xx > retroTissue."$2".bed"} ' expName.tab |sed -e "s/xx/'/g" |sed -e 's/tt/"\t"/' > buildTissues.sh
-
-edit first record
+tawk '{print "awk -F, xx{print $1, tt\$"$1"}xx retroTissueExtract.bed |tawk xx{\$8\=\(\$8\+5)\*10;print $1,$2,$3,$4,$5,$6,$8}xx > retroTissue."$2".bed"} ' expName.tab |sed -e "s/xx/'/g" |sed -e 's/tt/"\t"/' > buildTissues.sh
+chmod +x buildTissue.sh
 buildTissues.sh
 
-for i in `ls retroTissue.*.bed` ; do textHistogram $i -col=8 -autoScale=30 ; done > tissue.hist
+for i in `ls retroTissue.*.bed` ; do textHistogram $i -col=7 -autoScale=30 ; done > tissue.hist
 

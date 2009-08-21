@@ -1,5 +1,4 @@
- overhist
-function(x1, x2, breaks="Sturges",
+ overhist <- function(x1, x2, breaks="Sturges",
  	col1="red", col2="green",
  	coli=rgb( (col2rgb(col1) + col2rgb(col2))[1]/2,
   		  (col2rgb(col1) + col2rgb(col2))[2]/2,
