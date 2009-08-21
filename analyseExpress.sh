@@ -2,7 +2,7 @@
 set -beEu -o pipefail
 source $1
 echo '-------- script analyseExpress.sh -------------------'
-overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo650.bed pseudoRefGeneCds.bed
+overlapSelect ../$GENE2.multiCds.bed ../$TABLE.bed pseudoRefGeneCds.bed
 overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed -statsOutput pseudoRefGeneCds.out
 overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed pseudoRefGeneCds50.bed -overlapThreshold=0.50
 overlapSelect -selectFmt=genePred ../$GENE2.tab.gz pseudoRefGeneCds.bed shuffleEns.bed
@@ -49,14 +49,14 @@ wc -l *.id |sort -n
 
 #regenerate gene predictions from expressed retros
 wc -l ../pseudoEstAll.bed
-tawk '$5 > 600 && $2 > 25{$2=$2-25; $3=$3+25;print $0}$5 > 600 && $2 <= 25{ $3=$3+25;print $0}' pseudoEstOrMrna.bed > pseudoExpressed.bed
-echo "orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp to borf.out"
-/cluster/home/baertsch/bin/i386/orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp >borf.out
-echo "genePredSingleCover pseudoExpressed.gp pseudoExpressed.single.gp"
-genePredSingleCover pseudoExpressed.gp pseudoExpressed.single.gp
-awk '{print "mrna."$1}' pseudoExpressed.single.gp |sort > pseudoExpressed.ids
+tawk '$5 > 600 && $2 > 25{$2=$2-25; $3=$3+25;print $0}$5 > 600 && $2 <= 25{ $3=$3+25;print $0}' pseudoEstOrMrna.bed > pseudoEstOrMrna600.bed
+echo "orfBatch $DB pseudoEstOrMrna600.bed pseudoEstOrMrna600.out pseudoEstOrMrna600.gp to borf.out"
+/cluster/home/baertsch/bin/i386/orfBatch $DB pseudoEstOrMrna600.bed pseudoEstOrMrna600.out pseudoEstOrMrna600.gp >borf.out
+echo "genePredSingleCover pseudoEstOrMrna600.gp pseudoEstOrMrna600.single.gp"
+genePredSingleCover pseudoEstOrMrna600.gp pseudoEstOrMrna600.single.gp
+awk '{print "mrna."$1}' pseudoEstOrMrna600.single.gp |sort > pseudoEstOrMrna600.ids
 echo "predicted orfs from retros"
-wc -l pseudoExpressed.single.gp
+wc -l pseudoEstOrMrna600.single.gp
 
 
 #tawk '{print $3-$2}' ../pseudoGeneLinkNoOverlapFilter.bed > lengthAll.txt
@@ -160,11 +160,13 @@ hgsql $DB < updateBad5.sql
 $SCRIPT/selectById -tsv 1 goodOrf.list 1 pseudoEstAll.gp > pseudoExpressed.gp
 echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
 ldHgGene $DB ucscRetroExpressed pseudoExpressed.gp -genePredExt -predTab
-genePredToBed pseudoExpressed.gp > pseudoExpressed.bed
+genePredToBed pseudoExpressed.gp > pseudoTmp.bed
+$SCRIPT/selectById -tsv 1 goodOrf.list 1 ../$TABLE.bed > pseudoExpressed.bed
 echo "length histogram of coding region"
 awk '{print $7-$6}' pseudoExpressed.gp|textHistogram stdin -maxBinCount=100 -binSize=50
 
-tawk '($8-$7)>300{print }' pseudoExpressed.bed> pseudoEst100AA.bed
+tawk '($8-$7)>300{print }' pseudoTmp.bed>  pseudoTmp2.bed
+$SCRIPT/selectById -tsv 4 pseudoTmp2.bed 1 ../$TABLE.bed > pseudoEst100AA.bed
 echo tawk '$8-$7>300{print }' pseudoExpressed.bed redirect pseudoEst100AA.bed
 wc -l pseudoExpressed.bed pseudoEst100AA.bed goodOrf.list pseudoEst5AndMrna.bed pseudoEst5AndMrna.good.out
 
