@@ -22,8 +22,10 @@ echo "hgsql $DB -N -B -e select r.name, r.name, score, n.name,r.type, retroExonC
 hgsql $DB -N -B -e "select r.name, r.name, score, n.name,r.type, retroExonCount, overlapRhesus, overlapMouse, overlapDog, overName, r.blockCount, conservedSpliceSites, exonCover, coverage, milliBad from $TABLE  r left outer join rbGenBankName n on r.refSeq = n.acc " > retroMrnaInfo.txt
 #hgsql $DB -N -B -e "select r.name, r.name, score, replace(n.name,'n/a',''), r.type, overlapRhesus, overlapMouse, overlapDog, overName, r.blockCount, conservedSpliceSites, exonCover, coverage, milliBad from $TABLE  r , rbGenBankName n where r.refSeq = n.acc " > retroMrnaInfo.txt
 pwd
-hgsql $DB -B -e "select name, name, score, refSeq as parent, type, retroExonCount as Exons, overlapRhesus as Rhesus , overlapMouse as Mus, overlapDog as Dog, overName as exp, blockCount, conservedSpliceSites as consSS, exonCover, coverage, milliBad from $TABLE  limit 1" > retroMrnaInfo.lab
-wc -l retroMrnaInfo.txt retroMrnaInfo.lab
+hgsql $DB -B -e "select name, name, score, refSeq as parent, type, retroExonCount as Exons, overlapRhesus as Rhesus , overlapMouse as Mus, overlapDog as Dog, overName as exp, blockCount, conservedSpliceSites as consSS, exonCover, coverage, milliBad from $TABLE  limit 1" > retroMrnaInfo.hg18.lab
+#cp retroMrnaInfo.hg18.lab retroMrnaInfo.$DB.lab
+hgsql $DB -B -e "select name, name, score, refSeq as parent, type, retroExonCount as Exons, overlapRhesus as Human , overlapMouse as Dog, overlapDog as Rat, overName as exp, blockCount, conservedSpliceSites as consSS, exonCover, coverage, milliBad from $TABLE  limit 1" > retroMrnaInfo.mm9.lab
+wc -l retroMrnaInfo.txt retroMrnaInfo.mm9.lab retroMrnaInfo.hg18.lab
 
 hgsql $DB -B -N -e "select chrom, chromStart, chromEnd, name, score, strand from $TABLE  where overlapRhesus < 20 and overlapDog < 20 and overlapMouse < 20" > retroAncient.bed
 wc -l retroAncient.bed
