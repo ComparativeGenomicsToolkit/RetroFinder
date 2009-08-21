@@ -22,8 +22,8 @@ tawk '$5>=350{print $0}' pseudoGeneLinkNoOverlap.bed > pseudoGeneLinkNoOverlapFi
 tawk '$5>=425{print $0}' pseudoGeneLinkNoOverlap.bed > pseudoGeneLink425.bed
 tawk '$5>=510{print $0}' pseudoGeneLinkNoOverlap.bed > retroMrnaInfo.raw.bed
 tawk '$5>=650{print $0}' pseudoGeneLinkNoOverlap.bed > retroMrnaInfo650.bed
-cut -f 1-12 retroMrnaInfo650.bed > retroMrnaInfo.12.bed
-wc -l pseudoGeneLinkNoOverlap.bed pseudoGeneLinkNoOverlapFilter.bed pseudoGeneLink425.bed retroMrnaInfo.raw.bed retroMrnaInfo650.bed retroMrnaInfo.12.bed
+#cut -f 1-12 retroMrnaInfo650.bed > retroMrnaInfo.12.bed
+wc -l pseudoGeneLinkNoOverlap.bed pseudoGeneLinkNoOverlapFilter.bed pseudoGeneLink425.bed retroMrnaInfo.raw.bed retroMrnaInfo650.bed 
 
 if [[ -n $PFAM ]] 
 then
@@ -61,6 +61,7 @@ grep -v -F -f zincKg.lst retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
 echo "before and after zinc finger filtering"
 cp retroMrnaInfoLessZnf.bed $TABLE.bed
 wc -l retroMrnaInfo.raw.bed retroMrnaInfoLessZnf.bed $TABLE.bed
+cut -f 1-12 $TABLE.bed > retroMrnaInfo.12.bed
 textHistogram -col=5 $TABLE.bed -binSize=50 -maxBinCount=50
 echo creating $ALIGN.psl
 awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $TABLE.bed > pseudoGeneLinkSelect.tab
