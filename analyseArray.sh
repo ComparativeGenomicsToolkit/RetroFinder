@@ -47,6 +47,11 @@ mkdir -p tissue
 tawk '{print "awk -F, xx{print $1, tt\$"$1"}xx retroTissueExtract.bed |tawk xx{\$8\=\(\$8\+5)\*10;print $1,$2,$3,$4,$5,$6,$8}xx > tissue/retroTissue."$2".bed"} ' expName.tab |sed -e "s/xx/'/g" |sed -e 's/tt/"\t"/' > buildTissues.sh
 chmod +x buildTissues.sh
 ./buildTissues.sh
+mkdir -p retro.tissue
+for i in `ls tissue/*.bed`; do cut -f 1-3 $i | overlapSelect -selectFmt=bed stdin ../$TABLE.bed retro.$i ; done
+
+for t in `cut -f 2 expName.tab` ; do $SCRIPT/makeHtmlRightArray.sh DEF retro.tissue/retroTissue.$t.bed array/tissue/$DB/$t all_$t;done
+
 #for i in `ls retroTissue.*.bed` ; do textHistogram $i -col=7 -autoScale=30 ; done > tissue.hist
 wc -l retroTissueExtract.bed 
 echo "run arrayCompare.sh for R analysis after all species are complete"
