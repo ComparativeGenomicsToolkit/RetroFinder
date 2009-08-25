@@ -67,7 +67,8 @@ hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/mrna.fa  -seqTbl=ucscRetroSeq -extF
 
 echo "ucscRetroStep2.sh mrna alignments complete"
 cd $TMPMRNA
-cp ../DEF $OUTDIR
+cp DEF $OUTDIR
+cp S1.len $OUTDIR
 cd $OUTDIR
 pwd
 echo "run ucscRetroStep3.sh DEF to run retro pipeline"
