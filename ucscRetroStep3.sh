@@ -17,19 +17,15 @@ mkdir -p out
 ls $NIB/*.nib > $OUTDIR/S1.lst
 cp $GENOME/$DB/chrom.sizes .
 
-if [[ -s all_mrna.psl.gz ]] ; then
-    echo "all_mrna.psl.gz not refreshed"
-else
-    hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from all_mrna" > all_mrna.psl 
-    hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from refSeqAli" >> all_mrna.psl
-    rm -f all_mrna.psl.gz
-    gzip all_mrna.psl
-fi
 #cat $RMSK/*.out |awk '{OFS="\t";print $5,$6,$7}' | grep -v position|grep -v sequence | tawk 'length($0)>2{print $0}' > rmsk.bed
-rm -f rmsk.bed
-if [ $RMSK == "rmsk" ]; then hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from rmsk" >> rmsk.bed ;
-else 
-    for i in `cut -f 1 chrom.sizes` ;do hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from ${i}_rmsk" >> rmsk.bed ; done  ; fi
+if [[ -s rmsk.bed.gz ]] ; then
+    echo "rmsk.bed.gz not refreshed"
+else
+    rm -f rmsk.bed rmsk.bed.gz
+    if [ $RMSK == "rmsk" ]; then hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from rmsk" >> rmsk.bed ;
+    else 
+        for i in `cut -f 1 chrom.sizes` ;do hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from ${i}_rmsk" >> rmsk.bed ; done  ; fi
+fi
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN from $NET1 where type <> 'gap' or (type = 'gap' and qN*100/(qEnd-qStart) > 75)" > \
 $NET1.txt
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN from $NET2 where type <> 'gap' or (type = 'gap' and qN*100/(qEnd-qStart) > 75)" > \
@@ -40,9 +36,7 @@ hgsql $DB -N -B -e "select chrom, chromStart, chromEnd from simpleRepeat" > simp
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE1 order by chrom, txStart, txEnd" | sort -k2,2 -k4,4n > $GENE1.tab
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE2" > $GENE2.tab 
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE3" > $GENE3.tab 
-hgsql $DB -N -B -e "select acc, version, name, type from refSeqAli a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" > cds.tab
-hgsql $DB -N -B -e "select acc, version, name, type from all_mrna a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" >> cds.tab
-rm -f *.tab.gz *.txt.gz *.bed.gz
+rm -f $GENE1.tab.gz $GENE2.tab.gz $GENE3.tab.gz *.txt.gz *.bed.gz
 gzip *.tab &
 gzip *.txt &
 gzip *.bed 

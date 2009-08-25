@@ -7,11 +7,11 @@ else
        exit 3
 fi
 source $1
+cd $MRNABASE
 echo running mrna alignment against $DB
 #align mrnas to $DB using lastz
 mkdir -p $TMPMRNA
 mkdir -p $MRNABASE
-cd $MRNABASE
 
 #pull latest mrna and refseq from genbank 
 if [[ -s mrna.fa ]] ; then
@@ -29,6 +29,21 @@ else
     /cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
        refSeq mrna stdout | tr acgt ACGT > refseq.fa 
 fi
+if [[ -s all_mrna.psl.gz ]] ; then
+    echo "all_mrna.psl.gz not refreshed, must be extracted at the same time as mrna and refseq sequences. "
+else
+    hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from all_mrna" > all_mrna.psl 
+    hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from refSeqAli" >> all_mrna.psl
+    rm -f all_mrna.psl.gz
+    gzip all_mrna.psl
+fi
+if [[ -s cds.tab.gz ]] ; then
+    echo "cds.tab.gz not refreshed, must be extracted at the same time as all_mrna.psl.gz, mrna and refseq sequences. "
+else
+    hgsql $DB -N -B -e "select acc, version, name, type from refSeqAli a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" > cds.tab
+    hgsql $DB -N -B -e "select acc, version, name, type from all_mrna a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" >> cds.tab
+fi
+
 echo "cat mrna.fa refseq.fa output-to raw.fa"
 cat mrna.fa refseq.fa > raw.fa
 
@@ -40,7 +55,12 @@ cp -p trim.fa $TMPMRNA
 faToTwoBit raw.fa mrna.2bit
 twoBitToFa mrna.2bit stdout |faToTwoBit stdin -stripVersion mrnaNoversion.2bit
 faSize trim.fa -detailed > trim.len
-grep -v chrM $LOCAL/chrom.sizes > S1.len
+if [[ -s S1.len ]] ; then
+    echo "S1.len exists with `wc -l S1.len` rows"
+else
+    echo "please create S1.len from chrom.sizes without random chroms or chrM."
+    exit 3
+fi
 cp trim.len S2.len
 faSize raw.fa -detailed > raw.len
 sort raw.len > x
