@@ -4,6 +4,15 @@ source $1
 #align human mrnas to $DB using lastz
 cd $TMPMRNA
 echo "working directory is $TMPMRNA."
+wc -l run.0/jobList | awk '{print $1}'> jobs.cnt
+find lastz -name \*.psl| wc -l | awk '{print $1}'> jobs.lst
+echo Check Job Count from cluster run
+diff jobs.cnt jobs.lst 
+if [ $? != 0 ]; then
+  echo missing jobs aborting
+  wc -l jobs.cnt jobs.lst
+  exit 3
+fi
 #concatenate, sort (by name, score) and de-dup psls by chrom
 mkdir -p pslFilter
 for i in `awk '{print $1}' S1.len` ; do echo $i ; cat lastz/$i/*.psl | awk '{print $0, $1*3-$2}' | \
