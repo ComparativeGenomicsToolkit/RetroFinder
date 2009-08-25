@@ -79,6 +79,8 @@ cp -p raw.len $TMPMRNA
 mkdir -p $TMPMRNA/split
 mkdir -p $TMPMRNA/lastz
 mkdir -p $TMPMRNA/run.0
+rm -rf $TMPMRNA/run.0
+mkdir -p $TMPMRNA/run.0
 faSplit about trim.fa 1000000 $TMPMRNA/split/mrna
 
 cd $TMPMRNA/split
@@ -91,7 +93,7 @@ echo "axtChain -linearGap=loose -psl \$BASE/pslFilter/\$1.psl $LOCAL/$DB.2bit -f
 chmod +x doChain
 awk '{print "mkdir -p $TMPMRNA/lastz/"$1}' S1.len |grep -v random > create.dirs
 source create.dirs
-grep -v "random" $LOCAL/chrom.sizes |grep -v chrM |cut -f 1 > S1.lst
+awk '{print $1}' S1.len > S1.lst
 cd $TMPMRNA/run.0
 
 #cluster job to run lastz to align mRNAs to genome
