@@ -7,6 +7,12 @@ source $1
 echo "---------------------------------------------------------------------------------------"
 echo "Starting ucscRetroStep4.sh $1 on $HOST- catting output from retro pipeline cluster run"
 echo "---------------------------------------------------------------------------------------"
+if [[ -s S1.len ]] ; then
+    echo "S1.len exists with `wc -l S1.len` rows"
+else
+    echo "please create S1.len from chrom.sizes without random chroms or chrM."
+    exit 3
+fi
 cd $OUTDIR
 wc -l run.0/jobList | awk '{print $1}'> jobs.cnt
 pushd $RESULT ; ls pseudoGeneLink[0-9]*.bed | wc -l | awk '{print $1}'> $OUTDIR/jobs.lst
@@ -17,7 +23,6 @@ if [ $? != 0 ]; then
   echo missing jobs aborting
   exit 3
 fi
-cp $LOCAL/chrom.sizes $OUTDIR/S1.len
 
 # filter out low scoring hits as defined by retroscore and alignment score to parent gene
 rm -f pseudoGeneLinkSortFilter.bed.gz
