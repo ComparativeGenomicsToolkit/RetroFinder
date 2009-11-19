@@ -34,7 +34,7 @@ echo "<TR><TH>data set</TH>" >> $ROOTDIR/retro/type1_2009/index.html
 for db in `echo $SPECIES` ; do echo "<TH>$db Ancient</TH><TH>$db Recent</TH>" >> $ROOTDIR/retro/type1_2009/index.html ; done
 echo "</TR>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</THEAD><TBODY>" >> $ROOTDIR/retro/type1_2009/index.html
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoExpressedAll.bed type1_2009/expressedAll510 expressedAll510;
+#$SCRIPT/makeHtmlRightDb.sh $DEF pseudoExpressedAll.bed type1_2009/expressedAll510 expressedAll510;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstMrna.filter.bed type1_2009/estMrna expressedMrnaOrEst510;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstAll.bed type1_2009/est expressedEst510;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoExpressed.bed type1_2009/estOrf estGoodOrf600;
@@ -42,6 +42,7 @@ $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5Mrna.bed type1_2009/est5Mrna expressed
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5.bed type1_2009/est5 expressedEst5orMore;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5AndMrna.bed type1_2009/est5AndMrna expressedEst5orMoreAndMrna;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst100AA.bed type1_2009/estOrf100 estGoodOrfBigger100aa.score600;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudo5Est100AA.bed type1_2009/5estOrf100 5estGoodOrfBigger100aa.score600;
 $SCRIPT/makeHtmlRightDb.sh $DEF retroArray.bed type1_2009/gnfAtlas2 gnfAtlas2;
 $SCRIPT/makeHtmlRightDb.sh $DEF retroSplice.bed type1_2009/retroSplice Splice;
 echo "</tbody>" >> $ROOTDIR/retro/type1_2009/index.html
