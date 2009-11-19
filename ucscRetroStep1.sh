@@ -7,11 +7,12 @@ else
        exit 3
 fi
 source $1
-cd $MRNABASE
+#cd $MRNABASE
 echo running mrna alignment against $DB
 #align mrnas to $DB using lastz
 mkdir -p $TMPMRNA
 mkdir -p $MRNABASE
+cd $MRNABASE
 
 #pull latest mrna and refseq from genbank 
 if [[ -s mrna.fa ]] ; then
