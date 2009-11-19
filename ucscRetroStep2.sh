@@ -54,9 +54,6 @@ pslCDnaFilter -minCover=0.05 -minId=0.58 mrnaBlastz.sort.psl mrnaBlastz.psl
 rm -f mrnaBlastz.sort.psl.gz
 gzip mrnaBlastz.sort.psl &
 
-#load mrna alignment track into browser
-awk -f $SCRIPT/stripversion.awk mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrnaBlastz
-
 #split for pipeline cluster run 
 mkdir -p $OUTDIR/split
 /cluster/home/baertsch/bin/x86_64/pslSplit nohead $OUTDIR/split mrnaBlastz.psl -chunkSize=120
@@ -73,6 +70,9 @@ ln $MRNABASE/mrna.fa /gbdb/$DB/blastzRetro/ -s
 ln $MRNABASE/refseq.fa /gbdb/$DB/blastzRetro/ -s
 hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/refseq.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
 hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/mrna.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
+
+#load mrna alignment track into browser
+awk -f $SCRIPT/stripversion.awk $MRNABASE/mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrnaBlastz
 
 echo "ucscRetroStep2.sh mrna alignments complete"
 cd $TMPMRNA
