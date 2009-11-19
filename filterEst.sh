@@ -7,7 +7,8 @@ source $1
 echo "starting estFilter.sh $1 for $DB"
 #for i in `chromsNoY` chrY chrM; do echo $i ; hgsql $DB -N -B -e "select * from ${i}_est" |cut -f2-22 >> est.psl ; done
 rm -f est.psl
-hgsql $DB -N -B -e "select * from all_est" |cut -f2-22 >> est.psl 
+hgsql $DB -N -B -e "select acc from gbWarn" > gbWarn.id
+hgsql $DB -N -B -e "select * from all_est" |cut -f2-22 |grep -v -F -f gbWarn.id>> est.psl 
 tawk '{print $10}' est.psl|sort |uniq > est.list &
 cat est.psl |sort -k10,10> est.qName.psl
 pslStats -queryStats est.qName.psl est.stats 
