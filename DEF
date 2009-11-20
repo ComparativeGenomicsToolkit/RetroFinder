@@ -34,3 +34,4 @@ GENEPFAM=knownGene
 PFAM=knownToPfam
 PFAMIDFIELD=name
 PFAMDOMAIN=value
+SPLITBYAGE=splitRetrosByAge
