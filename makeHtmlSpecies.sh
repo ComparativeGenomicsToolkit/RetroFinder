@@ -7,7 +7,7 @@ script=$5
 webdir=$6
 echo "Writing $name html into $dir/$db "
 sort -k5,5nr $bed > $bed.sort ; mv $bed.sort $bed
-$script/splitRetrosByAge $bed ${bed%%.bed}.ancient.bed ${bed%%.bed}.recent.bed
+#$split $bed ${bed%%.bed}.ancient.bed ${bed%%.bed}.recent.bed
 #tawk '{print $4}' $bed > tmp.select
 #echo "grep -F -f tmp.select retroMrnaInfo.txt output $bed.txt"
 #grep -F -f tmp.select retroMrnaInfo.txt > $bed.txt
