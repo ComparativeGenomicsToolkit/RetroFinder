@@ -119,6 +119,7 @@ mrnaToGene all_mrnaFiltered.psl.gz -cdsMergeSize=10 -utrMergeSize=10 all_mrna_ut
 awk '$8>1{print }' all_mrna.gp > all_mrna_multiExon.gp
 awk '$8>1{print }' all_mrna_utr.gp > all_mrna_multiExonUTR.gp
 
+for bed in retroMrnaInfo650 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 mkdir -p $EXPDIR
 cd $EXPDIR
 echo pwd
