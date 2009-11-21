@@ -2,9 +2,10 @@
 DB=$1
 INPUT=$2
 NAME=$3
-tawk -f ape.awk $INPUT |sort -u> ape.$INPUT
-tawk -f primate.awk $INPUT |sort -u> primate.$INPUT
-tawk -f euArch.awk $INPUT |sort -u> euArch.$INPUT
+SCRIPTS=$HOME/baertsch/scripts
+tawk -f $SCRIPTS/ape.awk $INPUT |sort -u> ape.$INPUT
+tawk -f $SCRIPTS/primate.awk $INPUT |sort -u> primate.$INPUT
+tawk -f $SCRIPTS/euArch.awk $INPUT |sort -u> euArch.$INPUT
 overlapSelect euArch.$INPUT $INPUT tmp1.bed  -nonOverlapping
 overlapSelect primate.$INPUT tmp1.bed tmp.bed  -nonOverlapping
 overlapSelect ape.$INPUT tmp.bed old.$INPUT -nonOverlapping
