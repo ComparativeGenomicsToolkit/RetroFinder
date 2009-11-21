@@ -7,17 +7,17 @@ overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed -statsOutput pseudo
 overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed pseudoRefGeneCds50.bed -overlapThreshold=0.50
 overlapSelect -selectFmt=genePred ../$GENE2.tab.gz pseudoRefGeneCds.bed shuffleEns.bed
 overlapSelect -selectFmt=genePred ../$GENE2.multiCDSExon.genePred pseudoRefGeneCds.bed shuffleEnsMulti.bed
-echo "overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -idOutput stdout | sort to est.id"
-overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -idOutput stdout |awk '{print $1}' | sort |uniq> est.id
-overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -statsOutput stdout | sort > stat.out
-awk '{print $1}' stat.out |uniq -c |awk '{print $2,$1}' |sort> estCount.out
-overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -statsOutput -aggregate stdout | sort > statagg.out
-join estCount.out statagg.out > estCoverage.out
-overlapSelect ../splicedEst.psl.gz ../$TABLE.bed -statsOutput stdout | sort > splicedstat.out
-awk '{print $1}' splicedstat.out |uniq -c |awk '{print $2,$1}' |sort> splicedEstCount.out
-overlapSelect ../splicedEst.psl.gz ../$TABLE.bed -statsOutput -aggregate stdout | sort > splicedagg.out
-join splicedEstCount.out splicedagg.out > splicedEstCoverage.out
-overlapSelect ../all_mrna.psl.gz ../$TABLE.bed -statsOutput stdout |sort > mrna.out
+#echo "overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -idOutput stdout | sort to est.id"
+#overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -idOutput stdout |awk '{print $1}' | sort |uniq> est.id
+#overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -statsOutput stdout | sort > stat.out
+#awk '{print $1}' stat.out |uniq -c |awk '{print $2,$1}' |sort> estCount.out
+#overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -statsOutput -aggregate stdout | sort > statagg.out
+#join estCount.out statagg.out > estCoverage.out
+#overlapSelect ../splicedEst.psl.gz ../$TABLE.bed -statsOutput stdout | sort > splicedstat.out
+#awk '{print $1}' splicedstat.out |uniq -c |awk '{print $2,$1}' |sort> splicedEstCount.out
+#overlapSelect ../splicedEst.psl.gz ../$TABLE.bed -statsOutput -aggregate stdout | sort > splicedagg.out
+#join splicedEstCount.out splicedagg.out > splicedEstCoverage.out
+overlapSelect ../all_mrnaFiltered.psl.gz ../$TABLE.bed -statsOutput stdout |sort > mrna.out
 awk '$3>0.50{print $1}' mrna.out |sort > mrna.id
 awk '$2>=10 && $3>0.50{print $0}' estCoverage.out > est10.out
 awk '$2>=5 && $3>0.50{print $0}' estCoverage.out > est5.out
@@ -34,7 +34,7 @@ join est5.id mrna.id > est5Mrna.id
 grep -F -f est5.id ../$TABLE.bed >  pseudoEst5.bed
 cat mrna.id est10.id |sort |uniq > mrnaEst10.id
 cat mrna.id est5.id |sort |uniq > mrnaEst5.id
-cat mrna.id est.id |sort |uniq > mrnaEst.id
+#cat mrna.id est.id |sort |uniq > mrnaEst.id
 $SCRIPT/selectById -tsv 1 est5Mrna.id 4 ../$TABLE.bed > pseudoEst5AndMrna.bed
 $SCRIPT/selectById -tsv 1 est10Mrna.id 4 ../$TABLE.bed > pseudoEst10AndMrna.bed
 $SCRIPT/selectById -tsv 1 mrnaEst5.id 4 ../$TABLE.bed > pseudoEstMrna.filter.bed
@@ -161,14 +161,20 @@ $SCRIPT/selectById -tsv 1 goodOrf.list 1 pseudoEstAll.gp > pseudoExpressed.gp
 echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
 ldHgGene $DB ucscRetroExpressed pseudoExpressed.gp -genePredExt -predTab
 genePredToBed pseudoExpressed.gp > pseudoTmp.bed
-$SCRIPT/selectById -tsv 1 goodOrf.list 1 ../$TABLE.bed > pseudoExpressed.bed
+$SCRIPT/selectById -tsv 1 goodOrf.list 4 ../$TABLE.bed > pseudoExpressed.bed
 echo "length histogram of coding region"
 awk '{print $7-$6}' pseudoExpressed.gp|textHistogram stdin -maxBinCount=100 -binSize=50
 
 tawk '($8-$7)>300{print }' pseudoTmp.bed>  pseudoTmp2.bed
-$SCRIPT/selectById -tsv 4 pseudoTmp2.bed 1 ../$TABLE.bed > pseudoEst100AA.bed
+$SCRIPT/selectById -tsv 4 pseudoTmp2.bed 4 ../$TABLE.bed > pseudoEst100AA.bed
 echo tawk '$8-$7>300{print }' pseudoExpressed.bed redirect pseudoEst100AA.bed
+$SCRIPT/selectById -tsv 4 pseudoEst5AndMrna.good.out 4 ../$TABLE.bed > pseudo5Est100AA.bed
 wc -l pseudoExpressed.bed pseudoEst100AA.bed goodOrf.list pseudoEst5AndMrna.bed pseudoEst5AndMrna.good.out
+overlapSelect pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.bed
+
+#split retros by age
+
+for bed in pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudo5Est100AA pseudoEst5AndMrna100AA pseudoRefGeneCds pseudoRefGeneCds50 shuffleEns shuffleEnsMulti ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 
 if [[ -n $ALTSPLICE ]] 
 then
@@ -179,6 +185,7 @@ if [ -f altSplice.bed ]
 then
  echo "overlapSelect altSplice.bed ../$TABLE.bed retroSplice.bed"
  overlapSelect altSplice.bed ../$TABLE.bed retroSplice.bed
+ $SPLITBYAGE retroSplice.bed retroSplice.ancient.bed retroSplice.recent.bed 
 fi
 
 echo '-------- END script analyseExpress.sh -------------------'
