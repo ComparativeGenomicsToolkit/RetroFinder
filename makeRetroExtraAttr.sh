@@ -27,6 +27,6 @@ hgsql $DB -B -e "select name, name, score, refSeq as parent, type, retroExonCoun
 hgsql $DB -B -e "select name, name, score, refSeq as parent, type, retroExonCount as Exons, overlapRhesus as Human , overlapMouse as Dog, overlapDog as Rat, overName as exp, blockCount, conservedSpliceSites as consSS, exonCover, coverage, milliBad from $TABLE  limit 1" > retroMrnaInfo.mm9.lab
 wc -l retroMrnaInfo.txt retroMrnaInfo.mm9.lab retroMrnaInfo.hg18.lab
 
-hgsql $DB -B -N -e "select chrom, chromStart, chromEnd, name, score, strand from $TABLE  where overlapRhesus < 20 and overlapDog < 20 and overlapMouse < 20" > retroAncient.bed
-wc -l retroAncient.bed
+#hgsql $DB -B -N -e "select chrom, chromStart, chromEnd, name, score, strand from $TABLE  where (overlapDog < 40 and overlapMouse < 40 ) or (overlapRhesus < 50 and (overlapDog < 40 and overlapMouse > 40) or (overlapMouse <40 and overlapDog > 40))" > retroAncient.bed
+#wc -l retroAncient.bed
 echo "-------- END script makeRetroExtraAttr.sh ------------"
