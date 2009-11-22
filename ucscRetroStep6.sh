@@ -34,7 +34,8 @@ echo "<TR><TH>data set</TH>" >> $ROOTDIR/retro/type1_2009/index.html
 for db in `echo $SPECIES` ; do echo "<TH>$db Ancient</TH><TH>$db Recent</TH>" >> $ROOTDIR/retro/type1_2009/index.html ; done
 echo "</TR>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</THEAD><TBODY>" >> $ROOTDIR/retro/type1_2009/index.html
-$SCRIPT/makeHtmlRightDb.sh $DEF ../retroMrnaInfo650.bed type1_2009/all all;
+$SCRIPT/makeHtmlRightDb.sh $DEF ../retroMrnaInfoLessZnf.bed type1_2009/all510 expressedAndNonExpressedScore510;
+$SCRIPT/makeHtmlRightDb.sh $DEF ../retroMrnaInfo650.bed type1_2009/all650 expressedAndNonExpressedScore650;
 #$SCRIPT/makeHtmlRightDb.sh $DEF pseudoExpressedAll.bed type1_2009/expressedAll510 expressedAll510;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstMrna.filter.bed type1_2009/estMrna expressedMrnaOrEst510;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstAll.bed type1_2009/est expressedEst510;
