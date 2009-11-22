@@ -107,9 +107,22 @@ featureBits $DB rbRefGeneMulti $GENE2.cds.bed -bed=$GENE2.multiCds.bed
 
 pwd
 ls -l retroMrnaInfoLessZnf.bed 
+echo "calculate age of retros"
+
+for bed in retroMrnaInfoLessZnf retroMrnaInfo650 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 tawk '{print NF}' retroMrnaInfoLessZnf.bed |uniq
-echo "overlapSelect estFiltered.psl.gz retroMrnaInfoLessZnf.bed pseudoEstAll.bed"
-overlapSelect estFiltered.psl.gz retroMrnaInfoLessZnf.bed pseudoEstAll.bed
+
+echo "overlap with ests - use cluster jobs to speed this step"
+mkdir -p estSplit
+cd estSplit
+pslSplitOnTarget estFiltered.psl.gz estSplit
+rm -f jobList
+for i in `ls *.psl` ; do echo overlapSelect $i ../retroMrnaInfoLessZnf.bed pseudoEst.${i%%.psl}.bed ; done >> jo
+bList
+cd ..
+ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
+
+cat estSplit/pseudoEst*.bed > pseudoEstAll.bed
 wc -l retroMrnaInfoLessZnf.bed pseudoEstAll.bed
 
 echo "mrnaToGene all_mrnaFiltered.psl.gz -cdsMergeSize=10 all_mrna.gp -cdsDb=$DB -keepInvalid "
@@ -119,7 +132,6 @@ mrnaToGene all_mrnaFiltered.psl.gz -cdsMergeSize=10 -utrMergeSize=10 all_mrna_ut
 awk '$8>1{print }' all_mrna.gp > all_mrna_multiExon.gp
 awk '$8>1{print }' all_mrna_utr.gp > all_mrna_multiExonUTR.gp
 
-for bed in retroMrnaInfo650 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 mkdir -p $EXPDIR
 cd $EXPDIR
 echo pwd
