@@ -114,11 +114,10 @@ tawk '{print NF}' retroMrnaInfoLessZnf.bed |uniq
 
 echo "overlap with ests - use cluster jobs to speed this step"
 mkdir -p estSplit
-cd estSplit
 pslSplitOnTarget estFiltered.psl.gz estSplit
+cd estSplit
 rm -f jobList
-for i in `ls *.psl` ; do echo overlapSelect $i ../retroMrnaInfoLessZnf.bed pseudoEst.${i%%.psl}.bed ; done >> jo
-bList
+for i in `ls *.psl` ; do echo overlapSelect $i ../retroMrnaInfoLessZnf.bed pseudoEst.${i%%.psl}.bed ; done >> jobList
 cd ..
 ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
 
