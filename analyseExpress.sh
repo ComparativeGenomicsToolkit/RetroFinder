@@ -7,16 +7,11 @@ overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed -statsOutput pseudo
 overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed pseudoRefGeneCds50.bed -overlapThreshold=0.50
 overlapSelect -selectFmt=genePred ../$GENE2.tab.gz pseudoRefGeneCds.bed shuffleEns.bed
 overlapSelect -selectFmt=genePred ../$GENE2.multiCDSExon.genePred pseudoRefGeneCds.bed shuffleEnsMulti.bed
-echo "overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -idOutput stdout | sort to est.id"
-overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -idOutput stdout |awk '{print $1}' | sort |uniq> est.id
-overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -statsOutput stdout | sort > stat.out
-awk '{print $1}' stat.out |uniq -c |awk '{print $2,$1}' |sort> estCount.out
-overlapSelect ../estFiltered.psl.gz ../$TABLE.bed -statsOutput -aggregate stdout | sort > statagg.out
-join estCount.out statagg.out > estCoverage.out
-overlapSelect ../splicedEst.psl.gz ../$TABLE.bed -statsOutput stdout | sort > splicedstat.out
-awk '{print $1}' splicedstat.out |uniq -c |awk '{print $2,$1}' |sort> splicedEstCount.out
-overlapSelect ../splicedEst.psl.gz ../$TABLE.bed -statsOutput -aggregate stdout | sort > splicedagg.out
-join splicedEstCount.out splicedagg.out > splicedEstCoverage.out
+# grab results of cluster job
+cat ../estSplit/pseudoEst.*.bed > ../pseudoEstAll.bed
+cat ../estSplit/est.*.id > est.id
+cat ../estSplit/stat.*.out > stat.out
+cat ../estSplit/statagg.*.out > statagg.out
 overlapSelect ../all_mrnaFiltered.psl.gz ../$TABLE.bed -statsOutput stdout |sort > mrna.out
 awk '$3>0.50{print $1}' mrna.out |sort > mrna.id
 awk '$2>=10 && $3>0.50{print $0}' estCoverage.out > est10.out
@@ -30,11 +25,9 @@ awk '{print $1}' splicedEst10.out |sort > splicedEst10.id
 
 join est10.id mrna.id > est10Mrna.id
 join est5.id mrna.id > est5Mrna.id
-#awk '{print $1}' est10Mrna.out |sort |uniq> est10Mrna.id
 grep -F -f est5.id ../$TABLE.bed >  pseudoEst5.bed
 cat mrna.id est10.id |sort |uniq > mrnaEst10.id
 cat mrna.id est5.id |sort |uniq > mrnaEst5.id
-#cat mrna.id est.id |sort |uniq > mrnaEst.id
 $SCRIPT/selectById -tsv 1 est5Mrna.id 4 ../$TABLE.bed > pseudoEst5AndMrna.bed
 $SCRIPT/selectById -tsv 1 est10Mrna.id 4 ../$TABLE.bed > pseudoEst10AndMrna.bed
 $SCRIPT/selectById -tsv 1 mrnaEst5.id 4 ../$TABLE.bed > pseudoEstMrna.filter.bed
