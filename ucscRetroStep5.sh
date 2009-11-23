@@ -59,7 +59,7 @@ fi
 
 grep -v -F -f zincKg.lst retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
 echo "before and after zinc finger filtering"
-cp retroMrnaInfoLessZnf.bed $TABLE.bed
+cp -f retroMrnaInfoLessZnf.bed $TABLE.bed
 wc -l retroMrnaInfo.raw.bed retroMrnaInfoLessZnf.bed $TABLE.bed
 cut -f 1-12 $TABLE.bed > retroMrnaInfo.12.bed
 textHistogram -col=5 $TABLE.bed -binSize=50 -maxBinCount=50
@@ -112,6 +112,7 @@ echo "calculate age of retros"
 for bed in retroMrnaInfoLessZnf retroMrnaInfo650 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 tawk '{print NF}' retroMrnaInfoLessZnf.bed |uniq
 
+exit
 echo "overlap with ests - use cluster jobs to speed this step"
 mkdir -p estSplit
 pslSplitOnTarget estFiltered.psl.gz estSplit
