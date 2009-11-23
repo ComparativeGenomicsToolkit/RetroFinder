@@ -117,7 +117,10 @@ mkdir -p estSplit
 pslSplitOnTarget estFiltered.psl.gz estSplit
 cd estSplit
 rm -f jobList
-for i in `ls *.psl` ; do echo overlapSelect $i ../retroMrnaInfoLessZnf.bed pseudoEst.${i%%.psl}.bed ; done >> jobList
+echo "#LOOP"> template
+echo "$HOME/baertsch/scripts/estStat.sh \$(root1)">>template
+echo "#ENDLOOP">> template
+awk '{print $1}' ../S1.len | gensub2 stdin single template jobList
 cd ..
 ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
 
