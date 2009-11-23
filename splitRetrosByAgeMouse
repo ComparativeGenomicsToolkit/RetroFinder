@@ -1,5 +1,5 @@
 #!/bin/bash
 # splitRetrosByAgeMouse input.bed ancient.bed recent.bed
 # humanNet column 32, dogNet column 54, ratNet column 31
-tawk '{ortho=($32+$54)/2}ortho==0{print $0}' $1 |sort -k5,5nr> $2
-tawk '{ortho=($32+$54)/2}ortho>0{print $0}' $1 |sort -k5,5nr> $3
+tawk '$32==0 && $54==0{print $0}' $1 |sort -k5,5nr> $2
+tawk '$32!=0 || $54!=0{print $0}' $1 |sort -k5,5nr> $3
