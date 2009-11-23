@@ -26,11 +26,11 @@ else
     else 
         for i in `cut -f 1 chrom.sizes` ;do hgsql $DB -N -B -e "select genoName , genoStart , genoEnd from ${i}_rmsk" >> rmsk.bed ; done  ; fi
 fi
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf from $NET1 " > \
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf from $NET1 where tName not like '%hap%'" > \
 $NET1.txt
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf from $NET2 " > \
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf from $NET2 where tName not like '%hap%'" > \
 $NET2.txt 
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf from $NET3 " > \
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf from $NET3 where tName not like '%hap%'" > \
 $NET3.txt 
 hgsql $DB -N -B -e "select chrom, chromStart, chromEnd from simpleRepeat" > simpleRepeat.bed 
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE1 order by chrom, txStart, txEnd" | sort -k2,2 -k4,4n > $GENE1.tab
