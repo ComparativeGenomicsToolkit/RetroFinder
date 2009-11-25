@@ -112,7 +112,6 @@ echo "calculate age of retros"
 for bed in retroMrnaInfoLessZnf retroMrnaInfo650 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 tawk '{print NF}' retroMrnaInfoLessZnf.bed |uniq
 
-exit
 echo "overlap with ests - use cluster jobs to speed this step"
 mkdir -p estSplit
 pslSplitOnTarget estFiltered.psl.gz estSplit
