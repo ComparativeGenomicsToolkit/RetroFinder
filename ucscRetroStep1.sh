@@ -7,7 +7,6 @@ else
        exit 3
 fi
 source $1
-#cd $MRNABASE
 echo running mrna alignment against $DB
 #align mrnas to $DB using lastz
 mkdir -p $TMPMRNA
