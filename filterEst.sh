@@ -34,7 +34,7 @@ echo "#LOOP" > template
 echo "pslCDnaGenomeMatch \$(path1) S1.len $OUTDIR/est.2bit $NIB $OUTDIR/estOutput/\$(file1).filter.psl -score=$OUTDIR/estLog/\$(file1).mrnaMatch.tab -bedOut=$OUTDIR/estLog/\$(file1).mrnaMis.bed -minDiff=5" >> template
 echo "#ENDLOOP" >> template
 gensub2 list single template spec
-ssh $CLUSTER -T "cd $OUTDIR/run.est ; para make spec"
+ssh $CLUSTER -T "cd $OUTDIR/run.est ; /parasol/bin/para make spec"
 cd ..
 cat est.qName.single.psl $OUTDIR/estOutput/* | sort -k14,14 -k16,16n > $OUTDIR/estFiltered.psl
 gzip estFiltered.psl
