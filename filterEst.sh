@@ -31,7 +31,7 @@ mkdir -p run.est
 cd run.est
 ls ../est/*psl > list
 echo "#LOOP" > template
-echo "pslCDnaGenomeMatch \$(path1) S1.len $OUTDIR/est.2bit $NIB $OUTDIR/estOutput/\$(file1).filter.psl -score=$OUTDIR/estLog/\$(file1).mrnaMatch.tab -bedOut=$OUTDIR/estLog/\$(file1).mrnaMis.bed -minDiff=5" >> template
+echo "/cluster/home/baertsch/bin/x86_64/pslCDnaGenomeMatch \$(path1) S1.len $OUTDIR/est.2bit $NIB $OUTDIR/estOutput/\$(file1).filter.psl -score=$OUTDIR/estLog/\$(file1).mrnaMatch.tab -bedOut=$OUTDIR/estLog/\$(file1).mrnaMis.bed -minDiff=5" >> template
 echo "#ENDLOOP" >> template
 gensub2 list single template spec
 ssh $CLUSTER -T "cd $OUTDIR/run.est ; /parasol/bin/para make spec"
