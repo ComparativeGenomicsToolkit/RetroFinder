@@ -3,7 +3,7 @@ set -beEu -o pipefail
 SEQ=$1
 source $2
 CACHE=$OUTDIR
-TMP=/scratch/tmp/retro.$$
+TMP=/scratch/tmp/retro.$$.$LOGNAME
 mkdir -p $TMP
 cd $TMP
 rm -f $LOG/pseudo$1.log
