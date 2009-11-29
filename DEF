@@ -35,3 +35,4 @@ PFAM=knownToPfam
 PFAMIDFIELD=name
 PFAMDOMAIN=value
 SPLITBYAGE=splitRetrosByAge
+PDB=proteins090821
