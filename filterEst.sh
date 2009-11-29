@@ -4,8 +4,9 @@
 #
 set -beEu -o pipefail
 source $1
+for i in `cut -f 1 S1.len |grep -v random` ; do echo $i ; hgsql $DB -N -B -e "select * from ${i}_intronEst" |cut -f2-22 >> splicedEst.psl ; done
+gzip splicedEst.psl
 echo "starting estFilter.sh $1 for $DB"
-#for i in `chromsNoY` chrY chrM; do echo $i ; hgsql $DB -N -B -e "select * from ${i}_est" |cut -f2-22 >> est.psl ; done
 rm -f est.psl
 hgsql $DB -N -B -e "select acc from gbWarn" > gbWarn.id
 hgsql $DB -N -B -e "select * from all_est" |cut -f2-22 |grep -v -F -f gbWarn.id>> est.psl 
