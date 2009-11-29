@@ -118,7 +118,7 @@ pslSplitOnTarget estFiltered.psl.gz estSplit
 cd estSplit
 rm -f jobList
 echo "#LOOP"> template
-echo "$HOME/baertsch/scripts/estStat.sh \$(root1)">>template
+echo "$SCRIPT/estStat.sh \$(root1)">>template
 echo "#ENDLOOP">> template
 awk '{print $1}' ../S1.len | gensub2 stdin single template jobList
 cd ..
