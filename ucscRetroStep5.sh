@@ -75,6 +75,7 @@ hgsql $DB -e "alter table retroMrnaInfoXX set kaku = 0;"
 hgsql $DB -e "alter table retroMrnaInfoXX rename $TABLE;"
 hgLoadPsl $DB $ALIGN.psl
 
+zcat cds.tab.gz |tawk '{print $1"."$2,$3}' > ucscRetroCds.tab 
 hgLoadSqlTab $DB ucscRetroCds ~/kent/src/hg/lib/ucscRetroCds.sql ucscRetroCds.tab
 
 ####################
