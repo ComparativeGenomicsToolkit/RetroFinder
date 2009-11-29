@@ -13,6 +13,7 @@ cat ../estSplit/pseudoEst.*.bed > ../pseudoEstAll.bed
 cat ../estSplit/est.*.id > est.id
 cat ../estSplit/stat.*.out > stat.out
 cat ../estSplit/statagg.*.out |sort |grep -v "#"> statagg.out
+awk '{print $1}' stat.out |uniq -c |awk '{print $2,$1}' |sort> estCount.out
 join estCount.out statagg.out > estCoverage.out
 overlapSelect ../all_mrnaFiltered.psl.gz ../$TABLE.bed -statsOutput stdout |sort > mrna.out
 zcat ../splicedEst.psl.gz |cut -f 10 |sort |uniq> splicedEst.id
