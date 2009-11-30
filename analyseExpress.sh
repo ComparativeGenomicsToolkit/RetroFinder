@@ -42,7 +42,6 @@ $SCRIPT/selectById -tsv 1 est10Mrna.id 4 ../$TABLE.bed > pseudoEst10AndMrna.bed
 $SCRIPT/selectById -tsv 1 mrnaEst5.id 4 ../$TABLE.bed > pseudoEstMrna.filter.bed
 $SCRIPT/selectById -tsv 1 mrnaEst5.id 4 ../$TABLE.bed > pseudoEst5Mrna.bed
 $SCRIPT/selectById -tsv 1 mrnaEst10.id 4 ../$TABLE.bed >  pseudoEst10Mrna.bed
-$SCRIPT/selectById -tsv 1 mrnaEst.id 4 ../$TABLE.bed > pseudoEstOrMrna.bed
 $SCRIPT/selectById -tsv 1 est5.id 4 ../$TABLE.bed > pseudoEst5.bed
 $SCRIPT/selectById -tsv 1 est10.id 4 ../$TABLE.bed > pseudoEst10.bed
 overlapSelect pseudoEst10Mrna.bed pseudoRefGeneCds.bed  est10MrnaRefSeq.bed
