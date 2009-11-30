@@ -50,75 +50,6 @@ wc -l *.id |sort -n
 overlapSelect ../refGene.tab.gz ../$TABLE.bed pseudoRefGene.bed -selectFmt=genePred
 
 #regenerate gene predictions from expressed retros
-wc -l ../pseudoEstAll.bed
-tawk '$5 > 600 && $2 > 25{$2=$2-25; $3=$3+25;print $0}$5 > 600 && $2 <= 25{ $3=$3+25;print $0}' pseudoEstOrMrna.bed > pseudoEstOrMrna600.bed
-echo "orfBatch $DB pseudoEstOrMrna600.bed pseudoEstOrMrna600.out pseudoEstOrMrna600.gp to borf.out"
-/cluster/home/baertsch/bin/i386/orfBatch $DB pseudoEstOrMrna600.bed pseudoEstOrMrna600.out pseudoEstOrMrna600.gp >borf.out
-echo "genePredSingleCover pseudoEstOrMrna600.gp pseudoEstOrMrna600.single.gp"
-genePredSingleCover pseudoEstOrMrna600.gp pseudoEstOrMrna600.single.gp
-awk '{print "mrna."$1}' pseudoEstOrMrna600.single.gp |sort > pseudoEstOrMrna600.ids
-echo "predicted orfs from retros"
-wc -l pseudoEstOrMrna600.single.gp
-
-
-#tawk '{print $3-$2}' ../pseudoGeneLinkNoOverlapFilter.bed > lengthAll.txt
-#tawk '{print $4"."$1"."$2,$0}' ../pseudoGeneLinkNoOverlapFilter.bed > pseudoJoin.bed
-#tawk '$14 == "expressed"{print $3-$2}' ../pseudoGeneLinkNoOverlapFilter.bed > lengthExp.txt
-#tawk '$14 != "expressed"{print $3-$2}' ../pseudoGeneLinkNoOverlapFilter.bed > lengthNonExp.txt
-#tawk '$14 == "expressed"{print $1,$2,$3,$4"."$1"."$2,$5,$6}' ../pseudoGeneLinkNoOverlapFilter.bed | sort -k5,5nr >pseudoExpressed.bed
-#tawk '$14 != "expressed"{print $1,$2,$3,$4"."$1"."$2,$5,$6}' ../pseudoGeneLinkNoOverlapFilter.bed | sort -k5,5nr >pseudoNotExpressed.bed
-#overlapSelect /san/sanvol1/scratch/pseudo/hg18/sortedKnownGene.tab.gz pseudoExpressed.bed -selectFmt=genePred -inFmt=bed exp.bed -nonOverlapping -selectCds
-#tawk '{$2=$2-2000;$3=$3+2000;print $0}' exp.bed > expWindow.bed
- 
-#tawk 'BEGIN{print "name","Parent","score","child","parent","Spliced","knownGene"}' > exp.label
-#tawk '$14 == "expressed"{print $4"."$1"."$2,$41,$5,$1,$16,$24"/"$20,$47}' ../pseudoGeneLinkNoOverlapFilter.bed | sort -k5,5nr >>exp.label
-#~markd/bin/bedToHtmlDir -no-sort -dir-frame-per 25 -title "expressed retroGenes not overlapping refSeq" -label-tsv exp.label -browser-url http://hgwdev-baertsch.cse.ucsc.edu hg18 exp.bed ~/.html/expressed
-#tawk '$14=="expressed"{print $0}' ../pseudoGeneLinkNoOverlapFilter.bed > pseudoGeneLinkExpressed.bed
-
-#orfBatch hg18 pseudoGeneLinkExpressed.bed expOut.bed pseudoExpressed.genePred > borf.tab
-#gene-check  -nib-dir $NIB -incl-ok pseudoExpressed.genePred check.rdb 
-#sort check.rdb > check.rdb.sort
-#awk '{print "update pseudoGeneLink set thickStart = "$7", thickEnd = "$8" , posConf = "$55" where chrom = \""$1"\" and chromStart = \""$2"\" and chromEnd = \""$3"\";"}' expOut.bed >updateExp.sql
-##hgsql hg18 -N -B < deleteExp.sql
-#tawk 'BEGIN{print "name","mRNA","Parent","score","child","parent","Spliced","knownGene","borf score","strand","orf st","orf","problem"}' > expOrf.label
-#tawk '{print $4"."$1"."$2,$4,$41,$5,$1,$16,$24"/"$20,$47,$55,$6}' expOut.bed | sort | \
-#  join - check.rdb.sort -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,2.5,2.6,2.13 | \
-#  awk '{OFS="\t";$1=$1;print $0}' | sort -k4,4nr >>expOrf.label
-#~markd/bin/bedToHtmlDir -dir-below -no-sort -dir-frame-per 25 -title "expressed retroGenes " -label-tsv expOrf.label -browser-url http://hgwdev-baertsch.cse.ucsc.edu hg18 expWindow.bed ~/.html/expressedOrf
-#overlapSelect notMacaca.bed pseudoExpressed.bed pseudoNotMacaca.bed -overlapThreshold=0.80
-#~markd/bin/bedToHtmlDir -no-sort -title "Expressed retroGene not in macaca" -browser-url http://genome-test.cse.ucsc.edu hg18 pseudoNotMacaca.bed ~/.html/notMacaca
-
-#HUMAN SPECIFIC
-#overlapSelect chimpDels.bed pseudoExpressed.bed retroHumExp.bed
-#overlapSelect chimpDels.bed pseudoNotExpressed.bed retroHumNotExp.bed
-#tawk '{print $1,$2,$3}' retroHumExp.bed > retroHumExp.id
-#grep -F -f retroHumExp.id pseudoExpressedLong.bed > retroHumLongExp.bed  
-#overlapSelect indelible.txt pseudoExpressed.bed retroHumanKrish.bed -selectFmt=bed
-#tawk '{print $1,$2,$3}' retroHumanKrish.bed > retroHumanKrish.id
-#grep -F -f retroHumanKrish.id pseudoExpressedLong.bed > retroHumLongKrish.bed  
-
-#MACACA SPECIFIC
-#for i in `ls /cluster/bluearc/macaca/axtRecipBest3/*.axt` ;do b=`basename $i` ; echo $b; axtToBed $i ${b%%.axt}_macaca.bed ; done   
-
-#HIGH CONF PRIMATE RETRO
-#cat ../pseudoGeneLinkNoOverlapFilter.bed  | \
-#    tawk '$35 > 700 && $5 > 425 && $14 == "expressed" && $24 > 1{print $0}'  | sort -k5,5n > retroPrimateExpressed.bed
-#orfBatch hg18 retroPrimateExpressed.bed expPrimate.bed retroPrimateExpressed.genePred > borfPrimate.tab
-#echo gene-check  -nib-dir $NIB retroPrimateExpressed.genePred checkPrimate.rdb 
-#gene-check  -nib-dir $NIB retroPrimateExpressed.genePred checkPrimate.rdb 
-#sort checkPrimate.rdb > checkPrimate.rdb.sort
-#tawk 'BEGIN{print "name","mRNA","Parent","score","child","parent","Spliced","knownGene","borf score","strand","orf st","orf","problem"}' > retroPrimateExpressed.label
-#tawk '{print $4"."$1"."$2,$4,$41,$5,$1,$16,$24"/"$20,$47,$55,$6}' retroPrimateExpressed.bed | sort | \
-#  join - checkPrimate.rdb.sort -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,2.5,2.6,2.13 | \
-#  awk '{OFS="\t";$1=$1;print $0}' | sort -k4,4nr >>retroPrimateExpressed.label 
-#
-
-##### new set
-
-# look for orf in bigger window around retro
-
-#echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
-#ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab
 
 #set with 1 or more EST (tight)
 tawk '$2>50{$2=$2-50; $3=$3+50;print $0}$2<=50{$3=$3+50;print $0}' ../pseudoEstAll.bed > pseudoEstAll.bed
@@ -128,7 +59,6 @@ echo gene-check  -nib-dir $NIB pseudoEstAll.gp checkEst.rdb
 ~markd/compbio/genefinding/GeneTools/bin/x86_64/opt/gene-check  -genome-seqs $NIB pseudoEstAll.gp checkEst.rdb
 awk '$7=="ok"&& $25=="noStart" || $25==""{print $1}' checkEst.rdb > goodOrf.list
 
-#fgrep -f goodOrf.list pseudoEstAll.out > pseudoEstAll.good.out
 $SCRIPT/selectById -tsv 1 goodOrf.list 4 pseudoEstAll.out > pseudoEstAll.good.out
 
 echo "histogram of best.orf scores"
@@ -137,19 +67,19 @@ awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"e
 head updateExp.sql
 echo "hgsql $DB updateExp.sql"
 hgsql $DB < updateExp.sql
-#set with 5Est and 1spliced mRNA
+
+#set with 5 Est and 1 spliced mRNA
 tawk '$2>50{$2=$2-50; $3=$3+50;print $0}$2<=50{$3=$3+50;print $0}' pseudoEst5AndMrna.bed > pseudoEst5AndMrna.window.bed
 orfBatch $DB pseudoEst5AndMrna.window.bed pseudoEst5AndMrna.out pseudoEst5AndMrna.gp > borfEst5AndMrna.out
 echo gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 ~markd/compbio/genefinding/GeneTools/bin/x86_64/opt/gene-check  -genome-seqs $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 tawk '$7=="ok" && $25=="noStart" || $25==""{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
-#tawk '$6=="ok"&& $7=="ok"{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
-#fgrep -f goodOrf5AndMrna.list pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
 $SCRIPT/selectById -tsv 1 goodOrf5AndMrna.list 4 pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
 awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed strong\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEst5AndMrna.good.out > updateExp5.sql
 head updateExp5.sql
 echo "hgsql $DB  updateExp5.sql"
 hgsql $DB < updateExp5.sql
+
 #bad orfs
 awk '$6!="ok"|| $7!="ok" || ($7=="ok" && $25!="noStart"&& $25!=""){print $1}' checkEst.rdb > badOrf.list
 awk '{print "update '$TABLE' set type = \"expressed weak noOrf\" where name = \""$1"\" ;"}' badOrf.list> updateBad.sql
@@ -158,7 +88,6 @@ awk '$6!="ok"|| $7!="ok" || ($7=="ok" && $25!="noStart"&& $25!=""){print $1}' ch
 awk '{print "update '$TABLE' set type = \"expressed strong noOrf\" where name = \""$1"\" ;"}' badOrf5.list> updateBad5.sql
 hgsql $DB < updateBad5.sql
 
-#fgrep -f goodOrf.list pseudoEstAll.gp > pseudoExpressed.gp
 $SCRIPT/selectById -tsv 1 goodOrf.list 1 pseudoEstAll.gp > pseudoExpressed.gp
 echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
 ldHgGene $DB ucscRetroExpressed pseudoExpressed.gp -genePredExt -predTab
@@ -177,6 +106,8 @@ overlapSelect pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.b
 #split retros by age
 
 for bed in pseudoRefGene pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudo5Est100AA pseudoEst5AndMrna100AA pseudoRefGeneCds pseudoRefGeneCds50 shuffleEns shuffleEnsMulti ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
+
+#retros involved in alt-splicing
 
 if [[ -n $ALTSPLICE ]] 
 then
