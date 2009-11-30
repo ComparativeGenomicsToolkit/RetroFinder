@@ -4,11 +4,21 @@
 #
 set -beEu -o pipefail
 source $1
-for i in `cut -f 1 S1.len |grep -v random` ; do echo $i ; hgsql $DB -N -B -e "select * from ${i}_intronEst" |cut -f2-22 >> splicedEst.psl ; done
+hgsql $DB -N -B -e "select acc from gbWarn" > gbWarn.id
+if [[ $SPLIT_SPLICED_EST == 1 ]] ; then
+    for chr in `cut -f 1 S1.len |grep -v random` ; do echo $chr ; hgsql $DB -N -B -e "select * from ${chr}_$SPLICED_EST" |cut -f2-22 |grep -v -F -f gbWarn.id>> splicedEst.psl ; done
+else
+    hgsql $DB -N -B -e "select * from $SPLICED_EST" |cut -f2-22 |grep -v -F -f gbWarn.id> splicedEst.psl 
+fi
+rm -f splicedEst.psl.gz
 gzip splicedEst.psl
 echo "starting estFilter.sh $1 for $DB"
 rm -f est.psl
-hgsql $DB -N -B -e "select acc from gbWarn" > gbWarn.id
+if [[ $SPLIT_EST == 1 ]] ; then
+    for chr in `cut -f 1 S1.len |grep -v random` ; do echo $chr ; hgsql $DB -N -B -e "select * from ${chr}_$EST" |cut -f2-22 |grep -v -F -f gbWarn.id>> est.psl ; done
+else
+    hgsql $DB -N -B -e "select * from $EST" |cut -f2-22 |grep -v -F -f gbWarn.id> est.psl 
+fi
 hgsql $DB -N -B -e "select * from all_est" |cut -f2-22 |grep -v -F -f gbWarn.id>> est.psl 
 tawk '{print $10}' est.psl|sort |uniq > est.list &
 cat est.psl |sort -k10,10> est.qName.psl
