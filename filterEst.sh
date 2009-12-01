@@ -47,7 +47,7 @@ echo "#ENDLOOP" >> template
 gensub2 list single template spec
 ssh $CLUSTER -T "cd $OUTDIR/run.est ; /parasol/bin/para make spec"
 cd ..
-cat est.qName.single.psl $OUTDIR/estOutput/* | sort -k14,14 -k16,16n > $OUTDIR/estFiltered.psl
+find est.qName.single.psl $OUTDIR/estOutput -name '*.psl' |xargs cat| | sort -k14,14 -k16,16n > $OUTDIR/estFiltered.psl
 gzip estFiltered.psl
 #mkdir -p $OUTDIR/estSplit
 #pslSplitOnTarget est.psl estSplit
