@@ -37,17 +37,19 @@ echo "</THEAD><TBODY>" >> $ROOTDIR/retro/type1_2009/index.html
 $SCRIPT/makeHtmlRightDb.sh $DEF ../retroMrnaInfoLessZnf.bed type1_2009/all510 expressedAndNonExpressedScore510;
 $SCRIPT/makeHtmlRightDb.sh $DEF ../retroMrnaInfo650.bed type1_2009/all650 expressedAndNonExpressedScore650;
 #$SCRIPT/makeHtmlRightDb.sh $DEF pseudoExpressedAll.bed type1_2009/expressedAll510 expressedAll510;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstMrna.filter.bed type1_2009/estMrna expressedMrnaOrEst510;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstAll.bed type1_2009/est expressedEst510;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoExpressed.bed type1_2009/estOrf estGoodOrf600;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5Mrna.bed type1_2009/est5Mrna expressedEst5orMoreOrMrna;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5.bed type1_2009/est5 expressedEst5orMore;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5AndMrna.bed type1_2009/est5AndMrna expressedEst5orMoreAndMrna;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst100AA.bed type1_2009/estOrf100 estGoodOrfBigger100aa.score600;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudo5Est100AA.bed type1_2009/5estOrf100 5estGoodOrfBigger100aa.score600;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5AndMrna100AA.bed type1_2009/5estAndMrnaOrf100 5estAndMrnaGoodOrfBigger100aa.score600;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstMrna.filter.bed type1_2009/estMrna atLeastOneEstOrMrna;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstAll.bed type1_2009/est atLeastOneEst;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoExpressed.bed type1_2009/estOrf atLeastOneEstGoodOrf
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstOrMrna600.bed type1_2009/estorMrna600 oneEstOrMrnaScore600;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5Mrna.bed type1_2009/est5Mrna 5EstOrMrna;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5.bed type1_2009/est5 5Est;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5AndMrna.bed type1_2009/5estAndMrna 5EstAndMrna;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst100AA.bed type1_2009/estOrf100 1EstGoodOrfBigger100aa;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudo5Est100AA.bed type1_2009/5estOrf100 5estGoodOrfBigger100aa;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5AndMrna100AA.bed type1_2009/5estAndMrnaOrf100 5estAndMrnaGoodOrfBigger100aa;
 $SCRIPT/makeHtmlRightDb.sh $DEF retroArray.bed type1_2009/gnfAtlas2 gnfAtlas2;
 $SCRIPT/makeHtmlRightDb.sh $DEF retroSplice.bed type1_2009/retroSplice Splice;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudoRefGene.bed type1_2009/refSeqAll refSeqAll;
 echo "</tbody>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</table>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</body>" >> $ROOTDIR/retro/type1_2009/index.html
