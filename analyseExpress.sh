@@ -92,7 +92,7 @@ $SCRIPT/selectById -tsv 1 goodOrf.list 1 pseudoEstAll.gp > pseudoExpressed.gp
 echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
 ldHgGene $DB ucscRetroExpressed pseudoExpressed.gp -genePredExt -predTab
 genePredToBed pseudoExpressed.gp > pseudoTmp.bed
-$SCRIPT/selectById -tsv 1 goodOrf.list 4 ../$TABLE.bed > pseudoExpressed.bed
+$SCRIPT/selectById -tsv 1 goodOrf.list 4 pseudoEstAll.bed > pseudoExpressed.bed
 echo "length histogram of coding region"
 awk '{print $7-$6}' pseudoExpressed.gp|textHistogram stdin -maxBinCount=100 -binSize=50
 
@@ -105,7 +105,7 @@ overlapSelect pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.b
 
 #split retros by age
 
-for bed in pseudoRefGene pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudo5Est100AA pseudoEst5AndMrna100AA pseudoRefGeneCds pseudoRefGeneCds50 shuffleEns shuffleEnsMulti ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
+for bed in pseudoRefGene pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudoEstOrMrna600 pseudo5Est100AA pseudoEst5AndMrna100AA pseudoRefGeneCds pseudoRefGeneCds50 shuffleEns shuffleEnsMulti ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 
 #retros involved in alt-splicing
 
