@@ -71,7 +71,7 @@ hgLoadBed $DB -verbose=9 -allowNegativeScores -noBin retroMrnaInfoXX -sqlTable=/
 hgsql $DB -e "drop table if exists $TABLE;"
 # kaku is no longer being used and some values are not loaded correctly
 # as represented in exponential notation so they get replaced by inf.
-hgsql $DB -e "alter table retroMrnaInfoXX set kaku = 0;"
+hgsql $DB -e "update retroMrnaInfoXX set kaku = 0;"
 hgsql $DB -e "alter table retroMrnaInfoXX rename $TABLE;"
 hgLoadPsl $DB $ALIGN.psl
 
