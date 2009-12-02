@@ -17,7 +17,6 @@ for db in `echo $SPECIES` ; do echo "<TH>$db Ancient</TH><TH>$db Recent</TH>" >>
 echo "</TR>" >> $ROOTDIR/retro/shuffle2009/index.html
 echo "</THEAD><TBODY>" >> $ROOTDIR/retro/shuffle2009/index.html
 echo "$SCRIPT/makeHtmlRightDb.sh $DEF pseudoRefGeneCds.bed shuffle2009/shuffle refSeqShuffle;"
-$SCRIPT/makeHtmlRightDb.sh $DEF retroShuffleGood.bed shuffle2009/shuffleGood shuffleGood;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoRefGeneCds.bed shuffle2009/shuffle refSeqShuffle;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoRefGeneCds50.bed shuffle2009/shuffle50 refSeq50%Shuffle;
 $SCRIPT/makeHtmlRightDb.sh $DEF shuffleEns.bed shuffle2009/shuffleEnd shuffleEns;
@@ -40,7 +39,6 @@ $SCRIPT/makeHtmlRightDb.sh $DEF ../retroMrnaInfo650.bed type1_2009/all650 expres
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstMrna.filter.bed type1_2009/estMrna atLeastOneEstOrMrna;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstAll.bed type1_2009/est atLeastOneEst;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoExpressed.bed type1_2009/estOrf atLeastOneEstGoodOrf
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoEstOrMrna600.bed type1_2009/estorMrna600 oneEstOrMrnaScore600;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5Mrna.bed type1_2009/est5Mrna 5EstOrMrna;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5.bed type1_2009/est5 5Est;
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5AndMrna.bed type1_2009/5estAndMrna 5EstAndMrna;
