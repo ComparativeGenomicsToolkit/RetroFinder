@@ -2,12 +2,26 @@
 set -beEu -o pipefail
 source $1
 echo '-------- script analyseExpress.sh -------------------'
+#expression according to knownGene
 hgsql $PDB -N -B -e "select * from hgncXref " > hgncXref.tab
-overlapSelect ../$GENE2.multiCds.bed ../$TABLE.bed pseudoRefGeneCds.bed
-overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed -statsOutput pseudoRefGeneCds.out
-overlapSelect ../$GENE2.multiCds.bed ../retroMrnaInfo.12.bed pseudoRefGeneCds50.bed -overlapThreshold=0.50
-overlapSelect -selectFmt=genePred ../$GENE2.tab.gz pseudoRefGeneCds.bed shuffleEns.bed
-overlapSelect -selectFmt=genePred ../$GENE2.multiCDSExon.genePred pseudoRefGeneCds.bed shuffleEnsMulti.bed
+hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'coding'" > kgCoding.gp
+hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'noncoding'" > kgNoncoding.gp
+hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'nearcoding'" > kgNearcoding.gp
+hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'antisense'" > kgAntisense.gp
+for i in Coding Noncoding Nearcoding Antisense ; do overlapSelect kg${i}.gp ../$TABLE.bed retroKg${i}.bed; $SPLITBYAGE retroKg${i}.bed retroKg${i}.ancient.bed retroKg${i}.recent.bed; done
+# exon shuffling
+overlapSelect ../${GENE1}.multiCds.bed ../$TABLE.bed pseudo${GENE1}Cds.bed
+overlapSelect ../${GENE1}.multiCds.bed ../retroMrnaInfo.12.bed -statsOutput pseudo${GENE1}Cds.out
+overlapSelect ../${GENE1}.multiCds.bed ../retroMrnaInfo.12.bed pseudo${GENE1}Cds50.bed -overlapThreshold=0.50
+overlapSelect ../${GENE2}.multiCds.bed ../$TABLE.bed pseudo${GENE2}Cds.bed
+overlapSelect ../${GENE2}.multiCds.bed ../retroMrnaInfo.12.bed -statsOutput pseudo${GENE2}Cds.out
+overlapSelect ../${GENE2}.multiCds.bed ../retroMrnaInfo.12.bed pseudo${GENE2}Cds50.bed -overlapThreshold=0.50
+overlapSelect -selectFmt=genePred ../${GENE2}.tab.gz pseudo${GENE2}Cds.bed shuffleEns.bed
+overlapSelect -selectFmt=genePred ../${GENE2}.multiCDSExon.genePred pseudo${GENE2}Cds.bed shuffleEnsMulti.bed
+
+for i in ${GENE1}Cds ${GENE2}Cds ${GENE1}Cds50 ${GENE2}Cds50 ; do $SPLITBYAGE pseudo${i}.bed pseudo${i}.ancient.bed pseudo${i}.recent.bed ; done
+
+# expression analysis based on mrna and est overlap
 # grab results of cluster job
 cat ../estSplit/pseudoEst.*.bed > ../pseudoEstAll.bed
 cat ../estSplit/est.*.id > est.id
@@ -25,8 +39,10 @@ join splicedEstCount.out splicedagg.out > splicedEstCoverage.out
 awk '$3>0.50{print $1}' mrna.out |sort > mrna.id
 awk '$2>=10 && $3>0.50{print $0}' estCoverage.out > est10.out
 awk '$2>=5 && $3>0.50{print $0}' estCoverage.out > est5.out
+awk '$2>=1 && $3>0.50{print $0}' estCoverage.out > est.out
 awk '$2>=5 && $3>0.50{print $0}' splicedEstCoverage.out > splicedEst5.out
 awk '$2>=10 && $3>0.50{print $0}' splicedEstCoverage.out > splicedEst10.out
+awk '{print $1}' est.out |sort > est1.id
 awk '{print $1}' est5.out |sort > est5.id
 awk '{print $1}' est10.out |sort > est10.id
 awk '{print $1}' splicedEst5.out |sort > splicedEst5.id
@@ -37,9 +53,10 @@ join est5.id mrna.id > est5Mrna.id
 grep -F -f est5.id ../$TABLE.bed >  pseudoEst5.bed
 cat mrna.id est10.id |sort |uniq > mrnaEst10.id
 cat mrna.id est5.id |sort |uniq > mrnaEst5.id
+cat mrna.id est1.id |sort |uniq > mrnaEst1.id
 $SCRIPT/selectById -tsv 1 est5Mrna.id 4 ../$TABLE.bed > pseudoEst5AndMrna.bed
 $SCRIPT/selectById -tsv 1 est10Mrna.id 4 ../$TABLE.bed > pseudoEst10AndMrna.bed
-$SCRIPT/selectById -tsv 1 mrnaEst5.id 4 ../$TABLE.bed > pseudoEstMrna.filter.bed
+$SCRIPT/selectById -tsv 1 mrnaEst1.id 4 ../$TABLE.bed > pseudoEstMrna.filter.bed
 $SCRIPT/selectById -tsv 1 mrnaEst5.id 4 ../$TABLE.bed > pseudoEst5Mrna.bed
 $SCRIPT/selectById -tsv 1 mrnaEst10.id 4 ../$TABLE.bed >  pseudoEst10Mrna.bed
 $SCRIPT/selectById -tsv 1 est5.id 4 ../$TABLE.bed > pseudoEst5.bed
@@ -105,7 +122,7 @@ overlapSelect pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.b
 
 #split retros by age
 
-for bed in pseudoRefGene pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudoEstOrMrna600 pseudo5Est100AA pseudoEst5AndMrna100AA pseudoRefGeneCds pseudoRefGeneCds50 shuffleEns shuffleEnsMulti ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
+for bed in pseudoRefGene pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudo5Est100AA pseudoEst5AndMrna100AA pseudo${GENE1}Cds pseudo${GENE1}Cds50 pseudo${GENE2}Cds pseudo${GENE2}Cds50 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 
 #retros involved in alt-splicing
 
