@@ -43,12 +43,13 @@ then
     hgsql $DB -N -B -e "select  k.name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENEPFAM k, $PFAM p \
                 where k.name = p.$PFAMIDFIELD and p.$PFAMDOMAIN in (\
             'PF00096', 'PF01352', 'PF06758', 'PF00047', 'PF07654'  );" > zincKg.gp
-    cut -f 1 zincKg.gp |sort | uniq > zincKg.lst
-    echo "Zinc fingers excluded"
-    wc -l zincKg.gp zincKg.lst
-
     echo zcat $GENEPFAM.tab.gz to  $GENEPFAM.tab
     zcat $GENEPFAM.tab.gz > $GENEPFAM.tab
+    overlapSelect zincKg.gp $GENEPFAM.tab zincKg2.gp -inFmt=genePred
+    cut -f 1 zincKg2.gp |sort | uniq > zincKg.lst
+    echo "Zinc fingers excluded"
+    wc -l zincKg2.gp zincKg.lst
+
     echo "$SCRIPT/selectById 1 zincKg.lst 4 $GENEPFAM.tab to kgZnf.gp"
     $SCRIPT/selectById 1 zincKg.lst 1 $GENEPFAM.tab > kgZnf.gp
 else
@@ -57,7 +58,8 @@ echo "skipping zinc finger and immunoglobin filtering"
 fi
 
 
-grep -v -F -f zincKg.lst retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
+$SCRIPT/selectById 1 zincKg.lst 47 retroMrnaInfo.raw.bed > retroMrnaInfoZnf.bed
+$SCRIPT/selectById -not 1 zincKg.lst 47 retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
 echo "before and after zinc finger filtering"
 cp -f retroMrnaInfoLessZnf.bed $TABLE.bed
 wc -l retroMrnaInfo.raw.bed retroMrnaInfoLessZnf.bed $TABLE.bed
@@ -96,15 +98,12 @@ wc -l $GENE1.multiCDSExon.genePred $GENE2.multiCDSExon.genePred $GENE1.multiCDSE
 echo "cat $GENE1.multiCDSExon.genePred $GENE2.multiCDSExon.genePred $GENE3.multiCDSExon.genePred to  all.multiCds.gp"
 cat $GENE1.multiCDSExon.genePred $GENE2.multiCDSExon.genePred $GENE3.multiCDSExon.genePred > all.multiCds.gp
 
-echo "ldHgGene $DB rbRefGeneMulti $GENE2.multiCDSExon.genePred -predTab"
-ldHgGene $DB rbRefGeneMulti $GENE2.multiCDSExon.genePred -predTab
-featureBits $DB $GENE2:cds -bed=$GENE2.cds.bed
-featureBits $DB rbRefGeneMulti;
-#52619505 bases of 2881515245 (1.826%) in intersection
-featureBits $DB $GENE2;     
-#54738314 bases of 2881515245 (1.900%) in intersection
-featureBits $DB rbRefGeneMulti $GENE2.cds.bed -bed=$GENE2.multiCds.bed 
-#29845142 bases of 2881515245 (1.036%) in intersection
+ldHgGene $DB rb${GENE1}Multi ${GENE1}.multiCDSExon.genePred -predTab;
+ldHgGene $DB rb${GENE2}Multi ${GENE2}.multiCDSExon.genePred -predTab;
+featureBits $DB ${GENE1}:cds -bed=$GENE1.cds.bed;
+featureBits $DB ${GENE2}:cds -bed=$GENE2.cds.bed;
+featureBits $DB rb${GENE1}Multi $GENE1.cds.bed -bed=$GENE1.multiCds.bed ;
+featureBits $DB rb${GENE2}Multi $GENE2.cds.bed -bed=$GENE2.multiCds.bed ;
 
 pwd
 ls -l retroMrnaInfoLessZnf.bed 
