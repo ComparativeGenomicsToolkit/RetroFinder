@@ -16,11 +16,10 @@ echo "<TR><TH>data set</TH>" >> $ROOTDIR/retro/shuffle2009/index.html
 for db in `echo $SPECIES` ; do echo "<TH>$db Ancient</TH><TH>$db Recent</TH>" >> $ROOTDIR/retro/shuffle2009/index.html ; done
 echo "</TR>" >> $ROOTDIR/retro/shuffle2009/index.html
 echo "</THEAD><TBODY>" >> $ROOTDIR/retro/shuffle2009/index.html
-echo "$SCRIPT/makeHtmlRightDb.sh $DEF pseudoRefGeneCds.bed shuffle2009/shuffle refSeqShuffle;"
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoRefGeneCds.bed shuffle2009/shuffle refSeqShuffle;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoRefGeneCds50.bed shuffle2009/shuffle50 refSeq50%Shuffle;
-$SCRIPT/makeHtmlRightDb.sh $DEF shuffleEns.bed shuffle2009/shuffleEnd shuffleEns;
-$SCRIPT/makeHtmlRightDb.sh $DEF shuffleEnsMulti.bed shuffle2009/shuffleEnsMulti shuffleEnsMulti;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudo${GENE1}Cds.bed shuffle2009/kgshuffle ${GENE1}Shuffle;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudo${GENE1}Cds50.bed shuffle2009/kgshuffle50 ${GENE1}50%Shuffle;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudo${GENE2}Cds.bed shuffle2009/refseqshuffle ${GENE2}Shuffle;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudo${GENE2}Cds50.bed shuffle2009/refseqshuffle50 ${GENE2}50%Shuffle;
 echo "</tbody>" >> $ROOTDIR/retro/shuffle2009/index.html
 echo "</table>" >> $ROOTDIR/retro/shuffle2009/index.html
 echo "</body>" >> $ROOTDIR/retro/shuffle2009/index.html
@@ -33,6 +32,7 @@ echo "<TR><TH>data set</TH>" >> $ROOTDIR/retro/type1_2009/index.html
 for db in `echo $SPECIES` ; do echo "<TH>$db Ancient</TH><TH>$db Recent</TH>" >> $ROOTDIR/retro/type1_2009/index.html ; done
 echo "</TR>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</THEAD><TBODY>" >> $ROOTDIR/retro/type1_2009/index.html
+for i in Coding Noncoding Nearcoding Antisense ; do $SCRIPT/makeHtmlRightDb.sh $DEF retroKg${i}.bed type1_2009/known${i} known${i}; done
 $SCRIPT/makeHtmlRightDb.sh $DEF ../retroMrnaInfoLessZnf.bed type1_2009/all510 expressedAndNonExpressedScore510;
 $SCRIPT/makeHtmlRightDb.sh $DEF ../retroMrnaInfo650.bed type1_2009/all650 expressedAndNonExpressedScore650;
 #$SCRIPT/makeHtmlRightDb.sh $DEF pseudoExpressedAll.bed type1_2009/expressedAll510 expressedAll510;
@@ -52,5 +52,28 @@ echo "</tbody>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</table>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</body>" >> $ROOTDIR/retro/type1_2009/index.html
 echo "</html>" >> $ROOTDIR/retro/type1_2009/index.html
+
+echo " add following entry to trackDb.ra"
+echo ""
+echo "track ucscRetroAli$VERSION"
+echo "shortLabel Retroposed Genes $VERSION.0"
+echo "longLabel Retroposed Genes, Including Pseudogenes August 2009 [ucscRetroAli$VERSION]"
+echo "group genes"
+echo "type psl"
+echo "priority 37.14"
+echo "color 20,0,250"
+echo "visibility pack"
+echo "nextItemButton on"
+echo "retroMrnaInfo ucscRetroInfo$VERSION"
+echo "baseColorDefault diffCodons"
+echo "baseColorUseCds table ucscRetroCds"
+echo "baseColorUseSequence extFile ucscRetroSeq ucscRetroExtFile"
+echo "indelDoubleInsert on"
+echo "indelQueryInsert on"
+echo "showDiffBasesAllScales ."
+echo "showDiffBasesMaxZoom 10000.0"
+echo "showCdsAllScales ."
+echo "showCdsMaxZoom 10000.0"
+
 
 echo '-------- END script ucscRetroStep6.sh -------------------'
