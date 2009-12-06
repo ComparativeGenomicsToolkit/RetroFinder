@@ -21,13 +21,13 @@ mrnaToGene transMapAlnMRna.best.psl transMapAlnMRna.gp -cdsFile=mrnaCds.tab -ign
 mrnaToGene transMapAlnUcscGenes.psl transMapAlnUcscGenes.gp -cdsFile=kgCds.tab -ignoreUniqSuffix 2> error.ucsc
 mrnaToGene transMapAlnRefSeq.psl transMapAlnRefSeq.gp -cdsFile=refSeqCds.tab -ignoreUniqSuffix 2> error.refseq
 
-getRnaPred -cdsUpper panTro2 transMapAlnRefSeq.gp all refseqCds.fa ; tr acgt ACGT < refseqCds.fa > refseq.fa &
-getRnaPred -cdsUpper panTro2 transMapAlnUcscGenes.gp all ucscCds.fa ; tr acgt ACGT < ucscCds.fa > ucsc.fa &
-mkdir -p $OUTDIR/run.getmrna
-mkdir -p $OUTDIR/mrna.psl
+getRnaPred -cdsUpper $DB transMapAlnRefSeq.gp all refseqCds.fa ; tr acgt ACGT < refseqCds.fa > refseq.fa &
+getRnaPred -cdsUpper $DB transMapAlnUcscGenes.gp all ucscCds.fa ; tr acgt ACGT < ucscCds.fa > ucsc.fa &
+mkdir -p $MRNABASE/run.getmrna
+mkdir -p $MRNABASE/mrna.psl
 rm -f run.getmrna/jobList
-for chr in `cut -f1 $GENOME/$DB/chrom.sizes`; do echo "$SCRIPT/genePredToFa.sh ../DEF $chr " >>$OUTDIR/run.getmrna/jobList ;done
-ssh -T $CLUSTER "cd $OUTDIR/run.getmrna ; /parasol/bin/para -ram=4g make jobList"
+for chr in `cut -f1 $GENOME/$DB/chrom.sizes`; do echo "$SCRIPT/genePredToFa.sh ../DEF $chr " >>$MRNABASE/run.getmrna/jobList ;done
+ssh -T $CLUSTER "cd $MRNABASE/run.getmrna ; /parasol/bin/para -ram=4g make jobList"
 cat run.getmrna/mrnaCds*.fa > mrnaCds.fa
 cat run.getmrna/mrna.*.fa > mrna.fa
 awk -f $SCRIPT/stripversion.awk < mrna.psl/*.psl > transmap_mrna.psl
