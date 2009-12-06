@@ -9,6 +9,7 @@ hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.
 hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'nearcoding'" > kgNearcoding.gp
 hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'antisense'" > kgAntisense.gp
 for i in Coding Noncoding Nearcoding Antisense ; do overlapSelect kg${i}.gp ../$TABLE.bed retroKg${i}.bed; $SPLITBYAGE retroKg${i}.bed retroKg${i}.ancient.bed retroKg${i}.recent.bed; done
+echo "Exon Shuffling"
 # exon shuffling
 overlapSelect ../${GENE1}.multiCds.bed ../$TABLE.bed pseudo${GENE1}Cds.bed
 overlapSelect ../${GENE1}.multiCds.bed ../retroMrnaInfo.12.bed -statsOutput pseudo${GENE1}Cds.out
@@ -20,6 +21,8 @@ overlapSelect -selectFmt=genePred ../${GENE2}.tab.gz pseudo${GENE2}Cds.bed shuff
 overlapSelect -selectFmt=genePred ../${GENE2}.multiCDSExon.genePred pseudo${GENE2}Cds.bed shuffleEnsMulti.bed
 
 for i in ${GENE1}Cds ${GENE2}Cds ${GENE1}Cds50 ${GENE2}Cds50 ; do $SPLITBYAGE pseudo${i}.bed pseudo${i}.ancient.bed pseudo${i}.recent.bed ; done
+ls -l pseudo${GENE1}*.bed
+wc -l pseudo${GENE1}*.bed
 
 # expression analysis based on mrna and est overlap
 # grab results of cluster job
@@ -81,7 +84,6 @@ $SCRIPT/selectById -tsv 1 goodOrf.list 4 pseudoEstAll.out > pseudoEstAll.good.ou
 echo "histogram of best.orf scores"
 awk '{print $55}' pseudoEstAll.good.out |textHistogram stdin -maxBinCount=40 -binSize=10
 awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed weak\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEstAll.good.out > updateExp.sql
-head updateExp.sql
 echo "hgsql $DB updateExp.sql"
 hgsql $DB < updateExp.sql
 
@@ -93,7 +95,6 @@ echo gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 tawk '$7=="ok" && $25=="noStart" || $25==""{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
 $SCRIPT/selectById -tsv 1 goodOrf5AndMrna.list 4 pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
 awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed strong\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEst5AndMrna.good.out > updateExp5.sql
-head updateExp5.sql
 echo "hgsql $DB  updateExp5.sql"
 hgsql $DB < updateExp5.sql
 
@@ -104,6 +105,7 @@ hgsql $DB < updateBad.sql
 awk '$6!="ok"|| $7!="ok" || ($7=="ok" && $25!="noStart"&& $25!=""){print $1}' checkEst5AndMrna.rdb > badOrf5.list
 awk '{print "update '$TABLE' set type = \"expressed strong noOrf\" where name = \""$1"\" ;"}' badOrf5.list> updateBad5.sql
 hgsql $DB < updateBad5.sql
+wc -l update*.sql
 
 $SCRIPT/selectById -tsv 1 goodOrf.list 1 pseudoEstAll.gp > pseudoExpressed.gp
 echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
@@ -139,4 +141,4 @@ then
 fi
 
 echo '-------- END script analyseExpress.sh -------------------'
-echo '-------- run script ucscRetroStep6.sh to make Html pages -------------------'
+echo '------ run script ucscRetroStep6.sh to make Html pages -------------------'
