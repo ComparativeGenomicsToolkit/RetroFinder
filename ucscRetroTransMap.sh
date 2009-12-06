@@ -2,15 +2,13 @@
 # get mrnas from transmap if genbank not setup for this genome or native mRNA are scarse
 source DEF
 cd $MRNABASE
-hgsql $DB -N -B -e "select * from all_mrna" |cut -f2-22 > all_mrna.orig.psl
+hgsql $DB -N -B -e "select * from all_mrna" |cut -f2-22 > all_mrna.native.psl
 hgsql $DB -N -B -e "select * from transMapAlnMRna" |cut -f2-22 > transMapAlnMRna.psl
 hgsql $DB -N -B -e "select * from transMapAlnUcscGenes" |cut -f2-22 > transMapAlnUcscGenes.psl
 hgsql $DB -N -B -e "select * from transMapAlnRefSeq" |cut -f2-22 > transMapAlnRefSeq.psl
 sort -k10,10 transMapAlnMRna.psl >  transMapAlnMRna.qName.psl 
 awk -f ~/baertsch/scripts/stripextversion.awk < transMapAlnMRna.qName.psl > transMapAlnMRna.strip.psl 
 pslCDnaFilter -bestOverlap -maxAligns=1 transMapAlnMRna.strip.psl transMapAlnMRna.best.psl
-cat all_mrna.orig.psl transMapAlnMRna.best.psl transMapAlnRefSeq.psl > all_mrna.psl
-gzip all_mrna.psl
 
 hgsql hgFixed -N -B -e "select id, cds from transMapGeneMRna" > mrnaCds.tab
 hgsql hgFixed -N -B -e "select id, cds from transMapGeneUcscGenes" > kgCds.tab
@@ -32,6 +30,8 @@ for chr in `cut -f1 $GENOME/$DB/chrom.sizes`; do echo "$SCRIPT/genePredToFa.sh .
 ssh -T $CLUSTER "cd $OUTDIR/run.getmrna ; /parasol/bin/para -ram=4g make jobList"
 cat run.getmrna/mrnaCds*.fa > mrnaCds.fa
 cat run.getmrna/mrna.*.fa > mrna.fa
-cat mrna.psl/*.psl > mrna.psl
+awk -f $SCRIPT/stripversion.awk < mrna.psl/*.psl > transmap_mrna.psl
+cat all_mrna.native.psl transmap_mrna.psl transMapAlnRefSeq.psl > all_mrna.psl
+gzip all_mrna.psl
 
 wait
