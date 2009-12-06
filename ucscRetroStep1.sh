@@ -42,6 +42,7 @@ if [[ -s cds.tab.gz ]] ; then
 else
     hgsql $DB -N -B -e "select acc, version, name, type from refSeqAli a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" > cds.tab
     hgsql $DB -N -B -e "select acc, version, name, type from all_mrna a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" >> cds.tab
+    gzip cds.tab
 fi
 
 echo "cat mrna.fa refseq.fa output-to raw.fa"
