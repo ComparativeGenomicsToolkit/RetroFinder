@@ -40,9 +40,10 @@ then
     cat kgZnf.lst refZnf.lst kgImmuno.lst > bothZnf.lst
 
 # grap genes with pfam domains (zinc finger, immunoglobin, NBPF, and olfactory receptor
-    hgsql $DB -N -B -e "select  k.name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENEPFAM k, $PFAM p \
+    hgsql $DB -N -B -e "select  k.name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, \
+                exonStarts, exonEnds from $GENEPFAM k, $PFAM p \
                 where k.name = p.$PFAMIDFIELD and p.$PFAMDOMAIN in (\
-            'PF00096', 'PF01352', 'PF06758', 'PF00047', 'PF07654'  );" > zincKg.gp
+            'PF00096', 'PF01352', 'PF06758', 'PF00047', 'PF07654', 'PF00642'  );" > zincKg.gp
     echo zcat $GENEPFAM.tab.gz to  $GENEPFAM.tab
     zcat $GENEPFAM.tab.gz > $GENEPFAM.tab
     overlapSelect zincKg.gp $GENEPFAM.tab zincKg2.gp -inFmt=genePred
@@ -61,8 +62,9 @@ fi
 $SCRIPT/selectById 1 zincKg.lst 47 retroMrnaInfo.raw.bed > retroMrnaInfoZnf.bed
 $SCRIPT/selectById -not 1 zincKg.lst 47 retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
 echo "before and after zinc finger filtering"
-cp -f retroMrnaInfoLessZnf.bed $TABLE.bed
-wc -l retroMrnaInfo.raw.bed retroMrnaInfoLessZnf.bed $TABLE.bed
+rm -f $TABLE.bed
+cp -pf retroMrnaInfoLessZnf.bed $TABLE.bed
+wc -l retroMrnaInfo.raw.bed retroMrnaInfoLessZnf.bed retroMrnaInfoZnf.bed $TABLE.bed
 cut -f 1-12 $TABLE.bed > retroMrnaInfo.12.bed
 textHistogram -col=5 $TABLE.bed -binSize=50 -maxBinCount=50
 echo creating $ALIGN.psl
@@ -70,15 +72,23 @@ awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $TABLE.bed > pseudoGeneLinkSelect.tab
 pslSelect -qtStart=pseudoGeneLinkSelect.tab pseudo.psl $ALIGN.psl
 wc -l $ALIGN.psl pseudoGeneLinkSelect.tab
 hgLoadBed $DB -verbose=9 -allowNegativeScores -noBin retroMrnaInfoXX -sqlTable=/cluster/home/baertsch/kent/src/hg/lib/retroMrnaInfo.sql $TABLE.bed
+mkdir -p $RETRODIR
+rm -f $RETRODIR/$TABLE.bed
+cp -p $TABLE.bed $RETRODIR
 hgsql $DB -e "drop table if exists $TABLE;"
 # kaku is no longer being used and some values are not loaded correctly
 # as represented in exponential notation so they get replaced by inf.
 hgsql $DB -e "update retroMrnaInfoXX set kaku = 0;"
 hgsql $DB -e "alter table retroMrnaInfoXX rename $TABLE;"
 hgLoadPsl $DB $ALIGN.psl
+rm -f $RETRODIR/$ALIGN.psl
+cp -p $ALIGN.psl $RETRODIR
 
 zcat cds.tab.gz |tawk '{print $1"."$2,$3}' > ucscRetroCds.tab 
 hgLoadSqlTab $DB ucscRetroCds ~/kent/src/hg/lib/ucscRetroCds.sql ucscRetroCds.tab
+rm -f $RETRODIR/ucscRetroCds.tab
+cp -p ucscRetroCds.tab $RETRODIR
+cp -p DEF $RETRODIR
 
 ####################
 # analyze expression 
@@ -109,8 +119,7 @@ pwd
 ls -l retroMrnaInfoLessZnf.bed 
 echo "calculate age of retros"
 
-for bed in retroMrnaInfoLessZnf retroMrnaInfo650 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
-tawk '{print NF}' retroMrnaInfoLessZnf.bed |uniq
+for bed in retroMrnaInfoLessZnf retroMrnaInfo650 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; wc -l ${bed}.ancient.bed ${bed}.recent.bed ; done
 
 echo "overlap with ests - use cluster jobs to speed this step"
 mkdir -p estSplit
@@ -120,7 +129,7 @@ rm -f jobList
 echo "#LOOP"> template
 echo "$SCRIPT/estStat.sh \$(root1)">>template
 echo "#ENDLOOP">> template
-awk '{print $1}' ../S1.len | gensub2 stdin single template jobList
+awk '{print $1}' ../S1.len |grep -v chrM | gensub2 stdin single template jobList
 cd ..
 ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
 
