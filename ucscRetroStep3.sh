@@ -48,7 +48,6 @@ ln $MRNABASE/mrna.2bit . -s
 ####
 # run retro pipeline on cluster
 ####
-mkdir -p $RETRODIR
 cd $OUTDIR
 mkdir -p run.0
 cd run.0
