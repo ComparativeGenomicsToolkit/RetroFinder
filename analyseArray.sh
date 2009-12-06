@@ -28,8 +28,12 @@ grep -v _hap array.bed |grep -v "_random"> array.nohap.bed
 tawk '{print $4}' array.nohap.bed|uniq -c|awk '$1==1{print $2}'> array.uniq
 $SCRIPT/selectById 1 array.uniq 4 array.nohap.bed |sort -k4 > array.uniq.bed
 wc -l array.nohap.bed array.uniq.bed
+
+#subset of retros that have an affy probe -> retroAffy.bed
 overlapSelect affy.psl ../$TABLE.bed retroAffy.bed
 overlapSelect affy.psl ../$TABLE.bed retroAffy.id -idOutput
+
+#filter for uniq affy prob hits -> retroAffyLogRatioAll.tab
 $SCRIPT/selectById 1 array.uniq 2 retroAffy.id > retroAffy.uniq.id
 $SCRIPT/selectById 2 retroAffy.uniq.id 1  $DB.LogRatioAll.tab > retroAffyLogRatioAll.tab
 hgsql $DB -N -B -e "select * from refGene" |cut -f 2-16 > refGene.genePred
@@ -65,6 +69,8 @@ overlapSelect ../knownGene.tab.gz retroArray.bed retroArrayKnown.bed -selectFmt=
 overlapSelect ../knownGene.tab.gz array.uniq.bed geneTissue.bed -selectFmt=genePred
 overlapSelect ../knownGene.tab.gz retroArrayKnown.bed  -selectFmt=genePred -idOutput retroKg.id
 overlapSelect retroArrayKnown.bed array.uniq.bed retroTissue.bed
+
+for bed in retroArray retroAllArray ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 
 wc -l retroArray.bed retroArrayKnown.bed geneTissue.bed
 
