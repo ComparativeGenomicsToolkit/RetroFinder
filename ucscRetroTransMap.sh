@@ -1,14 +1,21 @@
 #
 # get mrnas from transmap if genbank not setup for this genome or native mRNA are scarse
 source DEF
+mkdir -p $MRNABASE
+cp -p DEF $MRNABASE
 cd $MRNABASE
 hgsql $DB -N -B -e "select * from all_mrna" |cut -f2-22 > all_mrna.native.psl
 hgsql $DB -N -B -e "select * from transMapAlnMRna" |cut -f2-22 > transMapAlnMRna.psl
 hgsql $DB -N -B -e "select * from transMapAlnUcscGenes" |cut -f2-22 > transMapAlnUcscGenes.psl
 hgsql $DB -N -B -e "select * from transMapAlnRefSeq" |cut -f2-22 > transMapAlnRefSeq.psl
+
 sort -k10,10 transMapAlnMRna.psl >  transMapAlnMRna.qName.psl 
 awk -f ~/baertsch/scripts/stripextversion.awk < transMapAlnMRna.qName.psl > transMapAlnMRna.strip.psl 
 pslCDnaFilter -bestOverlap -maxAligns=1 transMapAlnMRna.strip.psl transMapAlnMRna.best.psl
+
+sort -k10,10 transMapAlnRefSeq.psl >  transMapAlnRefSeq.qName.psl 
+awk -f ~/baertsch/scripts/stripextversion.awk < transMapAlnRefSeq.qName.psl > transMapAlnRefSeq.strip.psl 
+pslCDnaFilter -bestOverlap -maxAligns=1 transMapAlnRefSeq.strip.psl transMapAlnRefSeq.best.psl
 
 hgsql hgFixed -N -B -e "select id, cds from transMapGeneMRna" > mrnaCds.tab
 hgsql hgFixed -N -B -e "select id, cds from transMapGeneUcscGenes" > kgCds.tab
@@ -21,8 +28,8 @@ mrnaToGene transMapAlnMRna.best.psl transMapAlnMRna.gp -cdsFile=mrnaCds.tab -ign
 mrnaToGene transMapAlnUcscGenes.psl transMapAlnUcscGenes.gp -cdsFile=kgCds.tab -ignoreUniqSuffix 2> error.ucsc
 mrnaToGene transMapAlnRefSeq.psl transMapAlnRefSeq.gp -cdsFile=refSeqCds.tab -ignoreUniqSuffix 2> error.refseq
 
-getRnaPred -cdsUpper $DB transMapAlnRefSeq.gp all refseqCds.fa ; tr acgt ACGT < refseqCds.fa > refseq.fa &
-getRnaPred -cdsUpper $DB transMapAlnUcscGenes.gp all ucscCds.fa ; tr acgt ACGT < ucscCds.fa > ucsc.fa &
+(getRnaPred -cdsUpper $DB transMapAlnRefSeq.gp all refseqCds.fa ; tr acgt ACGT < refseqCds.fa > refseq.fa )&
+(getRnaPred -cdsUpper $DB transMapAlnUcscGenes.gp all ucscCds.fa ; tr acgt ACGT < ucscCds.fa > ucsc.fa )&
 mkdir -p $MRNABASE/run.getmrna
 mkdir -p $MRNABASE/mrna.psl
 rm -f run.getmrna/jobList
