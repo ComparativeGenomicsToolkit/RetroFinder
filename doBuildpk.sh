@@ -9,8 +9,8 @@ cd $TMP
 rm -f $LOG/pseudo$1.log
 ulimit -d 2800000
 ulimit -v 2800000
-echo "/cluster/home/baertsch/bin/x86_64/pslPseudo -verbose=4 -minAli=0.98 -nearTop=0.005 -cdsFile=$CACHE/cds.tab.gz $DB $CACHE/split/tmp$1.psl $CACHE/chrom.sizes $CACHE/rmsk.bed.gz $CACHE/$NET1.txt.gz $CACHE/$NET2.txt.gz $CACHE/simpleRepeat.bed.gz $CACHE/all_mrna.psl.gz $OUT/mrna$1.psl $OUT/pseudo$1.psl $TMP/pseudoMrnaLink$1.txt $TMP/pseudo$1.axt $CACHE/S1.lst $CACHE/mrna.2bit $CACHE/$GENE2.tab.gz $CACHE/$GENE3.tab.gz $CACHE/$GENE1.tab.gz $CACHE/$NET3.txt.gz"
-/cluster/home/baertsch/bin/x86_64/pslPseudo -verbose=4 -minAli=0.98 -nearTop=0.005 -cdsFile=$CACHE/cds.tab.gz $DB $CACHE/split/tmp$1.psl $CACHE/chrom.sizes $CACHE/rmsk.bed.gz $CACHE/$NET1.txt.gz $CACHE/$NET2.txt.gz $CACHE/simpleRepeat.bed.gz $CACHE/all_mrna.psl.gz $OUT/mrna$1.psl $OUT/pseudo$1.psl $TMP/pseudoMrnaLink$1.txt /dev/null $CACHE/S1.lst $CACHE/mrna.2bit $CACHE/$GENE2.tab.gz $CACHE/$GENE3.tab.gz $CACHE/$GENE1.tab.gz $CACHE/$NET3.txt.gz > $TMP/pseudo$1.log
+echo "/cluster/home/baertsch/bin/x86_64/pslPseudo $RETRO_OPTIONS -cdsFile=$CACHE/cds.tab.gz $DB $CACHE/split/tmp$1.psl $CACHE/chrom.sizes $CACHE/rmsk.bed.gz $CACHE/$NET1.txt.gz $CACHE/$NET2.txt.gz $CACHE/simpleRepeat.bed.gz $CACHE/all_mrna.psl.gz $OUT/mrna$1.psl $OUT/pseudo$1.psl $TMP/pseudoMrnaLink$1.txt $TMP/pseudo$1.axt $CACHE/S1.lst $CACHE/mrna.2bit $CACHE/$GENE2.tab.gz $CACHE/$GENE3.tab.gz $CACHE/$GENE1.tab.gz $CACHE/$NET3.txt.gz"
+/cluster/home/baertsch/bin/x86_64/pslPseudo $RETRO_OPTIONS -cdsFile=$CACHE/cds.tab.gz $DB $CACHE/split/tmp$1.psl $CACHE/chrom.sizes $CACHE/rmsk.bed.gz $CACHE/$NET1.txt.gz $CACHE/$NET2.txt.gz $CACHE/simpleRepeat.bed.gz $CACHE/all_mrna.psl.gz $OUT/mrna$1.psl $OUT/pseudo$1.psl $TMP/pseudoMrnaLink$1.txt /dev/null $CACHE/S1.lst $CACHE/mrna.2bit $CACHE/$GENE2.tab.gz $CACHE/$GENE3.tab.gz $CACHE/$GENE1.tab.gz $CACHE/$NET3.txt.gz > $TMP/pseudo$1.log
 if [ $? == 0 ]; then
 ulimit -a >> $TMP/pseudo$1.log
  /bin/awk '$34 == 1 || $34==-2 {print $0}' $TMP/pseudoMrnaLink$1.txt > $TMP/pseudoGeneLink$1.bed
