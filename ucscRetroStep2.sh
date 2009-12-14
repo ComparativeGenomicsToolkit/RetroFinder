@@ -21,7 +21,7 @@ for i in `awk '{print $1}' S1.len` ; do echo $i ; cat lastz/$i/*.psl | awk '{pri
 
 #chain blocks
 
-ls $NIB/* > nib.lst
+find $NIB > nib.lst
 mkdir -p psl
 for i in `awk '{print $1}' S1.len` ; do nohup $TMPMRNA/doChain $i ; done 
 
