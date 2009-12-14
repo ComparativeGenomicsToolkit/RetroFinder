@@ -53,13 +53,18 @@ echo "faTrimPolyA raw.fa trim.fa "
 faTrimPolyA raw.fa trim.fa 
 mkdir -p $TMPMRNA 
 cp -p trim.fa $TMPMRNA 
+
+pwd
+
+echo "faToTwoBit raw.fa mrna.2bit"
 faToTwoBit raw.fa mrna.2bit
+echo "twoBitToFa mrna.2bit stdout |faToTwoBit stdin -stripVersion mrnaNoversion.2bit"
 twoBitToFa mrna.2bit stdout |faToTwoBit stdin -stripVersion mrnaNoversion.2bit
 faSize trim.fa -detailed > trim.len
 if [[ -s S1.len ]] ; then
     echo "S1.len exists with `wc -l S1.len` rows"
 else
-    echo "please create S1.len from chrom.sizes without random chroms or chrM."
+    echo "please create `pwd`/S1.len from chrom.sizes without random chroms or chrM."
     exit 3
 fi
 cp trim.len S2.len
@@ -90,7 +95,7 @@ ls mrna*.fa |awk '{print "'$TMPMRNA'/split/"$1}' > $TMPMRNA/S2.lst
 cd ..
 echo "#!/bin/bash" > doChain
 echo "BASE=$TMPMRNA" >> doChain
-echo "axtChain -linearGap=loose -psl \$BASE/pslFilter/\$1.psl $LOCAL/$DB.2bit -faQ \$BASE/trim.fa stdout | chainFilter -minScore=4000 stdin | chainToPsl stdin S1.len S2.len nib.lst trim.fa psl/\$1.psl" >> doChain
+echo "axtChain -linearGap=loose -psl \$BASE/pslFilter/\$1.psl $TWOBIT -faQ \$BASE/trim.fa stdout | chainFilter -minScore=4000 stdin | chainToPsl stdin S1.len S2.len nib.lst trim.fa psl/\$1.psl" >> doChain
 chmod +x doChain
 awk '{print "mkdir -p $TMPMRNA/lastz/"$1}' S1.len |grep -v random > create.dirs
 source create.dirs
@@ -99,7 +104,7 @@ cd $TMPMRNA/run.0
 
 #cluster job to run lastz to align mRNAs to genome
 echo "#LOOP" > template
-echo "$SCRIPT/lastz.sh $LOCAL/$DB.2bit/\$(path1) \$(path2) 10 62 {check out line+ $TMPMRNA/lastz/\$(root1)/\$(root2).psl} $TMPMRNA/S1.len $TMPMRNA/S2.len" >> template
+echo "$SCRIPT/lastz.sh $TWOBIT/\$(path1) \$(path2) 10 62 {check out line $TMPMRNA/lastz/\$(root1)/\$(root2).psl} $TMPMRNA/S1.len $TMPMRNA/S2.len" >> template
 echo "#ENDLOOP" >> template
 
 cp ../S1.lst .
@@ -114,6 +119,6 @@ ssh -T $CLUSTER "cd $TMPMRNA/run.0 ; /parasol/bin/para make jobList"
 #    para check
 #Checking finished jobs
 
-cd $TMPMRNA
-echo run $SCRIPT/ucscRetroStep2.sh DEF after cluster job is finished
+echo "run $SCRIPT/ucscRetroStep2.sh DEF after cluster job is finished"
+cd $OUTDIR
 $SCRIPT/ucscRetroStep2.sh DEF 
