@@ -26,7 +26,7 @@ gzip cds.tab &
 
 mrnaToGene transMapAlnMRna.best.psl transMapAlnMRna.gp -cdsFile=mrnaCds.tab -ignoreUniqSuffix 2> error.mrna
 mrnaToGene transMapAlnUcscGenes.psl transMapAlnUcscGenes.gp -cdsFile=kgCds.tab -ignoreUniqSuffix 2> error.ucsc
-mrnaToGene transMapAlnRefSeq.psl transMapAlnRefSeq.gp -cdsFile=refSeqCds.tab -ignoreUniqSuffix 2> error.refseq
+mrnaToGene transMapAlnRefSeq.best.psl transMapAlnRefSeq.gp -cdsFile=refSeqCds.tab -ignoreUniqSuffix 2> error.refseq
 
 (getRnaPred -cdsUpper $DB transMapAlnRefSeq.gp all refseqCds.fa ; tr acgt ACGT < refseqCds.fa > refseq.fa )&
 (getRnaPred -cdsUpper $DB transMapAlnUcscGenes.gp all ucscCds.fa ; tr acgt ACGT < ucscCds.fa > ucsc.fa )&
@@ -37,6 +37,7 @@ for chr in `cut -f1 $GENOME/$DB/chrom.sizes`; do echo "$SCRIPT/genePredToFa.sh .
 ssh -T $CLUSTER "cd $MRNABASE/run.getmrna ; /parasol/bin/para -ram=4g make jobList"
 cat run.getmrna/mrnaCds*.fa > mrnaCds.fa
 cat run.getmrna/mrna.*.fa > mrna.fa
+rm -f all_mrna.psl.gz
 awk -f $SCRIPT/stripversion.awk < mrna.psl/*.psl > transmap_mrna.psl
 cat all_mrna.native.psl transmap_mrna.psl transMapAlnRefSeq.psl > all_mrna.psl
 gzip all_mrna.psl
