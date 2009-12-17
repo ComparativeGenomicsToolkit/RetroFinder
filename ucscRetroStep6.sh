@@ -47,7 +47,7 @@ $SCRIPT/makeHtmlRightDb.sh $DEF pseudo5Est100AA.bed type2_2009/5estOrf100 5estGo
 $SCRIPT/makeHtmlRightDb.sh $DEF pseudoEst5AndMrna100AA.bed type2_2009/5estAndMrnaOrf100 5estAndMrnaGoodOrfBigger100aa;
 $SCRIPT/makeHtmlRightDb.sh $DEF retroArray.bed type2_2009/gnfAtlas2 gnfAtlas2;
 $SCRIPT/makeHtmlRightDb.sh $DEF retroSplice.bed type2_2009/retroSplice Splice;
-$SCRIPT/makeHtmlRightDb.sh $DEF pseudoRefGene.bed type2_2009/refSeqAll refSeqAll;
+$SCRIPT/makeHtmlRightDb.sh $DEF pseudo${GENE2}.bed type2_2009/refSeqAll refSeqAll;
 echo "</tbody>" >> $ROOTDIR/retro/type2_2009/index.html
 echo "</table>" >> $ROOTDIR/retro/type2_2009/index.html
 echo "</body>" >> $ROOTDIR/retro/type2_2009/index.html

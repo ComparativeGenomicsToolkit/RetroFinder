@@ -67,7 +67,7 @@ $SCRIPT/selectById -tsv 1 est10.id 4 ../$TABLE.bed > pseudoEst10.bed
 overlapSelect pseudoEst10Mrna.bed pseudo${GENE2}Cds.bed  est10MrnaRefSeq.bed
 echo "expressed retro stats"
 wc -l *.id |sort -n
-overlapSelect ../refGene.tab.gz ../$TABLE.bed pseudoRefGene.bed -selectFmt=genePred
+overlapSelect ../${GENE2}.tab.gz ../$TABLE.bed pseudo${GENE2}.bed -selectFmt=genePred
 
 #regenerate gene predictions from expressed retros
 
@@ -124,7 +124,7 @@ overlapSelect pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.b
 
 #split retros by age
 
-for bed in pseudoRefGene pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudo5Est100AA pseudoEst5AndMrna100AA pseudo${GENE1}Cds pseudo${GENE1}Cds50 pseudo${GENE2}Cds pseudo${GENE2}Cds50 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
+for bed in pseudo${GENE2} pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudo5Est100AA pseudoEst5AndMrna100AA pseudo${GENE1}Cds pseudo${GENE1}Cds50 pseudo${GENE2}Cds pseudo${GENE2}Cds50 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
 
 #retros involved in alt-splicing
 
