@@ -64,7 +64,7 @@ $SCRIPT/selectById -tsv 1 mrnaEst5.id 4 ../$TABLE.bed > pseudoEst5Mrna.bed
 $SCRIPT/selectById -tsv 1 mrnaEst10.id 4 ../$TABLE.bed >  pseudoEst10Mrna.bed
 $SCRIPT/selectById -tsv 1 est5.id 4 ../$TABLE.bed > pseudoEst5.bed
 $SCRIPT/selectById -tsv 1 est10.id 4 ../$TABLE.bed > pseudoEst10.bed
-overlapSelect pseudoEst10Mrna.bed pseudoRefGeneCds.bed  est10MrnaRefSeq.bed
+overlapSelect pseudoEst10Mrna.bed pseudo${GENE2}Cds.bed  est10MrnaRefSeq.bed
 echo "expressed retro stats"
 wc -l *.id |sort -n
 overlapSelect ../refGene.tab.gz ../$TABLE.bed pseudoRefGene.bed -selectFmt=genePred
