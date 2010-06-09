@@ -3,26 +3,26 @@
 #$1 = DEF file
 source $1
 #cd /hive/users/baertsch/retro/$DB
-hgsql $DB -e "select (1000-millibad)/10, type, chrom from ${TABLE}" |awk '$3=="chrX"{print $1,$2,$3}$3!="chrX"{print $1,$2,"auto"}' | sort -n>diverge.txt
-tawk '{print (1000-$35)/10,$1}' exp/age/retroKgCoding.bed > divergeKg.txt
-grep pseudogene diverge.txt |awk '{print $1,$3}' > div.pseudo.txt
-grep pseudogene diverge.txt |awk '{print $1,$3}' > div.pseudoweak.txt
-grep express diverge.txt |grep -v strong |grep -v shuffle |awk '{print $1,$3}' >> div.pseudoweak.txt
-grep express diverge.txt |awk '{print $1,$3}' > div.express.txt
-grep strong diverge.txt |awk '{print $1,$3}' > div.strong.txt
-grep shuffle diverge.txt |awk '{print $1,$3}' >> div.strong.txt
-cat divergeKg.txt |awk '{print $1,$3}' > div.strong.kg.txt
-grep express diverge.txt|grep -v strong |awk '{print $1,$3}' > div.weak.txt
+hgsql $DB -e "select (1000-millibad)/10, chrom, type from ${TABLE}" |awk '$2=="chrX"{print $1,$2,$3,$4,$5}$2!="chrX"{print $1,"auto",$2,$3,$4,$5}' | sort -n>diverge.txt
+tawk '$1=="chrX"{c="chrX"}$1!="chrX"{c="auto"}{print (1000-$35)/10,c,$15}' exp/age/retroKgCoding.bed > divergeKg.txt
+grep pseudogene diverge.txt |awk '{print $1,$2}' > div.pseudo.txt
+grep pseudogene diverge.txt |awk '{print $1,$2}' > div.pseudoweak.txt
+grep express diverge.txt |grep -v strong |grep -v shuffle |awk '{print $1,$2}' >> div.pseudoweak.txt
+grep express diverge.txt |awk '{print $1,$2}' > div.express.txt
+grep strong diverge.txt |awk '{print $1,$2}' > div.strong.txt
+grep shuffle diverge.txt |awk '{print $1,$2}' >> div.strong.txt
+cat divergeKg.txt |awk '{print $1,$2}' > div.strong.kg.txt
+grep express diverge.txt|grep -v strong |awk '{print $1,$2}' > div.weak.txt
 
 echo "pdf('div.${DB}.pseudo.pdf')" > div.R
 echo "op <- par(mfcol=c(2, 2))" >> div.R
-echo "pseudo<-scan('div.pseudo.txt')">> div.R
-echo "express<-scan('div.express.txt')" >> div.R
-echo "strong<-scan('div.strong.txt')" >> div.R
-echo "pseudoweak<-scan('div.pseudoweak.txt')">> div.R
-echo "strongKg<-scan('div.strong.kg.txt')" >> div.R
+echo "pseudo<-read.table('div.pseudo.txt')">> div.R
+echo "express<-read.table('div.express.txt')" >> div.R
+echo "strong<-read.table('div.strong.txt')" >> div.R
+echo "pseudoweak<-read.table('div.pseudoweak.txt')">> div.R
+echo "strongKg<-read.table('div.strong.kg.txt')" >> div.R
 
-echo "pseudogene.${DB}<-pseudo[pseudo<=$MAXDIVERGENCE]" >> div.R
+echo "pseudogene.${DB}<-subset(pseudo, V1<=$MAXDIVERGENCE)" >> div.R
 echo "length(pseudogene.${DB})">>div.R
 echo "hp<-hist(pseudogene.${DB},freq=TRUE,breaks=c(${BREAKS}), xlim=range(0,$XLIM),xlab='Range of substitution level (percent)',ylab='Fraction of ${GENOMENAME} non-expressed retrocopies', main='Not Expressed ${GENOMENAME}',sub='each bar represents ~25MYA')" >> div.R
 #echo "hp<-hist(pseudogene.${DB},freq=FALSE,breaks=c(${BREAKS}), xlim=range(0,$XLIM),ylim=range(0,$YLIM),xlab='Range of substitution level (percent)',ylab='Fraction of ${GENOMENAME} non-expressed retrocopies', main='Not Expressed ${GENOMENAME}',sub='each bar represents ~25MYA')" >> div.R
