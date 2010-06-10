@@ -22,7 +22,7 @@ echo "strong<-read.table('div.strong.txt')" >> div.R
 echo "pseudoweak<-read.table('div.pseudoweak.txt')">> div.R
 echo "strongKg<-read.table('div.strong.kg.txt')" >> div.R
 
-echo "pseudogene.${DB}<-subset(pseudo, V1<=$MAXDIVERGENCE)" >> div.R
+echo "pseudogene.${DB}<-subset(pseudo, V1<=$MAXDIVERGENCE)$V1" >> div.R
 echo "length(pseudogene.${DB})">>div.R
 echo "hp<-hist(pseudogene.${DB},freq=TRUE,breaks=c(${BREAKS}), xlim=range(0,$XLIM),xlab='Range of substitution level (percent)',ylab='Fraction of ${GENOMENAME} non-expressed retrocopies', main='Not Expressed ${GENOMENAME}',sub='each bar represents ~25MYA')" >> div.R
 #echo "hp<-hist(pseudogene.${DB},freq=FALSE,breaks=c(${BREAKS}), xlim=range(0,$XLIM),ylim=range(0,$YLIM),xlab='Range of substitution level (percent)',ylab='Fraction of ${GENOMENAME} non-expressed retrocopies', main='Not Expressed ${GENOMENAME}',sub='each bar represents ~25MYA')" >> div.R
