@@ -14,7 +14,7 @@ pslNetOverlap -verbose=2 $INPUT.psl ../../S1.len ../../rmsk.bed.gz netCanFam2.tx
 mkdir -p $INPUT
 pushd $INPUT
 tawk -f ../age.awk < ../$INPUT.out
-awk -f ../ageClass.awk ../$INPUT.out|sort > age.txt
+ageClass.awk ../$INPUT.out|sort > age.txt
 join -1 4 -2 1 ../$INPUT.sort.bed age.txt > $INPUT.age.txt
 
 echo "#!/bin/bash" > doit.sh
