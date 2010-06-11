@@ -3,6 +3,7 @@ set -beEu -o pipefail
 source $1
 INPUT=$2
 cut -f 4 $INPUT.bed > $INPUT.lst
+sort -k4,4 $INPUT.bed > $INPUT.sort.bed
 pslSelect -queries=$INPUT.lst ../../${TABLE}.psl $INPUT.psl
 
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar from $NET1" > $NET1.txt
@@ -13,6 +14,8 @@ pslNetOverlap -verbose=2 $INPUT.psl ../../S1.len ../../rmsk.bed.gz netCanFam2.tx
 mkdir -p $INPUT
 pushd $INPUT
 tawk -f ../age.awk < ../$INPUT.out
+awk -f ../ageClass.awk ../$INPUT.out|sort > age.txt
+join -1 4 -2 1 ../$INPUT.sort.bed age.txt > $INPUT.age.txt
 
 echo "#!/bin/bash" > doit.sh
 echo "set -beEu -o pipefail" >> doit.sh
