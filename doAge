@@ -4,13 +4,14 @@ source $1
 INPUT=$2
 cut -f 4 $INPUT.bed > $INPUT.lst
 sort -k4,4 $INPUT.bed > $INPUT.sort.bed
-pslSelect -queries=$INPUT.lst ../../${TABLE}.psl $INPUT.psl
+pwd
+pslSelect -queries=$INPUT.lst ../../${ALIGN}.psl $ALIGN.psl
 
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar from $NET1" > $NET1.txt
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar from $NET2" > $NET2.txt
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar from $NET3" > $NET3.txt
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar from netPanTro2" > netPanTro2.txt
-pslNetOverlap -verbose=2 $INPUT.psl ../../S1.len ../../rmsk.bed.gz netCanFam2.txt netMm8.txt netRheMac2.txt netPanTro2.txt > $INPUT.out 2> $INPUT.log
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET1" > $NET1.txt
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET2" > $NET2.txt
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET3" > $NET3.txt
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from netPanTro2" > netPanTro2.txt
+pslNetOverlap -verbose=2 $ALIGN.psl ../../S1.len ../../rmsk.bed.gz netCanFam2.txt netMm8.txt netRheMac2.txt netPanTro2.txt > $INPUT.out 2> $INPUT.log
 mkdir -p $INPUT
 pushd $INPUT
 tawk -f ../age.awk < ../$INPUT.out
