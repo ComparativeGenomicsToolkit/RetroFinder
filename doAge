@@ -11,7 +11,7 @@ hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET2" > $NET2.txt
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET3" > $NET3.txt
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from netPanTro2" > netPanTro2.txt
-pslNetOverlap -verbose=2 $ALIGN.psl ../../S1.len ../../rmsk.bed.gz netMm9.txt netCanFam2.txt netRheMac2.txt netPanTro2.txt > $INPUT.out 2> $INPUT.log
+pslNetOverlap -verbose=2 $DB $ALIGN.psl ../../S1.len ../../rmsk.bed.gz netMm9.txt netCanFam2.txt netRheMac2.txt netPanTro2.txt > $INPUT.out 2> $INPUT.log
 mkdir -p $INPUT
 pushd $INPUT
 tawk -f ../age.awk < ../$INPUT.out
