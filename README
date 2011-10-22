@@ -5,8 +5,21 @@ mkdir /hive/users/$HOME/mrnaBlastz/
 cp /hive/users/$HOME/mrnaBlastz/
 cp /cluster/home/baertsch/baertsch/scripts/DEF  .
 
-edit DEF file (any name is fine) and change organism, location of gene annotations, net files for orthology, location of repeats, etc
-
+edit DEF file  change:
+ DB to point to database create retro annotation
+ GENOMENAME show reference name in hgcentral.dbDb.scientificName
+ GBDB set to database name used by genBank getSeqs utility parameter -db
+ VERSION version number appended to database tables created  
+ NET1 - name of net table used for orthology fairly far
+ NET2 - name of net table used for orthology medium distance
+ NET3 - name of net table used for orthology fairly close
+ SPECIES - set this to list of databases used to create web pages in step 6 (start with current DB)
+ GENES1 - set to knownGene if present or "best gene prediction"
+ GENES2 - set to refGene or other gene prediction
+ GENES3 - set to ccdsGene or other gene prediction
+ ARRAY* - not used
+ PDB - set to latest protein database name (i.e. proteinsXXXXXX)
+ 
 If genbank is not available for the genome, create  $MRNABASE/mrna.fa (sequences for all mRNAs) and 
  $MRNABASE/refseq.fa (mrna transcripts from best available gene annotation from target genome or closely related genome) 
  from other sources and the genbank step will be skipped.
