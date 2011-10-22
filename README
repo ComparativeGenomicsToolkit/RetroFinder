@@ -24,20 +24,21 @@ If genbank is not available for the genome, create  $MRNABASE/mrna.fa (sequences
  $MRNABASE/refseq.fa (mrna transcripts from best available gene annotation from target genome or closely related genome) 
  from other sources and the genbank step will be skipped.
 
-nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep1.sh DEF
+
+nohup /cluster/home/baertsch/baertsch/scripts/ucscRetroStep1.sh DEF
 
 check cluster run (mrna alignment)
 
-nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep2.sh DEF
+nohup /cluster/home/baertsch/baertsch/scripts/ucscRetroStep2.sh DEF
 
-nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep3.sh DEF
+nohup /cluster/home/baertsch/baertsch/scripts/ucscRetroStep3.sh DEF
 check cluster run (retros)
 
-nohup run /cluster/home/baertsch/baertsch/scripts/filterEst.sh DEF 
+nohup /cluster/home/baertsch/baertsch/scripts/filterEst.sh DEF 
     (creates estFilter.psl.gz by extracting and filters est alignments - can be run at anytime)
 
-nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep4.sh DEF
+nohup /cluster/home/baertsch/baertsch/scripts/ucscRetroStep4.sh DEF
 check cluster run (remove overlapping retros)
 
-nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep5.sh DEF (post process and mysql load)
-nohup run /cluster/home/baertsch/baertsch/scripts/ucscRetroStep6.sh DEF (optiional web pages)
+nohup /cluster/home/baertsch/baertsch/scripts/ucscRetroStep5.sh DEF (post process and mysql load)
+nohup /cluster/home/baertsch/baertsch/scripts/ucscRetroStep6.sh DEF (optiional web pages)
