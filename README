@@ -2,10 +2,11 @@ Here are the steps for running the retro pipeline. Let me know if you have quest
 
 
 mkdir /hive/users/$HOME/mrnaBlastz/
-cp /hive/users/$HOME/mrnaBlastz/
+cd /hive/users/$HOME/mrnaBlastz/
 cp /cluster/home/baertsch/baertsch/scripts/DEF  .
 
-edit DEF file  change:
+
+edit DEF file with following changes:
  DB to point to database create retro annotation
  GENOMENAME show reference name in hgcentral.dbDb.scientificName
  GBDB set to database name used by genBank getSeqs utility parameter -db
@@ -19,14 +20,17 @@ edit DEF file  change:
  GENES3 - set to ccdsGene or other gene prediction
  ARRAY* - not used
  PDB - set to latest protein database name (i.e. proteinsXXXXXX)
+
+cp $LOCAL/chrom.sizes to $MRNABASE/S1.len and delete random chroms and chrM.
  
 If genbank is not available for the genome, create  $MRNABASE/mrna.fa (sequences for all mRNAs) and 
  $MRNABASE/refseq.fa (mrna transcripts from best available gene annotation from target genome or closely related genome) 
  from other sources and the genbank step will be skipped.
 
-
+run script:
 nohup /cluster/home/baertsch/baertsch/scripts/ucscRetroStep1.sh DEF
 
+check nohup.out for errors
 check cluster run (mrna alignment)
 
 nohup /cluster/home/baertsch/baertsch/scripts/ucscRetroStep2.sh DEF
