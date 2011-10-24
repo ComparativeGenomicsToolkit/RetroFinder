@@ -2,27 +2,33 @@
 set -beEu -o pipefail
 source $1
 INPUT=$2
-cut -f 4 $INPUT.bed > $INPUT.lst
+cut -f 4 $INPUT.bed |sort> $INPUT.lst
 sort -k4,4 $INPUT.bed > $INPUT.sort.bed
 pwd
-pslSelect -queries=$INPUT.lst ../../${ALIGN}.psl $ALIGN.psl
+echo "pslSelect -queries=$INPUT.lst ../../${ALIGN}.psl $ALIGN.psl"
+sort ../../${ALIGN}.psl | sort  | pslSelect -queries=$INPUT.lst stdin $ALIGN.psl
 
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET1" > $NET1.txt
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET2" > $NET2.txt
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET3" > $NET3.txt
 hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from netPanTro2" > netPanTro2.txt
-pslNetOverlap -verbose=2 $DB $ALIGN.psl ../../S1.len ../../rmsk.bed.gz netMm9.txt netCanFam2.txt netRheMac2.txt netPanTro2.txt > $INPUT.out 2> $INPUT.log
+pslNetOverlap -verbose=2 $ALIGN.psl ../../S1.len ../../rmsk.bed.gz $NET2.txt $NET1.txt $NET3.txt netPanTro2.txt > $INPUT.out 2> $INPUT.log
 mkdir -p $INPUT
 pushd $INPUT
 tawk -f ../age.awk < ../$INPUT.out
-ageClass.awk ../$INPUT.out|sort > age.txt
+ageClass ../$INPUT.out|sort > age.txt
 join -1 4 -2 1 ../$INPUT.sort.bed age.txt > $INPUT.age.txt
+awk 'BEGIN{print "name score type div age auto"}$2=="chrX"{a=$2}$2!="chrX"{a="auto"}{print $1,$5,$15,$35,$58,a}' $INPUT.age.txt  > $INPUT.hist
+awk 'BEGIN{print "name score type div age auto"}$2=="chrX"{a=$2}$2!="chrX"{a="auto"}$58!="ancient" && $58!="dog"{print $1,$5,$15,$35,$58,a}' $INPUT.age.txt  > $INPUT.recent.hist
+
 
 echo "#!/bin/bash" > doit.sh
 echo "set -beEu -o pipefail" >> doit.sh
 echo "source $1" >> doit.sh
 echo "$SCRIPT/selectById -tsv 1 0ancient.txt 4 ../../../$TABLE.bed >  ${INPUT}.0ancient.bed" >> doit.sh
-echo "$SCRIPT/selectById -tsv 1 1mouse.txt 4 ../../../$TABLE.bed >  ${INPUT}.1mouse.bed" >> doit.sh
-echo "$SCRIPT/selectById -tsv 1 2rhesus.txt 4 ../../../$TABLE.bed >  ${INPUT}.2rhesus.bed" >> doit.sh
-echo "$SCRIPT/selectById -tsv 1 3ape.txt 4 ../../../$TABLE.bed >  ${INPUT}.3ape.bed" >> doit.sh
-echo "$SCRIPT/selectById -tsv 1 4human.txt 4 ../../../$TABLE.bed >  ${INPUT}.4human.bed" >> doit.sh
+echo "$SCRIPT/selectById -tsv 1 1dog.txt 4 ../../../$TABLE.bed >  ${INPUT}.1dog.bed" >> doit.sh
+echo "$SCRIPT/selectById -tsv 1 2mouse.txt 4 ../../../$TABLE.bed >  ${INPUT}.2mouse.bed" >> doit.sh
+echo "$SCRIPT/selectById -tsv 1 3rhesus.txt 4 ../../../$TABLE.bed >  ${INPUT}.3rhesus.bed" >> doit.sh
+echo "$SCRIPT/selectById -tsv 1 4chimp.txt 4 ../../../$TABLE.bed >  ${INPUT}.4chimp.bed" >> doit.sh
+chmod +x doit.sh
+./doit.sh $1
