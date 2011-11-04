@@ -30,6 +30,7 @@ mkdir -p pslLift
 for i in `awk '{print $1}' S1.len` ; do liftUp pslLift/$i.psl mrna.lft warn psl/$i.psl -pslQ -nohead ; done
 
 cd $TMPMRNA/pslLift
+echo "MRNABASE $MRNABASE"
 pslCat -nohead *psl > $MRNABASE/mrnaBlastz.psl
 
 cd $MRNABASE
@@ -56,7 +57,7 @@ mkdir -p $OUTDIR/split
 /cluster/home/baertsch/bin/x86_64/pslSplit nohead $OUTDIR/split mrnaBlastz.psl -chunkSize=120
 
 cd $OUTDIR/split
-for i in `ls tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > temp.psl ; mv temp.psl $i ;echo $i; done
+for i in `ls tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > temp.psl ; mv temp.psl $i ; done
 grep chr tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'|uniq  > acc.lst
 
 #load mrna alignment track into browser
