@@ -1,5 +1,5 @@
 #!/bin/bash 
-set -beEu -o pipefail
+set -bevEu -o pipefail
 source $1
 #align human mrnas to $DB using lastz
 cd $TMPMRNA
