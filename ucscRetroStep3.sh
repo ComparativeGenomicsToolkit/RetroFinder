@@ -4,7 +4,7 @@
 #
 # est alignments are extracted at the end for use in expression analysis in further stages.
 #
-set -beEu -o pipefail
+set -bevEu -o pipefail
 source $1
 echo "starting ucscRetroStep3.sh $1 for $DB"
 mkdir -p $OUTDIR
