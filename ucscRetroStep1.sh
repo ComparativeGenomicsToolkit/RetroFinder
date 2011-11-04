@@ -24,14 +24,15 @@ if [[ -s mrna.fa ]] ; then
     echo "mrna.fa exists, extraction from genbank skipped"
 else
     echo "extracting mRNA and refseq from Genbank "
+    echo "change non standard lower case characters to N's being careful not to change headers that are upper case"
     /cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
-       genbank mrna stdout | tr acgtip ACGTNN > tmp.fa ; mv tmp.fa mrna.fa 
+       genbank mrna stdout | awk '/^>/{print $0}!/^>/{$1=toupper($0);s1=gsub("P","N");s2=gsub("I","N",$s1);print $s2}' > tmp.fa ; mv tmp.fa mrna.fa 
 fi
 if [[ -s refseq.fa ]] ; then
     echo "refseq.fa exists, extraction from genbank skipped"
 else
     /cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
-       refSeq mrna stdout | tr acgtiI ACGTNN > refseq.fa 
+       refSeq mrna stdout | awk '/^>/{print $0}!/^>/{$1=toupper($0);s1=gsub("P","N");s2=gsub("I","N",$s1);print $s2}' > refseq.fa 
 fi
 if [[ -s all_mrna.psl.gz ]] ; then
     echo "all_mrna.psl.gz not refreshed, must be extracted at the same time as mrna and refseq sequences. "
