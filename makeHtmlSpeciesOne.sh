@@ -8,9 +8,6 @@ script=$5
 webdir=$6
 echo "Writing $name html into $dir/$db "
 sort -k5,5nr $bed > $bed.sort ; mv $bed.sort $bed
-#tawk '{print $4}' $bed > tmp.select
-#echo "grep -F -f tmp.select retroMrnaInfo.txt output $bed.txt"
-#grep -F -f tmp.select retroMrnaInfo.txt > $bed.txt
 $script/selectById 4 ${bed} 1 retroMrnaInfo.txt > $bed.txt
 mkdir -p $webdir/${dir}/$db
 $script/bedToHtmlDir -page-size 21 -dir-frame-per 60 -dir-right -context-bases 500 -labels $bed.txt -label-tsv retroMrnaInfo.$db.lab -browser-url http://hgwdev-baertsch.cse.ucsc.edu $db ${bed} $webdir/${dir}
