@@ -1,10 +1,11 @@
 
 RETRO_OPTIONS="-verbose=4 -minAli=0.98 -nearTop=0.005 -skipBlatMerge "
+RUNDATE="2011-10-22"
 DB=hg18
 SCORETHRESH=550
 GENOMENAME='Homo sapiens'
 GBDB=hg
-MRNABASE=/hive/data/genomes/$DB/bed/mrnaBlastz/
+MRNABASE=/hive/data/genomes/$DB/bed/mrnaBlastz.$RUNDATE/
 TMPMRNA=/hive/users/baertsch/mrnaBlastz/$DB
 TMPEST=/hive/users/baertsch/est/$DB
 EST=all_est
@@ -36,6 +37,7 @@ GENE3=mgcGenes
 CLUSTER=swarm
 SPECIES="hg18 mm9"
 ROOTDIR="/cluster/home/baertsch/public_html"
+WEBROOT=$ROOTDIR/retro/
 EXPDIR=exp
 GENEPFAM=knownGene
 PFAM=knownToPfam
