@@ -37,8 +37,9 @@ for chr in `cut -f1 $GENOME/$DB/chrom.sizes`; do echo "$SCRIPT/genePredToFa.sh .
 ssh -T $CLUSTER "cd $MRNABASE/run.getmrna ; /parasol/bin/para -ram=4g make jobList"
 cat run.getmrna/mrnaCds*.fa > mrnaCds.fa
 cat run.getmrna/mrna.*.fa > mrna.fa
+pwd
 rm -f all_mrna.psl.gz
-awk -f $SCRIPT/stripversion.awk < mrna.psl/*.psl > transmap_mrna.psl
+cat mrna.psl/*.psl | awk -f $SCRIPT/stripversion.awk > transmap_mrna.psl
 cat all_mrna.native.psl transmap_mrna.psl transMapAlnRefSeq.psl > all_mrna.psl
 gzip all_mrna.psl
 
