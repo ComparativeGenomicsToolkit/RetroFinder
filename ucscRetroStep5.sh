@@ -147,5 +147,5 @@ mkdir -p $EXPDIR
 cd $EXPDIR
 echo pwd
 pwd
-$SCRIPT/analyseExpress.sh ../$1
+$SCRIPT/analyzeExpress.sh ../$1
 cd ..
