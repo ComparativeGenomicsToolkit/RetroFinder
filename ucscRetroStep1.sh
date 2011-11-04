@@ -25,7 +25,7 @@ if [[ -s mrna.fa ]] ; then
 else
     echo "extracting mRNA and refseq from Genbank "
     /cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
-       genbank mrna stdout | tr acgtiIpP ACGTNNNN > tmp.fa ; mv tmp.fa mrna.fa 
+       genbank mrna stdout | tr acgtip ACGTNN > tmp.fa ; mv tmp.fa mrna.fa 
 fi
 if [[ -s refseq.fa ]] ; then
     echo "refseq.fa exists, extraction from genbank skipped"
