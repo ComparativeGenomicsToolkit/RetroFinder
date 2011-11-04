@@ -84,8 +84,8 @@ hgLoadPsl $DB $ALIGN.psl
 rm -f $RETRODIR/$ALIGN.psl
 cp -p $ALIGN.psl $RETRODIR
 
-zcat cds.tab.gz |tawk '{print $1"."$2,$3}' > ucscRetroCds.tab 
-hgLoadSqlTab $DB ucscRetroCds ~/kent/src/hg/lib/ucscRetroCds.sql ucscRetroCds.tab
+zcat cds.tab.gz |tawk '{print $1"."$2,$3}' > ucscRetroCds${VERSION}.tab 
+hgLoadSqlTab $DB ucscRetroCds${VERSION} ~/kent/src/hg/lib/ucscRetroCds.sql ucscRetroCds.tab
 rm -f $RETRODIR/ucscRetroCds.tab
 cp -p ucscRetroCds.tab $RETRODIR
 cp -p DEF $RETRODIR
