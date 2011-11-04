@@ -90,7 +90,7 @@ ls mrna*.fa |awk '{print "'$TMPMRNA'/split/"$1}' > $TMPMRNA/S2.lst
 cd ..
 echo "#!/bin/bash" > doChain
 echo "BASE=$TMPMRNA" >> doChain
-echo "axtChain -linearGap=loose -psl \$BASE/pslFilter/\$1.psl $TWOBIT -faQ \$BASE/trim.fa stdout | chainFilter -minScore=4000 stdin | chainToPsl stdin S1.len S2.len nib.lst trim.fa psl/\$1.psl" >> doChain
+echo "axtChain -linearGap=loose -verbose=0 -psl \$BASE/pslFilter/\$1.psl $TWOBIT -faQ \$BASE/trim.fa stdout | chainFilter -minScore=4000 stdin | chainToPsl stdin S1.len S2.len nib.lst trim.fa psl/\$1.psl" >> doChain
 chmod +x doChain
 awk '{print "mkdir -p $TMPMRNA/lastz/"$1}' S1.len > create.dirs
 source create.dirs
