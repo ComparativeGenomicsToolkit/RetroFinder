@@ -72,9 +72,9 @@ pwd
 mkdir -p /gbdb/$DB/blastzRetro
 rm -f /gbdb/$DB/blastzRetro/mrna.fa 
 ln $MRNABASE/mrna.fa /gbdb/$DB/blastzRetro/ -s
-hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/mrna.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
+hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/mrna.fa  -seqTbl=ucscRetroSeq${VERSION} -extFileTbl=ucscRetroExtFile${VERSION}
 rm -f /gbdb/$DB/blastzRetro/refseq.fa 
 ln $MRNABASE/refseq.fa /gbdb/$DB/blastzRetro/ -s
-hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/refseq.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
+hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/refseq.fa  -seqTbl=ucscRetroSeq${VERSION} -extFileTbl=ucscRetroExtFile${VERSION}
 
 echo "run ucscRetroStep3.sh DEF to run retro pipeline"
