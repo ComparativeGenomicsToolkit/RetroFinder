@@ -25,17 +25,14 @@ find $NIB > nib.lst
 mkdir -p psl
 for i in `awk '{print $1}' S1.len` ; do nohup $TMPMRNA/doChain $i ; done 
 
-#convert chains to psl
-#for i in `awk '{print $1}' S1.len`; do chainToPsl chainFilter/$i.chain S1.len S2.len nib.lst trim.fa psl/$i.psl; done
-
-
 #reattach polyA tail and fix alignments
 mkdir -p pslLift
 for i in `awk '{print $1}' S1.len` ; do liftUp pslLift/$i.psl mrna.lft warn psl/$i.psl -pslQ -nohead ; done
 
-cd $MRNABASE
-pslCat -nohead $TMPMRNA/pslLift/*psl > mrnaBlastz.psl
+cd $TMPMRNA/pslLift
+pslCat -nohead *psl > $MRNABASE/mrnaBlastz.psl
 
+cd $MRNABASE
 sort -k10,10 -k14,14 -k16,16n -k12,12n mrnaBlastz.psl > mrnaBlastz.sort.psl
 #pslCDnaFilter -minCover=0.05 -minId=0.65 mrnaBlastz.sort.psl mrnaBlastz.65.psl
 ##                       seqs    aligns
@@ -62,22 +59,22 @@ cd $OUTDIR/split
 for i in `ls tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > temp.psl ; mv temp.psl $i ;echo $i; done
 grep chr tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'|uniq  > acc.lst
 
-#load mrna sequences into browser (with version numbers)
-mkdir -p /gbdb/$DB/blastzRetro
-rm -f /gbdb/$DB/blastzRetro/mrna.fa 
-rm -f /gbdb/$DB/blastzRetro/refseq.fa 
-ln $MRNABASE/mrna.fa /gbdb/$DB/blastzRetro/ -s
-ln $MRNABASE/refseq.fa /gbdb/$DB/blastzRetro/ -s
-hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/refseq.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
-hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/mrna.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
-
 #load mrna alignment track into browser
 awk -f $SCRIPT/stripversion.awk $MRNABASE/mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrnaBlastz
 
 echo "ucscRetroStep2.sh mrna alignments complete"
-cd $TMPMRNA
-cp DEF $OUTDIR
+cd $MRNABASE
 cp S1.len $OUTDIR
 cd $OUTDIR
 pwd
+
+#load mrna sequences into browser (with version numbers)
+mkdir -p /gbdb/$DB/blastzRetro
+rm -f /gbdb/$DB/blastzRetro/mrna.fa 
+ln $MRNABASE/mrna.fa /gbdb/$DB/blastzRetro/ -s
+hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/mrna.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
+rm -f /gbdb/$DB/blastzRetro/refseq.fa 
+ln $MRNABASE/refseq.fa /gbdb/$DB/blastzRetro/ -s
+hgLoadSeq -replace $DB /gbdb/$DB/blastzRetro/refseq.fa  -seqTbl=ucscRetroSeq -extFileTbl=ucscRetroExtFile
+
 echo "run ucscRetroStep3.sh DEF to run retro pipeline"
