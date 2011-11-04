@@ -3,7 +3,7 @@
 #$1 = DEF file
 source $1
 #cd /hive/users/baertsch/retro/$DB
-hgsql $DB -e "select (1000-millibad)/10, chrom, type from ${TABLE}" |awk '$2=="chrX"{print $1,$2,$3,$4,$5}$2!="chrX"{print $1,"auto",$2,$3,$4,$5}' | sort -n>diverge.txt
+hgsql $DB -e "select (1000-millibad)/10, chrom, type from ${TABLE}" |awk '$2=="chrX"{print $1,$2,$3,$4,$5}$2!="chrX"{print $1,"auto",$3,$4,$5}' | sort -n>diverge.txt
 tawk '$1=="chrX"{c="chrX"}$1!="chrX"{c="auto"}{print (1000-$35)/10,c,$15}' exp/age/retroKgCoding.bed > divergeKg.txt
 grep pseudogene diverge.txt |awk '{print $1,$2}' > div.pseudo.txt
 grep pseudogene diverge.txt |awk '{print $1,$2}' > div.pseudoweak.txt
