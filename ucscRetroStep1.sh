@@ -1,5 +1,5 @@
 #!/bin/bash 
-set -beEu -o pipefail
+set -bveEu -o pipefail
 if [ $BASH_ARGC ]; then
        echo "Parameter file is $1"
 else
@@ -13,21 +13,25 @@ mkdir -p $TMPMRNA
 mkdir -p $MRNABASE
 cd $MRNABASE
 
+if [[ -s S1.len ]] ; then
+    echo "S1.len exists with `wc -l S1.len` rows"
+else
+    echo "Fatal error: Please create `pwd`/S1.len from chrom.sizes without random chroms or chrM, and rerun."
+    exit 3
+fi
 #pull latest mrna and refseq from genbank 
 if [[ -s mrna.fa ]] ; then
     echo "mrna.fa exists, extraction from genbank skipped"
 else
-    echo "extracting mRNA and reqseq from Genbank "
-    echo "/cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
-       genbank mrna stdout | tr acgt ACGT "
+    echo "extracting mRNA and refseq from Genbank "
     /cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
-       genbank mrna stdout | tr acgt ACGT > tmp.fa ; mv tmp.fa mrna.fa 
+       genbank mrna stdout | tr acgtiIpP ACGTNNNN > tmp.fa ; mv tmp.fa mrna.fa 
 fi
 if [[ -s refseq.fa ]] ; then
     echo "refseq.fa exists, extraction from genbank skipped"
 else
     /cluster/data/genbank/bin/x86_64/gbGetSeqs -db=$GBDB -inclVersion -native -gbRoot=/cluster/data/genbank \
-       refSeq mrna stdout | tr acgt ACGT > refseq.fa 
+       refSeq mrna stdout | tr acgtiI ACGTNN > refseq.fa 
 fi
 if [[ -s all_mrna.psl.gz ]] ; then
     echo "all_mrna.psl.gz not refreshed, must be extracted at the same time as mrna and refseq sequences. "
@@ -45,28 +49,18 @@ else
     gzip cds.tab
 fi
 
-echo "cat mrna.fa refseq.fa output-to raw.fa"
 cat mrna.fa refseq.fa > raw.fa
 
 #remove polyA tail before aligning
-echo "faTrimPolyA raw.fa trim.fa "
 faTrimPolyA raw.fa trim.fa 
 mkdir -p $TMPMRNA 
 cp -p trim.fa $TMPMRNA 
 
 pwd
 
-echo "faToTwoBit raw.fa mrna.2bit"
 faToTwoBit raw.fa mrna.2bit
-echo "twoBitToFa mrna.2bit stdout |faToTwoBit stdin -stripVersion mrnaNoversion.2bit"
 twoBitToFa mrna.2bit stdout |faToTwoBit stdin -stripVersion mrnaNoversion.2bit
 faSize trim.fa -detailed > trim.len
-if [[ -s S1.len ]] ; then
-    echo "S1.len exists with `wc -l S1.len` rows"
-else
-    echo "please create `pwd`/S1.len from chrom.sizes without random chroms or chrM."
-    exit 3
-fi
 cp trim.len S2.len
 faSize raw.fa -detailed > raw.len
 sort raw.len > x
@@ -97,7 +91,7 @@ echo "#!/bin/bash" > doChain
 echo "BASE=$TMPMRNA" >> doChain
 echo "axtChain -linearGap=loose -psl \$BASE/pslFilter/\$1.psl $TWOBIT -faQ \$BASE/trim.fa stdout | chainFilter -minScore=4000 stdin | chainToPsl stdin S1.len S2.len nib.lst trim.fa psl/\$1.psl" >> doChain
 chmod +x doChain
-awk '{print "mkdir -p $TMPMRNA/lastz/"$1}' S1.len |grep -v random > create.dirs
+awk '{print "mkdir -p $TMPMRNA/lastz/"$1}' S1.len > create.dirs
 source create.dirs
 awk '{print $1}' S1.len > S1.lst
 cd $TMPMRNA/run.0
