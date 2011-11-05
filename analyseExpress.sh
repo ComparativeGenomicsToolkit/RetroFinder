@@ -120,8 +120,8 @@ awk '$7=="ok"&& $25=="noStart" || $25==""{print $1}' checkEst.rdb > goodOrf.list
 $SCRIPT/selectById -tsv 1 goodOrf.list 4 pseudoEstAll.out > pseudoEstAll.good.out
 
 echo "histogram of best.orf scores"
-awk '{print $55}' pseudoEstAll.good.out |textHistogram stdin -maxBinCount=40 -binSize=10
-awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed weak\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEstAll.good.out > updateExp.sql
+awk '{print $52}' pseudoEstAll.good.out |textHistogram stdin -maxBinCount=40 -binSize=10
+awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed weak\", posConf = \""$52"\" where name = \""$4"\" ;"}' pseudoEstAll.good.out > updateExp.sql
 echo "hgsql $DB updateExp.sql"
 hgsql $DB < updateExp.sql
 
@@ -133,7 +133,7 @@ echo gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 ~markd/compbio/genefinding/GeneTools/bin/x86_64/opt/gene-check  -genome-seqs $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 tawk '$7=="ok" && $25=="noStart" || $25==""{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
 $SCRIPT/selectById -tsv 1 goodOrf5AndMrna.list 4 pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
-awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed strong\", posConf = \""$55"\" where name = \""$4"\" ;"}' pseudoEst5AndMrna.good.out > updateExp5.sql
+awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed strong\", posConf = \""$52"\" where name = \""$4"\" ;"}' pseudoEst5AndMrna.good.out > updateExp5.sql
 echo "hgsql $DB  updateExp5.sql"
 hgsql $DB < updateExp5.sql
 
