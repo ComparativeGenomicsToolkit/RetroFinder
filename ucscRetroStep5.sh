@@ -83,6 +83,7 @@ hgsql $DB -e "alter table retroMrnaInfoXX rename $TABLE;"
 hgLoadPsl $DB $ALIGN.psl
 rm -f $RETRODIR/$ALIGN.psl
 cp -p $ALIGN.psl $RETRODIR
+hgLoadSqlTab $DB ucscRetroOrtho${VERSION} ~/kent/src/hg/lib/ucscRetroOrtho.sql ortho.txt
 
 zcat cds.tab.gz |tawk '{print $1"."$2,$3}' > ucscRetroCds${VERSION}.tab 
 hgLoadSqlTab $DB ucscRetroCds${VERSION} ~/kent/src/hg/lib/ucscRetroCds.sql ucscRetroCds.tab
