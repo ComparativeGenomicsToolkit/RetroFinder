@@ -6,6 +6,7 @@ DB=hg19
 SCORETHRESH=550
 GENOMENAME='Homo sapiens'
 GBDB=hg
+BINDIR=/hive/users/baertsch/bin/x86_64
 MRNABASE=/hive/data/genomes/$DB/bed/mrnaBlastz.$RUNDATE/
 TMPMRNA=/hive/users/baertsch/mrnaBlastz/$DB
 TMPEST=/hive/users/baertsch/est/$DB

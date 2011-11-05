@@ -17,7 +17,7 @@ fi
 mkdir -p pslFilter
 for i in `awk '{print $1}' S1.len` ; do echo $i ; cat lastz/$i/*.psl | awk '{print $0, $1*3-$2}' | \
  sort -k 10,10 -k 22nr -T /scratch | awk '{OFS=" "; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21}' | \
- /cluster/home/baertsch/bin/x86_64/pslFilterDups stdin pslFilter/$i.psl  ; done 
+ ${BINDIR}/pslFilterDups stdin pslFilter/$i.psl  ; done 
 
 #chain blocks
 
@@ -54,7 +54,7 @@ gzip mrnaBlastz.sort.psl &
 
 #split for pipeline cluster run 
 mkdir -p $OUTDIR/split
-/cluster/home/baertsch/bin/x86_64/pslSplit nohead $OUTDIR/split mrnaBlastz.psl -chunkSize=120
+${BINDIR}/pslSplit nohead $OUTDIR/split mrnaBlastz.psl -chunkSize=120
 
 cd $OUTDIR/split
 for i in `ls tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > temp.psl ; mv temp.psl $i ; done
