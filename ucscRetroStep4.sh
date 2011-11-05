@@ -31,7 +31,8 @@ pushd $RESULT ; cat pseudoGeneLink[0-9]*.bed | tawk '$5 > 300 && ($14 > 10000 ||
 popd
 wc -l pseudoGeneLinkSortFilter.bed
 pushd $OUT
-cat pseudo[0-9]*.psl > $OUTDIR/pseudo.psl & #;/bin/rm $OUT/pseudo[0-9]*.psl &
+cat pseudo[0-9]*.psl > $OUTDIR/pseudo.psl #;/bin/rm $OUT/pseudo[0-9]*.psl &
+cat ortho*.txt | sed -e 's/.txt//'> $OUTDIR/ortho.txt
 popd
 echo Removing Overlaps
 RESULTSPLIT=$OUTDIR/resultSplit
