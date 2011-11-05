@@ -32,6 +32,9 @@ RMSK=rmsk
 NET1=netMm9 
 NET2=netCanFam2 
 NET3=netRheMac2 
+# these two nets determine which retros are classified as ancient, use two farthest nets 
+ANCIENT1=netMm9 
+ANCIENT2=netCanFam2 
 GENE1=knownGene
 GENE2=refGene
 GENE3=ensGene
