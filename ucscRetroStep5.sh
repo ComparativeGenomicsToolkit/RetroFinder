@@ -120,7 +120,7 @@ pwd
 ls -l retroMrnaInfoLessZnf.bed 
 echo "calculate age of retros"
 
-for bed in retroMrnaInfoLessZnf retroMrnaInfo650 ; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; wc -l ${bed}.ancient.bed ${bed}.recent.bed ; done
+for bed in retroMrnaInfoLessZnf retroMrnaInfo650 ; do $SPLITBYAGE ${bed}.bed ortho.txt ${bed}.ancient.bed ${bed}.recent.bed $ANCIENT1 $ANCIENT2 $SCRIPT ; wc -l ${bed}.ancient.bed ${bed}.recent.bed ; done
 
 echo "overlap with ests - use cluster jobs to speed this step"
 mkdir -p estSplit
