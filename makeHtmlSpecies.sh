@@ -5,6 +5,7 @@ dir=$3
 name=$4
 script=$5
 webdir=$6
+server=$7
 set -o verbose
 echo "Writing $name html into $dir/$db "
 sort -k5,5nr $bed > $bed.sort ; mv $bed.sort $bed
@@ -17,9 +18,9 @@ $script/selectById 4 ${bed%%.bed}.recent.bed 1 retroMrnaInfo.txt > $bed.recent.t
 $script/selectById 4 ${bed%%.bed}.ancient.bed 1 retroMrnaInfo.txt > $bed.ancient.txt
 echo "mkdir -p $webdir/${dir}Anc/$db"
 mkdir -p $webdir/${dir}Anc/$db
-echo "$script/bedToHtmlDir -page-size 21 -dir-frame-per 60 -dir-right -context-bases 500 -labels $bed.ancient.txt -label-tsv retroMrnaInfo.lab -browser-url http://hgwdev-baertsch.cse.ucsc.edu $db ${bed%%.bed}.ancient.bed $webdir/${dir}Anc/$db"
-$script/bedToHtmlDir -page-size 21 -dir-frame-per 60 -dir-right -context-bases 500 -labels $bed.recent.txt -label-tsv retroMrnaInfo.$db.lab -browser-url http://hgwdev-baertsch.cse.ucsc.edu $db ${bed%%.bed}.recent.bed $webdir/${dir}Rec/$db
-$script/bedToHtmlDir -page-size 21 -dir-frame-per 60 -dir-right -context-bases 500 -labels $bed.ancient.txt -label-tsv retroMrnaInfo.$db.lab -browser-url http://hgwdev-baertsch.cse.ucsc.edu $db ${bed%%.bed}.ancient.bed $webdir/${dir}Anc/$db
+echo "$script/bedToHtmlDir -page-size 21 -dir-frame-per 60 -dir-right -context-bases 500 -labels $bed.ancient.txt -label-tsv retroMrnaInfo.lab -browser-url $server $db ${bed%%.bed}.ancient.bed $webdir/${dir}Anc/$db"
+$script/bedToHtmlDir -page-size 21 -dir-frame-per 60 -dir-right -context-bases 500 -labels $bed.recent.txt -label-tsv retroMrnaInfo.$db.lab -browser-url $server $db ${bed%%.bed}.recent.bed $webdir/${dir}Rec/$db
+$script/bedToHtmlDir -page-size 21 -dir-frame-per 60 -dir-right -context-bases 500 -labels $bed.ancient.txt -label-tsv retroMrnaInfo.$db.lab -browser-url $server $db ${bed%%.bed}.ancient.bed $webdir/${dir}Anc/$db
 countR=`wc -l ${bed%%.bed}.recent.bed | awk '{print $1}'`
 countA=`wc -l ${bed%%.bed}.ancient.bed | awk '{print $1}'`
 echo copy $count to $webdir/$dir/../index.html
