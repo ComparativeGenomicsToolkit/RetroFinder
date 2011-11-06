@@ -2,8 +2,9 @@
 #
 # extract est sequences and alignments, then filter to remove est with multiple hits that are ambigouous
 #
-set -beEu -o pipefail
+set -bevEu -o pipefail
 source $1
+cd $OUTDIR
 hgsql $DB -N -B -e "select acc from gbWarn" > gbWarn.id
 if [[ $SPLIT_SPLICED_EST == 1 ]] ; then
     for chr in `cut -f 1 S1.len |grep -v random` ; do echo $chr ; hgsql $DB -N -B -e "select * from ${chr}_$SPLICED_EST" |cut -f2-22 |grep -v -F -f gbWarn.id>> splicedEst.psl ; done
