@@ -163,7 +163,7 @@ overlapSelect pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.b
 
 #split retros by age
 
-for bed in pseudo${GENE2} pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudo5Est100AA pseudoEst5AndMrna100AA pseudo${GENE1}Cds pseudo${GENE1}Cds50 pseudo${GENE2}Cds pseudo${GENE2}Cds50 pseudoEst5MrnaNotKg pseudoEst10MrnaNotKg pseudoEst5AndMrnaNotKg; do $SPLITBYAGE ${bed}.bed ${bed}.ancient.bed ${bed}.recent.bed; done
+for bed in pseudo${GENE2} pseudoEstMrna.filter pseudoEstAll pseudoExpressed pseudoEst5Mrna pseudoEst5 pseudoEst5AndMrna pseudoEst100AA pseudo5Est100AA pseudoEst5AndMrna100AA pseudo${GENE1}Cds pseudo${GENE1}Cds50 pseudo${GENE2}Cds pseudo${GENE2}Cds50 pseudoEst5MrnaNotKg pseudoEst10MrnaNotKg pseudoEst5AndMrnaNotKg; do $SCRIPT/selectById -tsv 1 ortho.ancient.id 4 ${bed}.bed |sort -k5,5nr> ${{bed}.ancient.bed ; $SCRIPT/selectById -not -tsv 1 ortho.ancient.id 4 ${bed}.bed |sort -k5,5nr> ${{bed}.recent.bed ; done
 
 mkdir -p age
 cd age
