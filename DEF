@@ -42,6 +42,7 @@ CLUSTER=swarm
 SPECIES="hg19 mm9"
 ROOTDIR="/cluster/home/baertsch/public_html"
 WEBROOT=$ROOTDIR/retro.$RUNDATE/
+WEBSERVER=http://hgwdev-baertsch.cse.ucsc.edu
 EXPDIR=exp
 GENEPFAM=knownGene
 PFAM=knownToPfam
