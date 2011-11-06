@@ -7,19 +7,26 @@ cp /cluster/home/baertsch/baertsch/scripts/DEF  .
 
 
 edit DEF file with following changes:
+ RUNDATE - date of this pipeline run
  DB to point to database create retro annotation
  GENOMENAME show reference name in hgcentral.dbDb.scientificName
+ BINDIR - location of binaries compiled from retroFinder source
  GBDB set to database name used by genBank getSeqs utility parameter -db
  VERSION version number appended to database tables created  
  NET1 - name of net table used for orthology fairly far
  NET2 - name of net table used for orthology medium distance
  NET3 - name of net table used for orthology fairly close
+ ANCIENT1 - name of farthest net, used for age of retro
+ ANCIENT2 - name of 2nd farthest net, used for age of retro
  SPECIES - set this to list of databases used to create web pages in step 6 (start with current DB)
  GENES1 - set to knownGene if present or "best gene prediction"
  GENES2 - set to refGene or other gene prediction
  GENES3 - set to ccdsGene or other gene prediction
  ARRAY* - not used
  PDB - set to latest protein database name (i.e. proteinsXXXXXX)
+ WEBSERVER - http address of server used to display retro webpages
+ ROOTDIR - local directory on webserver - top level directory
+ RMSK - table name of repeatmasker or directory containing rmsk output files .out
 
 cp $LOCAL/chrom.sizes to $MRNABASE/S1.len and delete random chroms and chrM.
  
