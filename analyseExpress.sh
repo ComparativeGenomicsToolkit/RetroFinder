@@ -67,7 +67,7 @@ echo "$SCRIPT/estStat.sh \$(root1)">>template
 echo "#ENDLOOP">> template
 awk '{print $1}' $OUTDIR/S1.len |grep -v chrM | gensub2 stdin single template jobList
 popd
-#ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
+ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
 
 pushd $OUTDIR/$EXPDIR
 cat $OUTDIR/estSplit/pseudoEst*.bed > pseudoEstAll.bed
