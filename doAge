@@ -1,18 +1,18 @@
 #!/bin/bash
-set -beEu -o pipefail
+set -bevEu -o pipefail
 source $1
 INPUT=$2
 cut -f 4 $INPUT.bed |sort> $INPUT.lst
 sort -k4,4 $INPUT.bed > $INPUT.sort.bed
 pwd
-echo "pslSelect -queries=$INPUT.lst ../../${ALIGN}.psl $ALIGN.psl"
-sort ../../${ALIGN}.psl | sort  | pslSelect -queries=$INPUT.lst stdin $ALIGN.psl
+echo "pslSelect -queries=$INPUT.lst $OUTDIR/${ALIGN}.psl $ALIGN.psl"
+sort $OUTDIR/${ALIGN}.psl | sort  | pslSelect -queries=$INPUT.lst stdin $ALIGN.psl
 
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET1" > $NET1.txt
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET2" > $NET2.txt
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET3" > $NET3.txt
-hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from netPanTro2" > netPanTro2.txt
-pslNetOverlap -verbose=2 $ALIGN.psl ../../S1.len ../../rmsk.bed.gz $NET2.txt $NET1.txt $NET3.txt netPanTro2.txt > $INPUT.out 2> $INPUT.log
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET1 where tName not like '%random' and tName not like 'chrUn%' and tName <> 'chrM'"> $NET1.txt
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET2 where tName not like '%random' and tName not like 'chrUn%' and tName <> 'chrM'" > $NET2.txt
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from $NET3 where tName not like '%random' and tName not like 'chrUn%' and tName <> 'chrM'" > $NET3.txt
+hgsql $DB -N -B -e "select tName, tStart, tEnd, level, qName, qStart, qEnd, type, qN, tR+tTrf, qFar, chainId from netPanTro2 where tName not like '%random' and tName not like 'chrUn%' and tName <> 'chrM'" > netPanTro2.txt
+zgrep -v random $OUTDIR/rmsk.bed.gz | grep -v chrM | grep -v chrUn | pslNetOverlap -verbose=2 $DB $ALIGN.psl $OUTDIR/S1.len stdin $NET2.txt $NET1.txt $NET3.txt netPanTro2.txt > $INPUT.out 
 mkdir -p $INPUT
 pushd $INPUT
 tawk -f ../age.awk < ../$INPUT.out
@@ -25,10 +25,10 @@ awk 'BEGIN{print "name score type div age auto"}$2=="chrX"{a=$2}$2!="chrX"{a="au
 echo "#!/bin/bash" > doit.sh
 echo "set -beEu -o pipefail" >> doit.sh
 echo "source $1" >> doit.sh
-echo "$SCRIPT/selectById -tsv 1 0ancient.txt 4 ../../../$TABLE.bed >  ${INPUT}.0ancient.bed" >> doit.sh
-echo "$SCRIPT/selectById -tsv 1 1dog.txt 4 ../../../$TABLE.bed >  ${INPUT}.1dog.bed" >> doit.sh
-echo "$SCRIPT/selectById -tsv 1 2mouse.txt 4 ../../../$TABLE.bed >  ${INPUT}.2mouse.bed" >> doit.sh
-echo "$SCRIPT/selectById -tsv 1 3rhesus.txt 4 ../../../$TABLE.bed >  ${INPUT}.3rhesus.bed" >> doit.sh
-echo "$SCRIPT/selectById -tsv 1 4chimp.txt 4 ../../../$TABLE.bed >  ${INPUT}.4chimp.bed" >> doit.sh
+echo "$SCRIPT/selectById -tsv 1 0ancient.txt 4 ../../$TABLE.bed >  ${INPUT}.0ancient.bed" >> doit.sh
+echo "$SCRIPT/selectById -tsv 1 1dog.txt 4 ../../$TABLE.bed >  ${INPUT}.1dog.bed" >> doit.sh
+echo "$SCRIPT/selectById -tsv 1 2mouse.txt 4 ../../$TABLE.bed >  ${INPUT}.2mouse.bed" >> doit.sh
+echo "$SCRIPT/selectById -tsv 1 3rhesus.txt 4 ../../$TABLE.bed >  ${INPUT}.3rhesus.bed" >> doit.sh
+echo "$SCRIPT/selectById -tsv 1 4chimp.txt 4 ../../$TABLE.bed >  ${INPUT}.4chimp.bed" >> doit.sh
 chmod +x doit.sh
 ./doit.sh $1

@@ -36,11 +36,9 @@ then
  $SPLITBYAGE retroSplice.bed retroSplice.ancient.bed retroSplice.recent.bed 
 fi
 
-mkdir -p age
-pushd age
-$SCRIPT/doAge ../../DEF pseudoEst5Mrna
-$SCRIPT/doAge ../../DEF retroMrnaInfoLessZnf 
-$SCRIPT/doAge ../../DEF retroKgCoding 
+$SCRIPT/doAge ../DEF pseudoEst5Mrna
+$SCRIPT/doAge ../DEF retroMrnaInfoLessZnf 
+$SCRIPT/doAge ../DEF retroKgCoding 
 
 
 echo '-------- END script analyseAge.sh -------------------'
