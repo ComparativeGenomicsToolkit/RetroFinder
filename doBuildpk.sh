@@ -22,9 +22,9 @@ ulimit -a >> $TMP/pseudo$1.log
  /bin/mv $TMP/pseudoGeneLink$1.bed $RESULT
 # /bin/rm -f $TMP/pseudo$1.axt.gz
 # /bin/gzip $TMP/pseudo$1.axt
-#/bin/cp -fp $TMP/pseudoMrnaLink$1.txt.gz $RESULT
+ /bin/cp -fp $TMP/pseudoMrnaLink$1.txt.gz $RESULT
 # /bin/mv $TMP/pseudo$1.axt.gz $RESULT/axt
- /bin/rm -rf $TMP
+# /bin/rm -rf $TMP
 
 
 # /bin/awk '{OFS="	";print $14,$16,$17,$10,$1*3-$2,$9}' pseudoMrna.psl > pseudoMrna.txt

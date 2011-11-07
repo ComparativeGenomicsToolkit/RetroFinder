@@ -24,6 +24,7 @@ LOG=$OUTDIR/log
 OUT=$OUTDIR/out
 OVERLAPDIR=$OUTDIR/run.o
 TABLE=ucscRetroInfo$VERSION
+ORTHOTABLE=ucscRetroOrtho$VERSION
 ALIGN=ucscRetroAli$VERSION
 LOCAL=/scratch/data/$DB
 TWOBIT=$LOCAL/$DB.2bit

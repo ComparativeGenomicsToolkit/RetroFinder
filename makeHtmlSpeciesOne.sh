@@ -1,5 +1,5 @@
 #!/bin/bash
-set -o verbose
+#set -o verbose
 db=$1
 bed=$2
 dir=$3

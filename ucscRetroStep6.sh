@@ -1,5 +1,5 @@
 #!/bin/bash
-set -beEu -o pipefail
+set -bevEu -o pipefail
 source $1
 DEF=$1
 echo "-------- script ucscRetroStep6.sh make retro webpages for $SPECIES -------------------"
@@ -87,27 +87,6 @@ echo "</table>" >> $AGEROOT/index.html
 
 echo "</body>" >> $AGEROOT/index.html
 echo "</html>" >> $AGEROOT/index.html
-echo " add following entry to trackDb.ra"
-echo ""
-echo "track ucscRetroAli$VERSION"
-echo "shortLabel Retroposed Genes $VERSION.0"
-echo "longLabel Retroposed Genes, Including Pseudogenes August 2009 [ucscRetroAli$VERSION]"
-echo "group genes"
-echo "type psl"
-echo "priority 37.14"
-echo "color 20,0,250"
-echo "visibility pack"
-echo "nextItemButton on"
-echo "retroMrnaInfo ucscRetroInfo$VERSION"
-echo "baseColorDefault diffCodons"
-echo "baseColorUseCds table ucscRetroCds$VERSION"
-echo "baseColorUseSequence extFile ucscRetroSeq$VERSION ucscRetroExtFile$VERSION"
-echo "indelDoubleInsert on"
-echo "indelQueryInsert on"
-echo "showDiffBasesAllScales ."
-echo "showDiffBasesMaxZoom 10000.0"
-echo "showCdsAllScales ."
-echo "showCdsMaxZoom 10000.0"
 
 
 echo '-------- END script ucscRetroStep6.sh -------------------'

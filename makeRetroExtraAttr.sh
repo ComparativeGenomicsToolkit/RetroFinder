@@ -17,9 +17,11 @@ echo "load rbGenBankName"
 hgsql $DB -e "load data local infile 'genBankName.txt' into table rbGenBankName"
 
 echo "extract retroMrnaInfo.txt"
-hgsql $DB -N -B -e "select r.name, r.name, score, n.name,r.type, retroExonCount, overlapRhesus, overlapMouse, overlapDog, overName, r.blockCount, conservedSpliceSites, exonCover, coverage, milliBad, n.product from $TABLE  r left outer join rbGenBankName n on r.refSeq = n.acc " > retroMrnaInfo.txt
+hgsql $DB -N -B -e "select r.name, r.name, r.score, n.name,r.type, r.retroExonCount, -777, o1.overlap,-1788, r.overName, r.blockCount, r.conservedSpliceSites, r.exonCover, r.coverage, r.milliBad, n.product from $TABLE  r left outer join (rbGenBankName n, $ORTHOTABLE o1) on r.refSeq = n.acc and r.name = o1.name and o1.db = "\"$NET1\""" > retroMrnaInfo.txt
+#hgsql $DB -N -B -e "select r.name, r.name, score, n.name,r.type, retroExonCount, overlapRhesus, overlapMouse, overlapDog, overName, r.blockCount, conservedSpliceSites, exonCover, coverage, milliBad, n.product from $TABLE  r left outer join rbGenBankName n on r.refSeq = n.acc " > retroMrnaInfo.txt
 pwd
-hgsql $DB -B -e "select name, name, score, refSeq as parent, type, retroExonCount as Exons, overlapRhesus as "$NET3" , overlapMouse as "$NET1", overlapDog as "$NET2", overName as exp, blockCount, conservedSpliceSites as consSS, exonCover, coverage, milliBad, name as product from $TABLE  limit 1" > retroMrnaInfo.$DB.lab
+hgsql $DB -N -B -e "select r.name as name , r.name as name, score, refSeq as parent, type, retroExonCount as Exons, -777, o1.overlap as "$NET1",-1788, overName as exp, blockCount, conservedSpliceSites as consSS, exonCover, coverage, milliBad, product from $TABLE  r left outer join (rbGenBankName n, $ORTHOTABLE o1) on r.refSeq = n.acc and r.name = o1.name and o1.db = "\"$NET1\"" limit 1" > retroMrnaInfo.$DB.lab
+#hgsql $DB -B -e "select name, name, score, refSeq as parent, type, retroExonCount as Exons, overlapRhesus as "$NET3" , overlapMouse as "$NET1", overlapDog as "$NET2", overName as exp, blockCount, conservedSpliceSites as consSS, exonCover, coverage, milliBad, name as product from $TABLE  limit 1" > retroMrnaInfo.$DB.lab
 #cp retroMrnaInfo.hg18.lab retroMrnaInfo.$DB.lab
 #hgsql $DB -B -e "select name, name, score, refSeq as parent, type, retroExonCount as Exons, overlapRhesus as Rat , overlapMouse as Human, overlapDog as Dog, overName as exp, blockCount, conservedSpliceSites as consSS, exonCover, coverage, milliBad , name as product from $TABLE  limit 1" > retroMrnaInfo.mm9.lab
 
