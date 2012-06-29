@@ -38,7 +38,8 @@ then
     hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where a1.alias like 'ZNF%' and a1.kgID = a2.kgID" |sort -u > kgZnf.lst
     hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where a1.alias like 'NBPF%' and a1.kgID = a2.kgID" |sort -u >> kgZnf.lst
 
-    cat kgZnf.lst refZnf.lst kgImmuno.lst > bothZnf.lst
+#    cat kgZnf.lst refZnf.lst kgImmuno.lst > bothZnf.lst
+cat kgZnf.lst kgImmuno.lst > bothZnf.lst
 
 # grap genes with pfam domains (zinc finger, immunoglobin, NBPF, and olfactory receptor
     hgsql $DB -N -B -e "select  k.name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, \
@@ -52,7 +53,7 @@ then
     echo "Zinc fingers excluded"
     wc -l zincKg2.gp zincKg.lst
 
-    echo "$SCRIPT/selectById 1 zincKg.lst 4 $GENEPFAM.tab to kgZnf.gp"
+    echo "$SCRIPT/selectById 1 zincKg.lst 1 $GENEPFAM.tab to kgZnf.gp"
     $SCRIPT/selectById 1 zincKg.lst 1 $GENEPFAM.tab > kgZnf.gp
 else
 echo "xxx" > zincKg.lst
@@ -60,8 +61,8 @@ echo "skipping zinc finger and immunoglobin filtering"
 fi
 
 
-$SCRIPT/selectById 1 zincKg.lst 47 retroMrnaInfo.raw.bed > retroMrnaInfoZnf.bed
-$SCRIPT/selectById -not 1 zincKg.lst 47 retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
+$SCRIPT/selectById 1 zincKg.lst 45 retroMrnaInfo.raw.bed > retroMrnaInfoZnf.bed
+$SCRIPT/selectById -not 1 zincKg.lst 45 retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
 echo "before and after zinc finger filtering"
 rm -f $TABLE.bed
 cp -pf retroMrnaInfoLessZnf.bed $TABLE.bed
