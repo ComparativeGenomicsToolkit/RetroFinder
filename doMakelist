@@ -1,3 +1,0 @@
-wc -l /san/sanvol1/scratch/pseudo/hg18/split/* |grep -v total | grep -v acc.lst| sort -nr | awk '{print $2}' |sed -e 's./san/sanvol1/scratch/pseudo/hg18/split/tmp..'|sed -e 's/.psl//' > list
-
-
