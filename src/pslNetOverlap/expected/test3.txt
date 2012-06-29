@@ -1,0 +1,2 @@
+#qName	/hive/users/baertsch/retro/hg18/exp/age/netCanFam2.txt	/hive/users/baertsch/retro/hg18/exp/age/netMm9.txt	/hive/users/baertsch/retro/hg18/exp/age/netRheMac2.txt	/hive/users/baertsch/retro/hg18/exp/age/netPanTro2.txt	
+BC008194.1-3	96	2	0	0	

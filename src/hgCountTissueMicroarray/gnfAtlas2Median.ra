@@ -1,0 +1,79 @@
+'fetal brain'	brain	40
+'whole brain'	brain	28
+'temporal lobe'	brain	23
+'parietal lobe'	brain	29
+'occipital lobe'	brain	33
+'prefrontal cortex'	brain	32
+'cingulate cortex'	brain	37
+'cerebellum'	brain	26
+'cerebellum peduncles'	brain	25
+'amygdala'	brain	31
+'hypothalamus'	brain	34
+'thalamus'	brain	35
+'subthalamic nucleus'	brain	36
+'caudate nucleus'	brain	27
+'globus pallidus'	brain	24
+'olfactory bulb'	brain	77
+'pons'	brain	38
+'medulla oblongata'	brain	30
+'spinal cord'	nerve	39
+'ciliary ganglion'	nerve	69
+'trigeminal ganglion'	nerve	70
+'superior cervical ganglion'	nerve	73
+'dorsal root ganglion'	nerve	72
+'thymus' immune 34 35		0
+'tonsil'	immune	18
+'lymph node'	immune	19
+'bone marrow'	immune	22
+'BM-CD71+ early erythroid'	immune	21
+'BM-CD33+ myeloid'	immune	2
+'BM-CD105+ endothelial'	immune	9
+'BM-CD34+'	immune	10
+'whole blood'	immune	1
+'PB-BDCA4+ dentritic cells'	immune	4
+'PB-CD14+ monocytes'	immune	3
+'PB-CD56+ NKCells'	immune	5
+'PB-CD4+ Tcells'	immune	6
+'PB-CD8+ Tcells'	immune	7
+'PB-CD19+ Bcells'	immune	8
+'leukemia lymphoblastic(molt4)'	cancer	11
+'721 B lymphoblasts'	cancer	12
+'lymphoma Burkitts Raji'	cancer	13
+'leukemia promyelocytic(hl60)'	cancer	14
+'lymphoma Burkitts Daudi'	cancer	15
+'leukemia chronic myelogenous(k562)'	cancer	16
+'colorectal adenocarcinoma'	cancer	0
+'appendix'	other	67
+'skin'	other	68
+'adipocyte'	other	55
+'fetal thyroid'	gland	49
+'thyroid'	gland	48
+'pituitary gland'	gland	78
+'adrenal gland'	gland	41
+'adrenal cortex'	gland	65
+'prostate'	gland	46
+'salivary gland'	gland	63
+'pancreas'	gland	56
+'pancreatic islets'	gland	57
+'atrioventricular node'	other	71
+'heart'	muscle	43
+'cardiac myocytes'	muscle	52
+'skeletal muscle'	muscle	74
+'tongue'	muscle	76
+'smooth muscle'	muscle	53
+'uterus'	muscle	47
+'uterus corpus'	muscle	75
+'trachea'	other	64
+'bronchial epithelial cells'	other	54
+'fetal lung'	other	50
+'lung'	other	42
+'kidney'	other	45
+'fetal liver'	other	20
+'liver'	other	44
+'placenta'	other	51
+'testis'	germ	58
+'testis Leydig cell'	germ	59
+'testis germ cell'	germ	60
+'testis interstitial'	germ	61
+'testis seminiferous tubule'	germ	62
+'ovary'	germ	66

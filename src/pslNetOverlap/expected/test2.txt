@@ -1,0 +1,3 @@
+#qName	/hive/users/baertsch/retro/hg18/exp/age/netCanFam2.txt	/hive/users/baertsch/retro/hg18/exp/age/netMm9.txt	/hive/users/baertsch/retro/hg18/exp/age/netRheMac2.txt	/hive/users/baertsch/retro/hg18/exp/age/netPanTro2.txt	
+AK124403.1-10	0	0	0	0	
+AB231739.1-245	0	0	0	0	
