@@ -33,7 +33,7 @@ rm -f est.fa
 pslSelect -queries=est.doublehit.list est.qName.psl est.qName.filter.psl
 rm -rf est
 mkdir -p $OUTDIR/est
-pslSplit nohead $OUTDIR/est est.qName.filter.psl -chunkSize=12000
+${BINDIR}/pslSplit nohead $OUTDIR/est est.qName.filter.psl -chunkSize=12000
 
 
 mkdir -p $OUTDIR/estOutput
