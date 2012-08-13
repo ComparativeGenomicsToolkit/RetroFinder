@@ -63,7 +63,7 @@ tawk '$5 > 600 {$2=$2-50; $3=$3+50;print $0}' ../pseudoEstAll.bed > pseudoExpres
 echo output
 wc -l pseudoExpressed.bed
 echo orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp 
-orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp > borf.out
+${BINDIR}/orfBatch $DB pseudoExpressed.bed pseudoExpressed.out pseudoExpressed.gp > borf.out
 echo ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab
 echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
 ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab
@@ -72,7 +72,7 @@ ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab
 #set of 5000 with 1 or more EST (tight)
 tawk '$2>50{$2=$2-50; $3=$3+50;print $0}$2<=50{$3=$3+50;print $0}' ../pseudoEstAll.bed > pseudoEstAll.bed
 echo "orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp to borfEst.out"
-orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp > borfEst.out
+${BINDIR}/orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp > borfEst.out
 echo gene-check  -nib-dir /cluster/data/$DB/nib pseudoEstAll.gp checkEst.rdb
 gene-check  -nib-dir /cluster/data/$DB/nib pseudoEstAll.gp checkEst.rdb
 awk '$7=="ok"&& $25=="noStart" || $25==""{print $1}' checkEst.rdb > goodOrf.list
