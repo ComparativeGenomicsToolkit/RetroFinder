@@ -187,7 +187,7 @@ overlapSelect $OUTDIR/${GENE2}.tab.gz $OUTDIR/$TABLE.bed pseudo${GENE2}.bed -sel
 #look for orf in window 200 bp around retro
 tawk '$2>200{$2=$2-200; $3=$3+200;print $0}$2<=200{$3=$3+200;print $0}' pseudoEstAllNotShuffle.bed > pseudoEstAll.bed
 echo "orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp to borfEst.out"
-orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp > borfEst.out
+${BINDIR}/orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp > borfEst.out
 echo gene-check  -nib-dir $NIB pseudoEstAll.gp checkEst.rdb
 gene-check  -nib-dir $NIB pseudoEstAll.gp checkEst.rdb
 awk '$7=="ok"&& $25=="noStart" || $25==""{print $1}' checkEst.rdb > goodOrf.list
@@ -204,7 +204,7 @@ hgsql $DB < updateExp.sql
 #set with 5 Est and 1 spliced mRNA
 overlapSelect pseudo${GENE1}Cds.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotShuffle.bed -nonOverlapping
 tawk '$2>200{$2=$2-200; $3=$3+200;print $0}$2<=200{$3=$3+200;print $0}' pseudoEst5AndMrnaNotShuffle.bed > pseudoEst5AndMrna.window.bed
-orfBatch $DB pseudoEst5AndMrna.window.bed pseudoEst5AndMrna.out pseudoEst5AndMrna.gp > borfEst5AndMrna.out
+${BINDIR}/orfBatch $DB pseudoEst5AndMrna.window.bed pseudoEst5AndMrna.out pseudoEst5AndMrna.gp > borfEst5AndMrna.out
 echo gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 tawk '$7=="ok" && $25=="noStart" || $25==""{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
