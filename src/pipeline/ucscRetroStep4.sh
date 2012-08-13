@@ -17,12 +17,12 @@ fi
 wc -l run.0/jobList | awk '{print $1}'> jobs.cnt
 pushd $RESULT ; ls pseudoGeneLink[0-9]*.bed | wc -l | awk '{print $1}'> $OUTDIR/jobs.lst
 popd
-echo Check Job Count from cluster run
-diff jobs.cnt jobs.lst 
-if [ $? != 0 ]; then
-  echo missing jobs aborting
-  exit 3
-fi
+#echo Check Job Count from cluster run
+#diff jobs.cnt jobs.lst 
+#if [ $? != 0 ]; then
+#  echo missing jobs aborting
+#  exit 3
+#fi
 
 # filter out low scoring hits as defined by retroscore and alignment score to parent gene
 rm -f pseudoGeneLinkSortFilter.bed.gz
@@ -49,7 +49,7 @@ cd $OVERLAPDIR
 
 ls $RESULTSPLIT/*.bed | grep -v random > results.lst
 echo "#LOOP" > template
-echo "bedOverlap -noBin \$(path1) {check out exists ../\$(root1)_NoOverlap.bed}" >> template
+echo "${BINDIR}/bedOverlap -noBin \$(path1) {check out exists ../\$(root1)_NoOverlap.bed}" >> template
 echo "#ENDLOOP" >> template
 gensub2 results.lst single template jobList
 
