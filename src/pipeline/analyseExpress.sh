@@ -63,7 +63,7 @@ pslSplitOnTarget estFiltered.psl.gz estSplit
 pushd estSplit
 rm -f jobList
 echo "#LOOP"> template
-echo "$SCRIPT/estStat.sh \$(root1)">>template
+echo "$SCRIPT/estStat.sh $1 \$(root1)">>template
 echo "#ENDLOOP">> template
 awk '{print $1}' $OUTDIR/S1.len |grep -v chrM | gensub2 stdin single template jobList
 ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
