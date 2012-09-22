@@ -48,7 +48,7 @@
 #define MINGAP 50
 #define MINNETSIZE 150
 
-static char const rcsid[] = "$Id: pslPseudo.c,v 1.17 2011/11/05 03:17:05 baertsch Exp $";
+static char const rcsid[] = "$Id: pslPseudo.c,v 1.18 2012/09/22 15:17:05 baertsch Exp $";
 
 char *db;
 char *nibDir;
@@ -3142,6 +3142,10 @@ if (trfRatio > maxTrf)
 if ( keepChecking && positiveRangeIntersection(bestStart, bestEnd, psl->tStart, psl->tEnd) && 
             sameString(psl->tName, bestChrom))
    {
+   verbose(2,"NO. self overlap %s %d %d parent %s %d %d\n",
+            psl->tName, psl->tStart, psl->tEnd,
+            bestChrom, bestStart, bestEnd
+            );
    dyStringAppend(reason,"self;");
    keepChecking = FALSE;
    }
@@ -3334,14 +3338,14 @@ for (psl = pslList; psl != NULL; psl = psl->next)
     int blockIx;
     char strand = psl->strand[0];
 
-    verbose(2,"checking %s %s:%d-%d\n",psl->qName, psl->tName, psl->tStart, psl->tEnd);
     assert (psl!= NULL);
     milliScore = calcMilliScore(psl);
+    verbose(2,"checking %s %s:%d-%d milliScore %d\n",psl->qName, psl->tName, psl->tStart, psl->tEnd, milliScore);
     if (milliScore >= milliMin)
 	{
 	++goodAliCount;
 	milliScore += sizeFactor(psl, rmskHash, trfHash);
-        verbose(5,"@ %s %s:%d milliScore %d\n", psl->qName, psl->tName, psl->tStart, milliScore);
+        verbose(5,"@ %s %s:%d\n", psl->qName, psl->tName, psl->tStart);
 	for (blockIx = 0; blockIx < psl->blockCount; ++blockIx)
 	    {
 	    int start = psl->qStarts[blockIx];
@@ -3439,6 +3443,13 @@ if (bestChrom != NULL)
 for (psl = pslList; psl != NULL; psl = psl->next)
 {
 int score = calcSizedScore(psl, rmskHash, trfHash);
+
+verbose(2,"checking qName for extension %s \n",psl->qName, psl->tName, psl->tStart, psl->tEnd);
+if (strstr(psl->qName, "-") == NULL)
+    {
+    verbose(2,"skipping score step for blat alignment %s %s:%d-%d\n",psl->qName, psl->tName, psl->tStart, psl->tEnd);
+    continue;
+    }
 if (
     calcMilliScore(psl) >= milliMin && closeToTop(psl, scoreTrack, score) 
     && psl->match + psl->misMatch + psl->repMatch >= minCover * psl->qSize)
@@ -3507,7 +3518,7 @@ else
         aPsl = el->val;
         if (sameString(el->name, choppedName))
             {
-            verbose(4, "adding blat alignment %s %s\n",aPsl->tName, aPsl->qName);
+            verbose(3, "adding blat alignment %s:%d-%d %s\n",aPsl->tName, aPsl->tStart, aPsl->tEnd, aPsl->qName);
             slAddHead(pslList, aPsl);
             }
         else
