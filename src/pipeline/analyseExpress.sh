@@ -88,7 +88,7 @@ hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.
 hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'noncoding'" > kgNoncoding.gp
 hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'nearcoding'" > kgNearcoding.gp
 hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'antisense'" > kgAntisense.gp
-for i in Coding Noncoding Nearcoding Antisense ; do overlapSelect kg${i}.gp $OUTDIR/$TABLE.bed retroKg${i}.bed; done
+for i in Coding Noncoding Nearcoding Antisense ; do overlapSelect -inCoordCols=0,1,2,5,3 kg${i}.gp $OUTDIR/$TABLE.bed retroKg${i}.bed; done
 zcat $OUTDIR/knownGene.tab.gz |sort > $OUTDIR/knownGene.sort.gp
 hgsql $DB -N -B -e "select distinct kgID from kgSpAlias, uniProt.proteinEvidence where spId = acc and proteinEvidenceType <=1" |sort> kgProtEvidence.id
 hgsql $DB -N -B -e "select distinct kgID from kgSpAlias, uniProt.proteinEvidence where spId = acc and proteinEvidenceType <=2" |sort> kgTransEvidence.id
@@ -97,28 +97,28 @@ $SCRIPT/selectById -tsv 1 kgTransEvidence.id 1 $OUTDIR/knownGene.sort.gp > known
 
 overlapSelect knownGeneProt.gp ${GENE1}.cds.bed knownGeneProtCds.bed -selectFmt=genePred
 overlapSelect knownGeneTrans.gp ${GENE1}.cds.bed knownGeneTransCds.bed -selectFmt=genePred
-overlapSelect knownGeneProtCds.bed $OUTDIR/$TABLE.bed ucscRetroProtein.bed
-overlapSelect knownGeneTransCds.bed $OUTDIR/$TABLE.bed ucscRetroTranscript.bed
+overlapSelect -inCoordCols=0,1,2,5,3 knownGeneProtCds.bed $OUTDIR/$TABLE.bed ucscRetroProtein.bed
+overlapSelect -inCoordCols=0,1,2,5,3 knownGeneTransCds.bed $OUTDIR/$TABLE.bed ucscRetroTranscript.bed
 fi
 
 echo "Exon Shuffling"
 # exon shuffling
 ##cat $OUTDIR/$TABLE.bed $OUTDIR/retroMrnaInfoZnf.bed > ucscRetroInfoZnf.bed
 
-overlapSelect ${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed pseudo${GENE1}Cds.bed
-overlapSelect ${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed -statsOutput pseudo${GENE1}Cds.out
-overlapSelect ${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed pseudo${GENE1}Cds50.bed -overlapThreshold=0.50
-overlapSelect ${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed pseudo${GENE2}Cds.bed
-overlapSelect ${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed -statsOutput pseudo${GENE2}Cds.out
-overlapSelect ${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed pseudo${GENE2}Cds50.bed -overlapThreshold=0.50
-overlapSelect -selectFmt=genePred $OUTDIR/${GENE2}.tab.gz pseudo${GENE2}Cds.bed shuffleEns.bed
-overlapSelect -selectFmt=genePred ${GENE2}.multiCDSExon.genePred pseudo${GENE2}Cds.bed shuffleEnsMulti.bed
-overlapSelect pseudo${GENE1}Cds.bed pseudoEstAll.bed pseudoEstAllNotShuffle.bed -nonOverlapping
+overlapSelect -inCoordCols=0,1,2,5,3 ${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed pseudo${GENE1}Cds.bed
+overlapSelect -inCoordCols=0,1,2,5,3 ${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed -statsOutput pseudo${GENE1}Cds.out
+overlapSelect -inCoordCols=0,1,2,5,3 ${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed pseudo${GENE1}Cds50.bed -overlapThreshold=0.50
+overlapSelect -inCoordCols=0,1,2,5,3 ${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed pseudo${GENE2}Cds.bed
+overlapSelect -inCoordCols=0,1,2,5,3 ${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed -statsOutput pseudo${GENE2}Cds.out
+overlapSelect -inCoordCols=0,1,2,5,3 ${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed pseudo${GENE2}Cds50.bed -overlapThreshold=0.50
+overlapSelect -inCoordCols=0,1,2,5,3 -selectFmt=genePred $OUTDIR/${GENE2}.tab.gz pseudo${GENE2}Cds.bed shuffleEns.bed
+overlapSelect -inCoordCols=0,1,2,5,3 -selectFmt=genePred ${GENE2}.multiCDSExon.genePred pseudo${GENE2}Cds.bed shuffleEnsMulti.bed
+overlapSelect -inCoordCols=0,1,2,5,3 pseudo${GENE1}Cds.bed pseudoEstAll.bed pseudoEstAllNotShuffle.bed -nonOverlapping
 
 if [[ $GENE1 == "knownGene" ]] 
 then
-overlapSelect knownGeneProt.gp pseudo${GENE1}Cds.bed pseudo${GENE1}ProtCds.bed
-overlapSelect knownGeneProt.gp pseudo${GENE2}Cds.bed pseudo${GENE2}ProtCds.bed
+overlapSelect -inCoordCols=0,1,2,5,3 knownGeneProt.gp pseudo${GENE1}Cds.bed pseudo${GENE1}ProtCds.bed
+overlapSelect -inCoordCols=0,1,2,5,3 knownGeneProt.gp pseudo${GENE2}Cds.bed pseudo${GENE2}ProtCds.bed
 fi
 
 ls -l pseudo${GENE1}*.bed
@@ -135,11 +135,11 @@ cat $OUTDIR/estSplit/stat.*.out > stat.out
 cat $OUTDIR/estSplit/statagg.*.out |sort |grep -v "#"> statagg.out
 awk '{print $1}' stat.out |uniq -c |awk '{print $2,$1}' |sort> estCount.out
 join estCount.out statagg.out > estCoverage.out
-overlapSelect $OUTDIR/all_mrnaFiltered.psl.gz $OUTDIR/$TABLE.bed -statsOutput stdout |sort > mrna.out
+overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/all_mrnaFiltered.psl.gz $OUTDIR/$TABLE.bed -statsOutput stdout |sort > mrna.out
 zcat $OUTDIR/splicedEst.psl.gz |cut -f 10 |sort |uniq> splicedEst.id
-overlapSelect $OUTDIR/splicedEst.psl.gz $OUTDIR/$TABLE.bed -statsOutput stdout | sort > splicedstat.out
+overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/splicedEst.psl.gz $OUTDIR/$TABLE.bed -statsOutput stdout | sort > splicedstat.out
 awk '{print $1}' splicedstat.out |uniq -c |awk '{print $2,$1}' |sort> splicedEstCount.out
-overlapSelect $OUTDIR/splicedEst.psl.gz $OUTDIR/$TABLE.bed -statsOutput -aggregate stdout | sort > splicedagg.out
+overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/splicedEst.psl.gz $OUTDIR/$TABLE.bed -statsOutput -aggregate stdout | sort > splicedagg.out
 join splicedEstCount.out splicedagg.out > splicedEstCoverage.out
 
 awk '$3>0.50{print $1}' mrna.out |sort > mrna.id
@@ -167,11 +167,11 @@ $SCRIPT/selectById -tsv 1 mrnaEst5.id 4 $OUTDIR/$TABLE.bed > pseudoEst5Mrna.bed
 $SCRIPT/selectById -tsv 1 mrnaEst10.id 4 $OUTDIR/$TABLE.bed >  pseudoEst10Mrna.bed
 $SCRIPT/selectById -tsv 1 est5.id 4 $OUTDIR/$TABLE.bed > pseudoEst5.bed
 $SCRIPT/selectById -tsv 1 est10.id 4 $OUTDIR/$TABLE.bed > pseudoEst10.bed
-overlapSelect pseudoEst10Mrna.bed pseudo${GENE2}Cds.bed  est10MrnaRefSeq.bed
+overlapSelect -inCoordCols=0,1,2,5,3 pseudoEst10Mrna.bed pseudo${GENE2}Cds.bed  est10MrnaRefSeq.bed
 
-overlapSelect retroKgCoding.bed pseudoEst5Mrna.bed pseudoEst5MrnaNotKg.bed -nonOverlapping
-overlapSelect retroKgCoding.bed pseudoEst10Mrna.bed pseudoEst10MrnaNotKg.bed -nonOverlapping
-overlapSelect retroKgCoding.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotKg.bed -nonOverlapping
+overlapSelect -inCoordCols=0,1,2,5,3 retroKgCoding.bed pseudoEst5Mrna.bed pseudoEst5MrnaNotKg.bed -nonOverlapping
+overlapSelect -inCoordCols=0,1,2,5,3 retroKgCoding.bed pseudoEst10Mrna.bed pseudoEst10MrnaNotKg.bed -nonOverlapping
+overlapSelect -inCoordCols=0,1,2,5,3 retroKgCoding.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotKg.bed -nonOverlapping
 
 #sort -k2,2nr estCoverage.out |head -50|awk '{print $1}' > top50
 #echo $SCRIPT/selectById -tsv 1 top50 4 $OUTDIR/$TABLE.bed   top50.bed
@@ -179,7 +179,7 @@ overlapSelect retroKgCoding.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotKg.bed
 
 echo "expressed retro stats"
 wc -l *.id |sort -n
-overlapSelect $OUTDIR/${GENE2}.tab.gz $OUTDIR/$TABLE.bed pseudo${GENE2}.bed -selectFmt=genePred
+overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/${GENE2}.tab.gz $OUTDIR/$TABLE.bed pseudo${GENE2}.bed -selectFmt=genePred
 
 #regenerate gene predictions from expressed retros
 
@@ -202,7 +202,7 @@ echo "Updating mysql database with updateExp.sql `wc -l updateExp.sql` records."
 hgsql $DB < updateExp.sql
 
 #set with 5 Est and 1 spliced mRNA
-overlapSelect pseudo${GENE1}Cds.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotShuffle.bed -nonOverlapping
+overlapSelect -inCoordCols=0,1,2,5,3 pseudo${GENE1}Cds.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotShuffle.bed -nonOverlapping
 tawk '$2>200{$2=$2-200; $3=$3+200;print $0}$2<=200{$3=$3+200;print $0}' pseudoEst5AndMrnaNotShuffle.bed > pseudoEst5AndMrna.window.bed
 ${BINDIR}/orfBatch $DB pseudoEst5AndMrna.window.bed pseudoEst5AndMrna.out pseudoEst5AndMrna.gp > borfEst5AndMrna.out
 echo gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
@@ -238,7 +238,7 @@ $SCRIPT/selectById -tsv 4 pseudoTmp2.bed 4 $OUTDIR/$TABLE.bed > pseudoEst100AA.b
 echo tawk '$8-$7>300{print }' pseudoExpressed.bed redirect pseudoEst100AA.bed
 $SCRIPT/selectById -tsv 4 pseudoEst5AndMrna.good.out 4 $OUTDIR/$TABLE.bed > pseudo5Est100AA.bed
 wc -l pseudoExpressed.bed pseudoEst100AA.bed goodOrf.list pseudoEst5AndMrna.bed pseudoEst5AndMrna.good.out
-overlapSelect pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.bed
+overlapSelect -inCoordCols=0,1,2,5,3 pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.bed
 
 #retros involved in alt-splicing
 
@@ -250,7 +250,7 @@ fi
 if [ -f altSplice.bed ] 
 then
  echo "overlapSelect altSplice.bed $OUTDIR/$TABLE.bed retroSplice.bed"
- overlapSelect altSplice.bed $OUTDIR/$TABLE.bed retroSplice.bed
+ overlapSelect -inCoordCols=0,1,2,5,3 altSplice.bed $OUTDIR/$TABLE.bed retroSplice.bed
 fi
 
 
