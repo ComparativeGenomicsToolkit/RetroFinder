@@ -63,7 +63,7 @@ pslSplitOnTarget estFiltered.psl.gz estSplit
 pushd estSplit
 rm -f jobList
 echo "#LOOP"> template
-echo "$SCRIPT/estStat.sh $1 \$(root1)">>template
+echo "$SCRIPT/estStat.sh \$(root1) {check out line+ pseudoEst.\$(root1).bed}">>template
 echo "#ENDLOOP">> template
 awk '{print $1}' $OUTDIR/S1.len |grep -v chrM | gensub2 stdin single template jobList
 ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
@@ -113,7 +113,7 @@ overlapSelect -inCoordCols=0,1,2,5,3 ${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed -s
 overlapSelect -inCoordCols=0,1,2,5,3 ${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed pseudo${GENE2}Cds50.bed -overlapThreshold=0.50
 overlapSelect -inCoordCols=0,1,2,5,3 -selectFmt=genePred $OUTDIR/${GENE2}.tab.gz pseudo${GENE2}Cds.bed shuffleEns.bed
 overlapSelect -inCoordCols=0,1,2,5,3 -selectFmt=genePred ${GENE2}.multiCDSExon.genePred pseudo${GENE2}Cds.bed shuffleEnsMulti.bed
-overlapSelect -inCoordCols=0,1,2,5,3 pseudo${GENE1}Cds.bed pseudoEstAll.bed pseudoEstAllNotShuffle.bed -nonOverlapping
+overlapSelect -selectCoordCols=0,1,2,5,3 -inCoordCols=0,1,2,5,3 pseudo${GENE1}Cds.bed pseudoEstAll.bed pseudoEstAllNotShuffle.bed -nonOverlapping
 
 if [[ $GENE1 == "knownGene" ]] 
 then
@@ -167,11 +167,11 @@ $SCRIPT/selectById -tsv 1 mrnaEst5.id 4 $OUTDIR/$TABLE.bed > pseudoEst5Mrna.bed
 $SCRIPT/selectById -tsv 1 mrnaEst10.id 4 $OUTDIR/$TABLE.bed >  pseudoEst10Mrna.bed
 $SCRIPT/selectById -tsv 1 est5.id 4 $OUTDIR/$TABLE.bed > pseudoEst5.bed
 $SCRIPT/selectById -tsv 1 est10.id 4 $OUTDIR/$TABLE.bed > pseudoEst10.bed
-overlapSelect -inCoordCols=0,1,2,5,3 pseudoEst10Mrna.bed pseudo${GENE2}Cds.bed  est10MrnaRefSeq.bed
+overlapSelect -selectCoordCols=0,1,2,5,3 -inCoordCols=0,1,2,5,3 pseudoEst10Mrna.bed pseudo${GENE2}Cds.bed  est10MrnaRefSeq.bed
 
-overlapSelect -inCoordCols=0,1,2,5,3 retroKgCoding.bed pseudoEst5Mrna.bed pseudoEst5MrnaNotKg.bed -nonOverlapping
-overlapSelect -inCoordCols=0,1,2,5,3 retroKgCoding.bed pseudoEst10Mrna.bed pseudoEst10MrnaNotKg.bed -nonOverlapping
-overlapSelect -inCoordCols=0,1,2,5,3 retroKgCoding.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotKg.bed -nonOverlapping
+overlapSelect -selectCoordCols=0,1,2,5,3 -inCoordCols=0,1,2,5,3 retroKgCoding.bed pseudoEst5Mrna.bed pseudoEst5MrnaNotKg.bed -nonOverlapping
+overlapSelect -selectCoordCols=0,1,2,5,3 -inCoordCols=0,1,2,5,3 retroKgCoding.bed pseudoEst10Mrna.bed pseudoEst10MrnaNotKg.bed -nonOverlapping
+overlapSelect -selectCoordCols=0,1,2,5,3 -inCoordCols=0,1,2,5,3 retroKgCoding.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotKg.bed -nonOverlapping
 
 #sort -k2,2nr estCoverage.out |head -50|awk '{print $1}' > top50
 #echo $SCRIPT/selectById -tsv 1 top50 4 $OUTDIR/$TABLE.bed   top50.bed
@@ -188,8 +188,8 @@ overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/${GENE2}.tab.gz $OUTDIR/$TABLE.bed 
 tawk '$2>200{$2=$2-200; $3=$3+200;print $0}$2<=200{$3=$3+200;print $0}' pseudoEstAllNotShuffle.bed > pseudoEstAll.bed
 echo "orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp to borfEst.out"
 ${BINDIR}/orfBatch $DB pseudoEstAll.bed pseudoEstAll.out pseudoEstAll.gp > borfEst.out
-echo gene-check  -nib-dir $NIB pseudoEstAll.gp checkEst.rdb
-gene-check  -nib-dir $NIB pseudoEstAll.gp checkEst.rdb
+echo gene-check -genome-seqs $NIB pseudoEstAll.gp checkEst.rdb
+gene-check  -genome-seqs $NIB pseudoEstAll.gp checkEst.rdb
 awk '$7=="ok"&& $25=="noStart" || $25==""{print $1}' checkEst.rdb > goodOrf.list
 
 $SCRIPT/selectById -tsv 1 goodOrf.list 4 pseudoEstAll.out > pseudoEstAll.good.out
@@ -202,11 +202,11 @@ echo "Updating mysql database with updateExp.sql `wc -l updateExp.sql` records."
 hgsql $DB < updateExp.sql
 
 #set with 5 Est and 1 spliced mRNA
-overlapSelect -inCoordCols=0,1,2,5,3 pseudo${GENE1}Cds.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotShuffle.bed -nonOverlapping
+overlapSelect -selectCoordCols=0,1,2,5,3 -inCoordCols=0,1,2,5,3 pseudo${GENE1}Cds.bed pseudoEst5AndMrna.bed pseudoEst5AndMrnaNotShuffle.bed -nonOverlapping
 tawk '$2>200{$2=$2-200; $3=$3+200;print $0}$2<=200{$3=$3+200;print $0}' pseudoEst5AndMrnaNotShuffle.bed > pseudoEst5AndMrna.window.bed
 ${BINDIR}/orfBatch $DB pseudoEst5AndMrna.window.bed pseudoEst5AndMrna.out pseudoEst5AndMrna.gp > borfEst5AndMrna.out
-echo gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
-gene-check  -nib-dir $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
+echo gene-check -genome-seqs $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
+gene-check -genome-seqs $NIB pseudoEst5AndMrna.gp checkEst5AndMrna.rdb
 tawk '$7=="ok" && $25=="noStart" || $25==""{print $1}' checkEst5AndMrna.rdb > goodOrf5AndMrna.list
 $SCRIPT/selectById -tsv 1 goodOrf5AndMrna.list 4 pseudoEst5AndMrna.out > pseudoEst5AndMrna.good.out
 awk '{print "update '$TABLE' set thickStart = "$7", thickEnd = "$8" , type = \"expressed strong\", posConf = \""$52"\" where name = \""$4"\" ;"}' pseudoEst5AndMrna.good.out > updateExp5.sql
@@ -227,7 +227,7 @@ wc -l update*.sql
 
 $SCRIPT/selectById -tsv 1 goodOrf.list 1 pseudoEstAll.gp > pseudoExpressed.gp
 echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
-ldHgGene $DB ucscRetroExpressed pseudoExpressed.gp -genePredExt -predTab
+ldHgGene $DB ucscRetroExpressed$VERSION pseudoExpressed.gp -genePredExt -predTab
 genePredToBed pseudoExpressed.gp > pseudoTmp.bed
 $SCRIPT/selectById -tsv 1 goodOrf.list 4 pseudoEstAll.bed > pseudoExpressed.bed
 echo "length histogram of coding region"
@@ -238,7 +238,7 @@ $SCRIPT/selectById -tsv 4 pseudoTmp2.bed 4 $OUTDIR/$TABLE.bed > pseudoEst100AA.b
 echo tawk '$8-$7>300{print }' pseudoExpressed.bed redirect pseudoEst100AA.bed
 $SCRIPT/selectById -tsv 4 pseudoEst5AndMrna.good.out 4 $OUTDIR/$TABLE.bed > pseudo5Est100AA.bed
 wc -l pseudoExpressed.bed pseudoEst100AA.bed goodOrf.list pseudoEst5AndMrna.bed pseudoEst5AndMrna.good.out
-overlapSelect -inCoordCols=0,1,2,5,3 pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.bed
+overlapSelect -selectCoordCols=0,1,2,5,3 -inCoordCols=0,1,2,5,3 pseudoEst5AndMrna.bed pseudo5Est100AA.bed pseudoEst5AndMrna100AA.bed
 
 #retros involved in alt-splicing
 
