@@ -118,4 +118,3 @@ ssh -T $CLUSTER "cd $TMPMRNA/run.0 ; /parasol/bin/para make jobList"
 
 echo "run $SCRIPT/ucscRetroStep2.sh DEF after cluster job is finished"
 cd $OUTDIR
-$SCRIPT/ucscRetroStep2.sh DEF 
