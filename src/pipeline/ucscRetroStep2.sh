@@ -60,6 +60,8 @@ cd $OUTDIR/split
 for i in `ls tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > temp.psl ; mv temp.psl $i ; done
 grep chr tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'|uniq  > acc.lst
 
+export TMPDIR=/scratch/tmp
+echo TMPDIR
 #load mrna alignment track into browser
 awk -f $SCRIPT/stripversion.awk $MRNABASE/mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrnaBlastz
 
