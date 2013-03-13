@@ -75,7 +75,7 @@ echo creating $ALIGN.psl
 awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $TABLE.bed > pseudoGeneLinkSelect.tab
 pslSelect -qtStart=pseudoGeneLinkSelect.tab pseudo.psl $ALIGN.psl
 wc -l $ALIGN.psl pseudoGeneLinkSelect.tab
-hgLoadBed $DB -verbose=9 -renameSqlTable -allowNegativeScores -noBin ucscRetroInfoXX -sqlTable=$SCRIPT/ucscRetroInfo.sql $TABLE.bed
+hgLoadBed $DB -verbose=9 -renameSqlTable -allowNegativeScores -noBin ucscRetroInfoXX -sqlTable=~/kent/src/hg/lib/ucscRetroInfo.sql $TABLE.bed
 mkdir -p $RETRODIR
 rm -f $RETRODIR/$TABLE.bed
 cp -p $TABLE.bed $RETRODIR
