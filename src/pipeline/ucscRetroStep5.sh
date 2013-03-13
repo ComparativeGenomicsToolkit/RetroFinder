@@ -61,8 +61,8 @@ echo "skipping zinc finger and immunoglobin filtering"
 fi
 
 
-$SCRIPT/selectById 1 zincKg.lst 45 retroMrnaInfo.raw.bed > retroMrnaInfoZnf.bed
-$SCRIPT/selectById -not 1 zincKg.lst 45 retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
+$SCRIPT/selectById 1 zincKg.lst 44 retroMrnaInfo.raw.bed > retroMrnaInfoZnf.bed
+$SCRIPT/selectById -not 1 zincKg.lst 44 retroMrnaInfo.raw.bed > retroMrnaInfoLessZnf.bed
 echo "before and after zinc finger filtering"
 rm -f $TABLE.bed
 cp -pf retroMrnaInfoLessZnf.bed $TABLE.bed
@@ -75,7 +75,7 @@ echo creating $ALIGN.psl
 awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $TABLE.bed > pseudoGeneLinkSelect.tab
 pslSelect -qtStart=pseudoGeneLinkSelect.tab pseudo.psl $ALIGN.psl
 wc -l $ALIGN.psl pseudoGeneLinkSelect.tab
-hgLoadBed $DB -verbose=9 -renameSqlTable -allowNegativeScores -noBin ucscRetroInfoXX -sqlTable=/cluster/home/baertsch/kent/src/hg/lib/ucscRetroInfo.sql $TABLE.bed
+hgLoadBed $DB -verbose=9 -renameSqlTable -allowNegativeScores -noBin ucscRetroInfoXX -sqlTable=$SCRIPT/ucscRetroInfo.sql $TABLE.bed
 mkdir -p $RETRODIR
 rm -f $RETRODIR/$TABLE.bed
 cp -p $TABLE.bed $RETRODIR
@@ -84,9 +84,9 @@ hgsql $DB -e "alter table ucscRetroInfoXX rename $TABLE;"
 hgLoadPsl $DB $ALIGN.psl
 rm -f $RETRODIR/$ALIGN.psl
 cp -p $ALIGN.psl $RETRODIR
-hgLoadSqlTab $DB ucscRetroOrtho${VERSION} ~/kent/src/hg/lib/ucscRetroOrtho.sql ortho.filter.txt
+hgLoadSqlTab $DB ${ORTHOTABLE} ~/kent/src/hg/lib/ucscRetroOrtho.sql ortho.filter.txt
 
-zcat cds.tab.gz |tawk '{print $1"."$2,$3}' > ucscRetroCds${VERSION}.tab 
+zcat cds.tab.gz |tawk '{print $1"."$2,$3}' | sort | uniq > ucscRetroCds${VERSION}.tab 
 hgLoadSqlTab $DB ucscRetroCds${VERSION} ~/kent/src/hg/lib/ucscRetroCds.sql ucscRetroCds${VERSION}.tab
 rm -f $RETRODIR/ucscRetroCds${VERSION}.tab
 cp -p ucscRetroCds${VERSION}.tab $RETRODIR
