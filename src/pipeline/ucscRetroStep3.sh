@@ -79,6 +79,6 @@ echo "#ENDLOOP" >> gsub
 gensub2 list single gsub jobList
 echo "Job Count"
 wc -l jobList
-ssh -T $CLUSTER "cd $OUTDIR/run.0 ; /parasol/bin/para make jobList"
+ssh -T $CLUSTER "cd $OUTDIR/run.0 ; /parasol/bin/para make jobList ram=4g"
 echo "check parasol status and then run ucscRetroStep4.sh DEF"
 cd ..
