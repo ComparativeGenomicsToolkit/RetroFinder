@@ -108,7 +108,7 @@ cp ../S1.lst .
 cp ../S2.lst .
 gensub2 S1.lst S2.lst template jobList
 
-ssh -T $CLUSTER "cd $TMPMRNA/run.0 ; /parasol/bin/para make jobList"
+ssh -T $CLUSTER "cd $TMPMRNA/run.0 ; /parasol/bin/para make jobList -ram=4g"
 #    para create jobList
 #    para try
 #    para check
