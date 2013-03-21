@@ -45,13 +45,21 @@ else
     gzip all_mrna.psl
 fi
 if [[ -s cds.tab.gz ]] ; then
-    echo "cds.tab.gz not refreshed, must be extracted at the same time as all_mrna.psl.gz, mrna and refseq sequences. "
+    echo "cds.tab.gz not refreshed, must be extracted at the same time as all_mrna.psl.gz, mRNA and RefSeq sequences. "
 else
     hgsql $DB -N -B -e "select acc, version, name, type from refSeqAli a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" > cds.tab
     hgsql $DB -N -B -e "select acc, version, name, type from all_mrna a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" >> cds.tab
     gzip cds.tab
 fi
-
+# For the filterMrna.sh step, need a PSL file of only GenBank mRNAs
+# GenBank tables are updated daily so all GenBank data should be collected
+# at the same time otherwise files are out of sync.
+if [[ -s gbMrnaOnly.psl ]] ; then
+    echo "gbMrnaOnly.psl not refreshed, must be extracted at the same time as
+ all_mrna.psl.gz, cds.tab.gz, mRNA and refSeq sequences."
+else
+    hgsql $DB -N -B -e "select * from all_mrna" | cut -f2-22 > gbMrnaOnly.psl
+fi
 cat mrna.fa refseq.fa > raw.fa
 
 #remove polyA tail before aligning
