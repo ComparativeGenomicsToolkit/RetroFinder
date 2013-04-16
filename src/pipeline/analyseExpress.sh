@@ -228,7 +228,7 @@ wc -l update*.sql
 $SCRIPT/selectById -tsv 1 goodOrf.list 1 pseudoEstAll.gp > pseudoExpressed.gp
 echo "ldHgGene $DB pseudoExpressed pseudoExpressed.gp -genePredExt -predTab"
 ldHgGene $DB ucscRetroExpressed$VERSION pseudoExpressed.gp -genePredExt -predTab
-genePredToBed pseudoExpressed.gp > pseudoTmp.bed
+genePredToBed pseudoExpressed.gp pseudoTmp.bed
 $SCRIPT/selectById -tsv 1 goodOrf.list 4 pseudoEstAll.bed > pseudoExpressed.bed
 echo "length histogram of coding region"
 awk '{print $7-$6}' pseudoExpressed.gp|textHistogram stdin -maxBinCount=100 -binSize=50
