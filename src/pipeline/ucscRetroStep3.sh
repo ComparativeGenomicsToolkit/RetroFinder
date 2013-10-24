@@ -57,7 +57,7 @@ fi
 rm -f $GENE1.tab.gz $GENE2.tab.gz $GENE3.tab.gz *.txt.gz *.bed.gz
 gzip *.tab &
 gzip *.txt &
-gzip *.bed 
+gzip *.bed &
 
 rm -f mrna.2bit
 ln $MRNABASE/mrna.2bit . -s
