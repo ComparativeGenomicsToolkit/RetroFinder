@@ -4,7 +4,7 @@ source $1
 DEF=$1
 echo "-------- script ucscRetroStep6.sh make retro webpages for $SPECIES -------------------"
 #extract extra columns for html pages
-$SCRIPT/makeRetroExtraAttr.sh $DEF $OUTDIR/$EXPDIR
+#$SCRIPT/makeRetroExtraAttr.sh $DEF $OUTDIR/$EXPDIR
 for i in `echo $SPECIES` ; do echo "make html $i"; done
 
 cp $DEF $OUTDIR/$EXPDIR
@@ -12,6 +12,7 @@ cd $OUTDIR/$EXPDIR
 #web pages for shuffling events
 SHUFFLEDIR=shuffle
 SHUFFLEROOT=$WEBROOT/$SHUFFLEDIR
+echo "mkdir -p $SHUFFLEROOT"
 mkdir -p $SHUFFLEROOT
 cp $SCRIPT/header.html $SHUFFLEROOT/index.html
 echo "<TR><TH>data set</TH>" >> $SHUFFLEROOT/index.html
