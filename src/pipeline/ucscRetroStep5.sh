@@ -7,7 +7,7 @@
 #
 DEF=$1
 source $DEF
-#set -beEu -o pipefail
+set -beEu -o pipefail
 CWD=`pwd`
 ## called from ~baertsch/baertsch/scripts/ucscRetroStep4.sh
 echo "-----------------------------------"
@@ -84,7 +84,7 @@ hgsql $DB -e "alter table ucscRetroInfoXX rename $TABLE;"
 hgLoadPsl $DB $ALIGN.psl
 rm -f $RETRODIR/$ALIGN.psl
 cp -p $ALIGN.psl $RETRODIR
-hgLoadSqlTab $DB ${ORTHOTABLE} ~/kent/src/hg/lib/ucscRetroOrtho.sql ortho.filter.txt
+hgLoadSqlTab $DB ${ORTHOTABLE} /cluster/home/$USER/kent/src/hg/lib/ucscRetroOrtho.sql ortho.filter.txt
 
 zcat cds.tab.gz |tawk '{print $1"."$2,$3}' | sort | uniq > ucscRetroCds${VERSION}.tab 
 hgLoadSqlTab $DB ucscRetroCds${VERSION} ~/kent/src/hg/lib/ucscRetroCds.sql ucscRetroCds${VERSION}.tab
