@@ -3502,6 +3502,7 @@ if (elist == NULL)
     }
 if (elist == NULL)
     {
+    verbose(3, "chopping %s at - \n", name);
     safef(choppedName, sizeof(choppedName), "%s",name);
     chopSuffixAt(choppedName,'-');
     elist = hashLookup(qNameHash, choppedName);
