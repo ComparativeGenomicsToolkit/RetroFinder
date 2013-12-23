@@ -1357,14 +1357,18 @@ if (nHash != NULL)
     int rptSize = 0;
     //float coverage = 0.0;
     struct binKeeper *bk = hashFindVal(nHash, psl->tName);
-    struct binElement *el, *elist, *rptlist;
+    struct binElement *el;
+    struct binElement *rptlist = NULL;
+    struct binElement *elist = NULL;
     struct binKeeper *rptbk = hashFindVal(rmskHash, psl->tName);
     int i;
     for (i = 0 ; i < MAX_NET_LEVELS ; i++) netSize[i] = 0;
     for (i = 0 ; i < MAX_NET_LEVELS ; i++) gapSize[i] = 0;
     for (i = 0 ; i < MAX_NET_LEVELS ; i++) overlapSize[i] = 0;
-    elist = binKeeperFindSorted(bk, psl->tStart , psl->tEnd ) ;
-    rptlist = binKeeperFindSorted(rptbk, psl->tStart , psl->tEnd ) ;
+    if (bk != NULL)
+        elist = binKeeperFindSorted(bk, psl->tStart , psl->tEnd ) ;
+    if (rptbk != NULL)
+        rptlist = binKeeperFindSorted(rptbk, psl->tStart , psl->tEnd ) ;
     for (el = rptlist; el != NULL ; el = el->next)
         {
         rptSize += min(el->end,psl->tEnd)-max(el->start,psl->tStart) ;
@@ -1671,16 +1675,19 @@ for (i=1; i<blockCount; ++i)
                 }
             }
         bk = hashFindVal(rmskHash, psl->tName);
-        elist = binKeeperFindSorted(bk, tsRegion , teRegion ) ;
-        for (el = elist; el != NULL ; el = el->next)
+        if (bk != NULL)
             {
-            /* count repeats in the gap */
-            reps += positiveRangeIntersection(te, ts, el->start, el->end);
-            /* count repeats in the gap  and surrounding exons  */
-            regionReps += positiveRangeIntersection(tsRegion, teRegion, el->start, el->end);
+            elist = binKeeperFindSorted(bk, tsRegion , teRegion ) ;
+            for (el = elist; el != NULL ; el = el->next)
+                {
+                /* count repeats in the gap */
+                reps += positiveRangeIntersection(te, ts, el->start, el->end);
+                /* count repeats in the gap  and surrounding exons  */
+                regionReps += positiveRangeIntersection(tsRegion, teRegion, el->start, el->end);
+                }
+            if (elist != NULL)
+                slFreeList(&elist);
             }
-        if (elist != NULL)
-            slFreeList(&elist);
         }
     /* don't subtract repeats if the entire region is masked */
     if ( regionReps + 10 >= teRegion - tsRegion )
@@ -2109,27 +2116,30 @@ if(ie < is) return FALSE;
 if (rmskHash != NULL)
     {
     bk = hashFindVal(rmskHash, chrom);
-    elist = binKeeperFindSorted(bk, is, ie) ;
-    for (el = elist; el != NULL ; el = el->next)
+    if (bk != NULL)
         {
-        reps += positiveRangeIntersection(is, ie, el->start, el->end);
-        verbose(5,"    isRep? chkRep %s:%d-%d reps %d ratio %f < 0.7\n",chrom,is, ie, reps,(float)reps/(float)(ie-is) );
-        }
-    slFreeList(&elist);
-    if (reps > ie-is)
-        {
-        reps = ie-is;
-        verbose(5,"Warning: too many reps %d in %s:%d-%d size %d\n",
-                        reps, chrom, is, ie, ie-is);
-        }
-    verbose(4,"     check if Intron is repeat: ratio = %f rep %d intron %d \n",
-            (float)reps/(float)(ie-is),reps, ie-is);
-    if ((float)reps/(float)(ie-is) > repsPerIntron)
-        {
-        verbose(3,"     Intron is repeat: ratio = %f \n",(float)reps/(float)(ie-is));
-        if (retRepCount != NULL)
-            *retRepCount = reps;
-        return TRUE;
+        elist = binKeeperFindSorted(bk, is, ie) ;
+        for (el = elist; el != NULL ; el = el->next)
+            {
+            reps += positiveRangeIntersection(is, ie, el->start, el->end);
+            verbose(5,"    isRep? chkRep %s:%d-%d reps %d ratio %f < 0.7\n",chrom,is, ie, reps,(float)reps/(float)(ie-is) );
+            }
+        slFreeList(&elist);
+        if (reps > ie-is)
+            {
+            reps = ie-is;
+            verbose(5,"Warning: too many reps %d in %s:%d-%d size %d\n",
+                            reps, chrom, is, ie, ie-is);
+            }
+        verbose(4,"     check if Intron is repeat: ratio = %f rep %d intron %d \n",
+                (float)reps/(float)(ie-is),reps, ie-is);
+        if ((float)reps/(float)(ie-is) > repsPerIntron)
+            {
+            verbose(3,"     Intron is repeat: ratio = %f \n",(float)reps/(float)(ie-is));
+            if (retRepCount != NULL)
+                *retRepCount = reps;
+            return TRUE;
+            }
         }
     }
 if (retRepCount != NULL)
@@ -2210,18 +2220,21 @@ for (i = 0 ; i < psl->blockCount-1 ; i++)
         {
         int reps = 0;
         bk = hashFindVal(rmskHash, psl->tName);
-        elist = binKeeperFindSorted(bk, is, ie) ;
-        for (el = elist; el != NULL ; el = el->next)
+        if (bk != NULL)
             {
-            reps += positiveRangeIntersection(is, ie, el->start, el->end);
+            elist = binKeeperFindSorted(bk, is, ie) ;
+            for (el = elist; el != NULL ; el = el->next)
+                {
+                reps += positiveRangeIntersection(is, ie, el->start, el->end);
+                }
+            slFreeList(&elist);
+            if (reps > ie-is)
+                {
+                reps = ie-is;
+                verbose(5,"Warning: too many reps %d in st %d in end %d\n",reps, is, ie);
+                }
+            outReps[i] = reps;
             }
-        slFreeList(&elist);
-        if (reps > ie-is)
-            {
-            reps = ie-is;
-            verbose(5,"Warning: too many reps %d in st %d in end %d\n",reps, is, ie);
-            }
-        outReps[i] = reps;
         }
     }
 /* shrink the repeats from the gene */
@@ -2618,12 +2631,15 @@ if (rmskHash != NULL)
         errAbort("name %s end %d < start %d\n",
                 name, end, start);
     assert(start <= end);
-    elist = binKeeperFindSorted(bk, start, end) ;
-    for (el = elist; el != NULL ; el = el->next)
+    if (bk != NULL)
         {
-        teReps += positiveRangeIntersection(start, end, el->start, el->end);
+        elist = binKeeperFindSorted(bk, start, end) ;
+        for (el = elist; el != NULL ; el = el->next)
+            {
+            teReps += positiveRangeIntersection(start, end, el->start, el->end);
+            }
+        slFreeList(&elist);
         }
-    slFreeList(&elist);
     }
 return teReps;
 }
@@ -2921,14 +2937,17 @@ if (trfHash != NULL)
         int ts = psl->tStarts[i] ;
         int te = psl->tStarts[i] + psl->blockSizes[i];
         struct binKeeper *bk = hashFindVal(trfHash, psl->tName);
-        struct binElement *el, *elist = binKeeperFindSorted(bk, ts, te ) ;
-        for (el = elist; el != NULL ; el = el->next)
+        if (bk != NULL)
             {
-            trf += positiveRangeIntersection(ts, te, el->start, el->end);
-            verbose(7,"%s trf overlap %d psl match+mismatch %d\n",
-                    psl->qName,trf,(psl->match+psl->misMatch));
+            struct binElement *el, *elist = binKeeperFindSorted(bk, ts, te ) ;
+            for (el = elist; el != NULL ; el = el->next)
+                {
+                trf += positiveRangeIntersection(ts, te, el->start, el->end);
+                verbose(7,"%s trf overlap %d psl match+mismatch %d\n",
+                        psl->qName,trf,(psl->match+psl->misMatch));
+                }
+            slFreeList(&elist);
             }
-        slFreeList(&elist);
         }
     }
 verbose(5,"%s trf overlap %d psl match+mismatch %d ratio %4.3f\n",
@@ -2948,69 +2967,72 @@ if (exprHash != NULL)
     int mrnaBases = 0;
     struct psl *mPsl = NULL , *mPslMerge = NULL;
     struct binKeeper *bk = hashFindVal(exprHash, psl->tName);
-    struct binElement *el, *elist = binKeeperFindSorted(bk, psl->tStart , psl->tEnd ) ;
-    int blockIx;
-    for (el = elist; el != NULL ; el = el->next)
+    if (bk != NULL)
         {
-        mrnaBases = 0;
-        mPsl = el->val;
-        if (mPsl != NULL)
+        struct binElement *el, *elist = binKeeperFindSorted(bk, psl->tStart , psl->tEnd ) ;
+        int blockIx;
+        for (el = elist; el != NULL ; el = el->next)
             {
-            assert (psl != NULL);
-            assert (mPsl != NULL);
-            assert (psl->tName != NULL);
-            if (differentString(psl->qName, mPsl->qName))
+            mrnaBases = 0;
+            mPsl = el->val;
+            if (mPsl != NULL)
                 {
-                //char *cdsStr = getCdsForAcc(psl->qName);
-                //AllocVar(mPslMerge);
-                //pslMergeBlocks(mPsl, mPslMerge, 10);
-                mPslMerge = mPsl;
-                if (exonCount != NULL)
-                    *exonCount = mPsl->blockCount;
-                assert(mPslMerge != NULL);
-                verbose(6,"blk %d %s %d ec %d\n",mPslMerge->blockCount, mPsl->qName, mrnaBases, *exonOverlapCount);
-                //if (cdsStr != NULL)
-                //    verbose(3, "%s cds %s\n",mPsl->qName, cdsStr);
-                //cds.start = cds.end = -1;
-                //genbankCdsParse(cdsStr, &cds);
+                assert (psl != NULL);
+                assert (mPsl != NULL);
+                assert (psl->tName != NULL);
+                if (differentString(psl->qName, mPsl->qName))
+                    {
+                    //char *cdsStr = getCdsForAcc(psl->qName);
+                    //AllocVar(mPslMerge);
+                    //pslMergeBlocks(mPsl, mPslMerge, 10);
+                    mPslMerge = mPsl;
+                    if (exonCount != NULL)
+                        *exonCount = mPsl->blockCount;
+                    assert(mPslMerge != NULL);
+                    verbose(6,"blk %d %s %d ec %d\n",mPslMerge->blockCount, mPsl->qName, mrnaBases, *exonOverlapCount);
+                    //if (cdsStr != NULL)
+                    //    verbose(3, "%s cds %s\n",mPsl->qName, cdsStr);
+                    //cds.start = cds.end = -1;
+                    //genbankCdsParse(cdsStr, &cds);
 
-                if (mPslMerge->blockCount > 0)
-                    {
-                    for (blockIx = 0; blockIx < mPslMerge->blockCount; ++blockIx)
+                    if (mPslMerge->blockCount > 0)
                         {
-                        mrnaBases += positiveRangeIntersection(psl->tStart, psl->tEnd, 
-                            mPslMerge->tStarts[blockIx], mPslMerge->tStarts[blockIx]+mPslMerge->blockSizes[blockIx]);
-                        verbose(6,"%s overlapMrna %s %d %s %d-%d\n", mPslMerge->qName, psl->qName, mrnaBases, 
-                                mPslMerge->tName, mPslMerge->tStarts[blockIx], mPslMerge->tStarts[blockIx]+mPslMerge->blockSizes[blockIx]);
+                        for (blockIx = 0; blockIx < mPslMerge->blockCount; ++blockIx)
+                            {
+                            mrnaBases += positiveRangeIntersection(psl->tStart, psl->tEnd, 
+                                mPslMerge->tStarts[blockIx], mPslMerge->tStarts[blockIx]+mPslMerge->blockSizes[blockIx]);
+                            verbose(6,"%s overlapMrna %s %d %s %d-%d\n", mPslMerge->qName, psl->qName, mrnaBases, 
+                                    mPslMerge->tName, mPslMerge->tStarts[blockIx], mPslMerge->tStarts[blockIx]+mPslMerge->blockSizes[blockIx]);
+                            }
                         }
+                    else
+                        {
+                        mrnaBases += positiveRangeIntersection(psl->tStart, psl->tEnd, mPsl->tStart, mPsl->tEnd);
+    //                    verbose(6,"blk merge %d %s %d ec %d\n",mPslMerge->blockCount, mPsl->qName, mrnaBases, *exonOverlapCount);
+                        }
+                    verbose(6,"MRNABASES %d block cnt %d maxOverlap %d exonOverlapCount %d \
+                            %s %s %d-%d best so far %s\n",
+                            mrnaBases, mPslMerge->blockCount, maxOverlap, *exonOverlapCount, 
+                            mPslMerge->qName, mPslMerge->qName, mPslMerge->tStart, mPslMerge->tEnd, mrnaOverlap);
+                    if (mrnaBases > 50 && (mPslMerge->blockCount > 0) && 
+                            (((int)mPslMerge->blockCount > *exonOverlapCount) || 
+                             (((int)mPslMerge->blockCount == *exonOverlapCount) && 
+                              ((mrnaBases > maxOverlap) || (startsWith("NM",mPslMerge->qName) && !startsWith("NM",mrnaOverlap)) 
+                               )))
+                       )
+                        {
+                            *exonOverlapCount = (int)mPslMerge->blockCount;
+                            safef(mrnaOverlap,255,"%s",mPslMerge->qName);
+                            maxOverlap = mrnaBases;
+                            //maxCds = cdsStr;
+                            *overlapPsl = mPslMerge;
+                        }
+                    //pslFree(&mPslMerge);
                     }
-                else
-                    {
-                    mrnaBases += positiveRangeIntersection(psl->tStart, psl->tEnd, mPsl->tStart, mPsl->tEnd);
-//                    verbose(6,"blk merge %d %s %d ec %d\n",mPslMerge->blockCount, mPsl->qName, mrnaBases, *exonOverlapCount);
-                    }
-                verbose(6,"MRNABASES %d block cnt %d maxOverlap %d exonOverlapCount %d \
-                        %s %s %d-%d best so far %s\n",
-                        mrnaBases, mPslMerge->blockCount, maxOverlap, *exonOverlapCount, 
-                        mPslMerge->qName, mPslMerge->qName, mPslMerge->tStart, mPslMerge->tEnd, mrnaOverlap);
-                if (mrnaBases > 50 && (mPslMerge->blockCount > 0) && 
-                        (((int)mPslMerge->blockCount > *exonOverlapCount) || 
-                         (((int)mPslMerge->blockCount == *exonOverlapCount) && 
-                          ((mrnaBases > maxOverlap) || (startsWith("NM",mPslMerge->qName) && !startsWith("NM",mrnaOverlap)) 
-                           )))
-                   )
-                    {
-                        *exonOverlapCount = (int)mPslMerge->blockCount;
-                        safef(mrnaOverlap,255,"%s",mPslMerge->qName);
-                        maxOverlap = mrnaBases;
-                        //maxCds = cdsStr;
-                        *overlapPsl = mPslMerge;
-                    }
-                //pslFree(&mPslMerge);
                 }
             }
+        slFreeList(&elist);
         }
-    slFreeList(&elist);
     }
 return maxOverlap ;
 }
@@ -3167,13 +3189,17 @@ if (keepChecking && rmskHash != NULL)
         int te = psl->tStarts[i] + psl->blockSizes[i];
         struct binKeeper *bk;
         bk = hashFindVal(rmskHash, psl->tName);
-        elist = binKeeperFindSorted(bk, ts, te) ;
-        for (el = elist; el != NULL ; el = el->next)
+        if (bk != NULL)
             {
-            rep += positiveRangeIntersection(ts, te, el->start, el->end);
+            elist = binKeeperFindSorted(bk, ts, te) ;
+            for (el = elist; el != NULL ; el = el->next)
+                {
+                rep += positiveRangeIntersection(ts, te, el->start, el->end);
+                }
+            slFreeList(&elist);
             }
-        slFreeList(&elist);
         }
+
     }
 pg->tReps = round((float)(rep*100)/(float)(psl->match+(psl->misMatch)));
 if ((float)rep/(float)(psl->match+(psl->misMatch)) > maxRep )
