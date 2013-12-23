@@ -1658,14 +1658,17 @@ for (i=1; i<blockCount; ++i)
         if (trfHash != NULL)
             {
             bk = hashFindVal(trfHash, psl->tName);
-            elist = binKeeperFindSorted(bk, psl->tStart , psl->tEnd ) ;
-            trf = 0;
-            for (el = elist; el != NULL ; el = el->next)
+            if (bk != NULL)
                 {
-                //bed = el->val;
-                trf += positiveRangeIntersection(te, ts, el->start, el->end);
+                elist = binKeeperFindSorted(bk, psl->tStart , psl->tEnd ) ;
+                trf = 0;
+                for (el = elist; el != NULL ; el = el->next)
+                    {
+                    //bed = el->val;
+                    trf += positiveRangeIntersection(te, ts, el->start, el->end);
+                    }
+                slFreeList(&elist);
                 }
-            slFreeList(&elist);
             }
         bk = hashFindVal(rmskHash, psl->tName);
         elist = binKeeperFindSorted(bk, tsRegion , teRegion ) ;
