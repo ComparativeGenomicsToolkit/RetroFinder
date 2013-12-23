@@ -1134,8 +1134,8 @@ int i, *chromStarts, chromStart;
 AllocVar(puro1);
 AllocVar(puro2);
 AllocVar(puro3);
-pg->oldScore = (pg->milliBad - (100-log(pg->polyAlen)*20) - (overlapOrtho1*2) - (100-pg->coverage) 
-        + log(psl->match+psl->repMatch)*100)/2 ;
+//pg->oldScore = (pg->milliBad - (100-log(pg->polyAlen)*20) - (overlapOrtho1*2) - (100-pg->coverage) 
+//        + log(psl->match+psl->repMatch)*100)/2 ;
 
 pg->chrom = cloneString(psl->tName);
 pg->chromStart = pg->thickStart = chromStart = psl->tStart;
@@ -1208,11 +1208,12 @@ ucscRetroOrthoOutput(puro3, orthoFile, '\t','\n');
         /* 28              29               30   */
 //        psl->qSize, psl->qSize-psl->qEnd, rep,  
         /* 31      32      33        34         35              36,                37        38          */
-//        coverage, label, milliBad, oldScore, oldIntronCount, conservedIntrons, consSplice, maxOverlap, 
-        /* 39      40      41     42      43     44,      45        46      47       48        49          50         51     */
-//        *refSeq , rStart, rEnd, *mgc , mStart , mEnd , *kgName , kStart , kEnd , *overName , overStart , overExonCover , overStrand[3]
-        /*  52        53 */
-//        posConf , polyAlen
+//        coverage, label, milliBad, alignGapCount, conservedIntrons, consSplice, maxOverlap, 
+        /* 39      40      41        42             43                44,         45        */
+//        *refSeq , rStart, rEnd, *mgc , mStart , mEnd , *kgName , kStart , kEnd , *overName , overStart , overExonCover , 
+        /* 46       47      48     49    50       51      52       53       54      55         56          57 */
+//        overStrand[3] , posConf , polyAlen
+        /* 58             59        60 */
 }
 
 void initWeights()
@@ -1228,7 +1229,7 @@ void initWeights()
   4 7 = - log maxOverlap
   7 8 = + coverage *((qSize-qEnd)/qSize)
   6 9 = - repeats
-    10 =- oldIntronCount
+    10 =- alignGapCount
 
  */
 wt[0] = 1; wt[1] = 1; wt[2] = 0.1; wt[3] = 0.2; wt[4] = 0.7; 
@@ -1469,7 +1470,7 @@ void outputLink(struct psl *psl, struct ucscRetroInfo *pg , struct dyString *rea
                 int exonCover, int intronCount, int bestAliCount, 
                 int tReps, int qReps, int overlapMouse, 
                 struct genePred *kg, struct genePred *mgc, struct genePred *gp, 
-                int oldIntronCount, struct dyString *iString, int conservedIntrons, int maxOverlap) */
+                int alignGapCount, struct dyString *iString, int conservedIntrons, int maxOverlap) */
 /* output bed record with pseudogene details and link to gene*/
 {
 struct axt *axt = NULL;
@@ -1562,11 +1563,11 @@ pseudoScore = ( wt[0]*scaledMilliBad
                 - wt[7]*(maxOverlap*300)                        // *-.50
                 + wt[8]*scaledCoverage //0.50
                 - wt[9]*(pg->tReps*10)  // *-1.00
-                - wt[10]*(pg->oldIntronCount)  //*-1.00
+                - wt[10]*(pg->alignGapCount)  //*-1.00
                 ) / ScoreNorm + bump;
 //wt[0] = 0; wt[1] = 0.85; wt[2] = 0.1; wt[3] = 0.2; wt[4] = 0.7; 
 //wt[5] = 1; wt[6] = 1  ; wt[7] = 0.5; wt[8] = 0.5; wt[9] = 1; wt[10] = 1;
-verbose(1,"##score %d %s %s:%d-%d scr %d milbad %d +%4.1f xon %d +%4.1f retainS %d ax +%4.1f pA +%4.1f net +%4.1f max (%d, %d) procIntrons %d +%4.1f in.cnt %d -%4.1f ov -%4.1f  cov %4.2f*qCov %4.2f log(qSize)%4.1f qSize %d +%4.1f tRep -%4.1f oldintron %d -%4.1f norm/%d %s bump+%d \n", 
+verbose(1,"##score %d %s %s:%d-%d scr %d milbad %d +%4.1f xon %d +%4.1f retainS %d ax +%4.1f pA +%4.1f net +%4.1f max (%d, %d) procIntrons %d +%4.1f in.cnt %d -%4.1f ov -%4.1f  cov %4.2f*qCov %4.2f log(qSize)%4.1f qSize %d +%4.1f tRep -%4.1f alignGapCount %d -%4.1f norm/%d %s bump+%d \n", 
                 pg->label, psl->qName, psl->tName, psl->tStart, psl->tEnd, pseudoScore, 
                 pg->milliBad, scaledMilliBad/ScoreNorm,
                 pg->exonCover,
@@ -1583,11 +1584,11 @@ verbose(1,"##score %d %s %s:%d-%d scr %d milbad %d +%4.1f xon %d +%4.1f retainS 
                 (float)pg->coverage/100.0, 1.0-((float)(psl->qSize-psl->qEnd)/(float)psl->qSize), log(psl->qSize), psl->qSize,
                 wt[8]*scaledCoverage/ScoreNorm,
                 wt[9]*(pg->tReps*10)/ScoreNorm, 
-                pg->oldIntronCount,
-                wt[10]*pg->oldIntronCount/ScoreNorm,
+                pg->alignGapCount,
+                wt[10]*pg->alignGapCount/ScoreNorm,
                 ScoreNorm, pg->type, bump
                 ) ;
-verbose(1,"###score %d %s %s:%d-%d scr %d milbad +%4.1f ParentExonCover +%4.1f axtScore +%4.1f pA +%4.1f net +%4.1f PInt +%4.1f ic -%4.1f ov -%4.1f cov +%4.1f tRep -%4.1f oldintron -%4.1f norm/%d %s bump+%d \n", 
+verbose(1,"###score %d %s %s:%d-%d scr %d milbad +%4.1f ParentExonCover +%4.1f axtScore +%4.1f pA +%4.1f net +%4.1f PInt +%4.1f ic -%4.1f ov -%4.1f cov +%4.1f tRep -%4.1f alignGapCount -%4.1f norm/%d %s bump+%d \n", 
                 pg->label, psl->qName, psl->tName, psl->tStart, psl->tEnd, pseudoScore, 
                 wt[0]*scaledMilliBad/ScoreNorm,
                 wt[1]*(log(pg->exonCover+1)/log(2))*600/ScoreNorm , 
@@ -1599,7 +1600,7 @@ verbose(1,"###score %d %s %s:%d-%d scr %d milbad +%4.1f ParentExonCover +%4.1f a
                 wt[7]*(maxOverlap*300)/ScoreNorm,
                 wt[8]*scaledCoverage/ScoreNorm,
                 wt[9]*(pg->tReps*10)/ScoreNorm, 
-                wt[10]*pg->oldIntronCount/ScoreNorm,
+                wt[10]*pg->alignGapCount/ScoreNorm,
                 ScoreNorm, pg->type, bump
                 ) ;
 if (pseudoScore > 0)
@@ -3039,8 +3040,8 @@ AllocVar(pg);
 pg->name = cloneString(psl->qName);
 pg->parentSpliceCount = (maxExons*2)-2; /* really splice sites */
 pg->bestAliCount = bestAliCount;
-pg->oldIntronCount = intronFactor(psl, rmskHash, trfHash, &intronBases);
-pg->oldIntronCount *= (intronBases/10);
+pg->alignGapCount = intronFactor(psl, rmskHash, trfHash, &intronBases);
+pg->alignGapCount *= (intronBases/10);
 pg->gChrom = cloneString(bestChrom);
 pg->gStart = bestStart;
 pg->gEnd = bestEnd;
@@ -3075,7 +3076,7 @@ verbose(4, "%s calcIntrons.ExonsSpliced_exon_covered - conserved_SS -> %d-%d=%d 
         psl->qName, pg->exonCover,pg->conservedSpliceSites, 
         pg->exonCover-pg->conservedSpliceSites, pg->intronCount, trfRatio);
 //if (bestPsl == NULL)
-//    pg->intronCount = pg->oldIntronCount;
+//    pg->intronCount = pg->alignGapCount;
 
 geneOverlap = 0;
 genePredFree(&kg); 
