@@ -3045,7 +3045,7 @@ struct ucscRetroInfo *pg = NULL;
 struct dyString *iString = newDyString(16*1024);
 struct dyString *reason = newDyString(255);
 struct genePred *gp = NULL, *kg = NULL, *mgc = NULL;
-int milliMinPseudo = 1000*minAliPseudo;
+int milliMinPseudo = round(1000*minAliPseudo);
 int processedIntrons = 0;    
 int intronCount = 0;    
 int exonCover = 0;
@@ -3370,7 +3370,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
 
     assert (psl!= NULL);
     milliScore = calcMilliScore(psl);
-    verbose(2,"checking %s %s:%d-%d milliScore %d\n",psl->qName, psl->tName, psl->tStart, psl->tEnd, milliScore);
+    verbose(2,"checking %s %s:%d-%d milliScore %d milliMin %d\n",psl->qName, psl->tName, psl->tStart, psl->tEnd, milliScore, milliMin);
     if (milliScore >= milliMin)
 	{
 	++goodAliCount;
@@ -3389,8 +3389,8 @@ for (psl = pslList; psl != NULL; psl = psl->next)
 		warn("Error: qName %s tName %s qSize %d psl->qSize %d start %d end %d",
 		    psl->qName, psl->tName, qSize, psl->qSize, start, end);
 		}
-            verbose(5,"milliScore: %d qName %s tName %s:%d-%d qSize %d psl->qSize %d start %d end %d \n",
-                    milliScore, psl->qName, psl->tName, psl->tStart, psl->tEnd, qSize, psl->qSize, start, end);
+            verbose(5,"milliScore: %d qName: %s tName: %s:%d-%d qSize: %d psl->qSize %d i %d start %d end %d \n",
+                    milliScore, psl->qName, psl->tName, psl->tStart, psl->tEnd, qSize, i, psl->qSize, start, end);
 	    for (i=start; i<end; ++i)
 		{
                 assert(i<=qSize);
@@ -3616,13 +3616,15 @@ while (lineFileNext(in, &line, &lineSize))
             verbose(2,"Skipping merge of blat alignments ");
         slReverse(&pslList);
 	processBestMulti(lastName, pslList);
-	pslFreeList(&pslList);
+	//pslFreeList(&pslList);
+        pslList = 0x0;
 	safef(lastName, sizeof(lastName), "%s", psl->qName);
 	}
     slAddHead(&pslList, psl);
     }
 addBlatAlignment(lastName, &pslList);
-slReverse(&pslList);
+//slReverse(&pslList);
+pslList = 0x0;
 processBestMulti(lastName, pslList);
 pslFreeList(&pslList);
 lineFileClose(&in);
