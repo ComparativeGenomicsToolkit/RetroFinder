@@ -8,12 +8,12 @@ BED = $(DBDIR)/bed
 PSEUDO = $(DBDIR)/bed/pseudo
 MRNA = $(DBDIR)/mrna.2bit
 BUILD=gs.19/build36
-INFILES = $(DBDIR)/chrom.sizes $(DBDIR)/rmsk.bed.gz $(DBDIR)/netMm10.test.txt.gz $(DBDIR)/netCanFam3.test.txt.gz $(DBDIR)/simpleRepeat.bed.gz $(DBDIR)/all_mrna.test.psl.gz 
+INFILES = $(DBDIR)/chrom.sizes $(DBDIR)/rmsk.test.bed.gz $(DBDIR)/netMm10.test.txt.gz $(DBDIR)/netCanFam3.test.txt.gz $(DBDIR)/simpleRepeat.test.bed.gz $(DBDIR)/all_mrna.test.psl.gz 
 OPTIONS = -minAli=0.97 -nearTop=0.005 -stripVersion -verbose=5 -cdsFile=$(DBDIR)/cds.tab.gz
 NIBLIST = $(DBDIR)/S1.test.lst
 GENES.ALL = $(DBDIR)/refGene.tab.gz $(DBDIR)/mgcGene.tab.gz $(DBDIR)/sortedKnownGene.tab.gz
 GENES = $(DBDIR)/refGene.tab.gz $(DBDIR)/ensGene.tab.gz $(DBDIR)/refGene.tab.gz
-NETHG =  $(DBDIR)/netHg19.txt.gz
+NETHG =  $(DBDIR)/netHg19.test.txt.gz
 MKDIR = mkdir -p
 
 test:	test996 
