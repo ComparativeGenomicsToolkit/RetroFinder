@@ -39,7 +39,12 @@ fi
 if [[ -s all_mrna.psl.gz ]] ; then
     echo "all_mrna.psl.gz not refreshed, must be extracted at the same time as mrna and refseq sequences. "
 else
-    hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from all_mrna" > all_mrna.psl 
+    if [[ "$DB" == "panTro4" ]]; then
+        hgsql $DB -N -B -e "select * from ensGene;" | cut -f 2-> ens.$DB.gp
+        genePredToPsl /hive/data/genomes/$DB/chrom.sizes ens.$DB.gp all_mrna.psl
+    else
+        hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from all_mrna" > all_mrna.psl 
+    fi
     hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from refSeqAli" >> all_mrna.psl
     rm -f all_mrna.psl.gz
     gzip all_mrna.psl
@@ -48,7 +53,13 @@ if [[ -s cds.tab.gz ]] ; then
     echo "cds.tab.gz not refreshed, must be extracted at the same time as all_mrna.psl.gz, mRNA and RefSeq sequences. "
 else
     hgsql $DB -N -B -e "select acc, version, name, type from refSeqAli a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" > cds.tab
+    if [[ "$DB" == "panTro4" ]]; then
+        hgsql $DB -N -B -e "select name, cdsStart, cdsEnd from ensGene;" \
+           > $DB.ens.cds.txt
+        tawk '{print $1, "", $2+1, $3}' $DB.ens.cds.txt >> cds.tab
+    else
     hgsql $DB -N -B -e "select acc, version, name, type from all_mrna a , gbCdnaInfo g , cds c where qName = acc and cds = c.id" >> cds.tab
+    fi
     gzip cds.tab
 fi
 # For the filterMrna.sh step, need a PSL file of only GenBank mRNAs
@@ -58,7 +69,12 @@ if [[ -s gbMrnaOnly.psl ]] ; then
     echo "gbMrnaOnly.psl not refreshed, must be extracted at the same time as
  all_mrna.psl.gz, cds.tab.gz, mRNA and refSeq sequences."
 else
-    hgsql $DB -N -B -e "select * from all_mrna" | cut -f2-22 > gbMrnaOnly.psl
+    if [[ "$DB" == "panTro4" ]]; then
+       cp all_mrna.psl.gz gbMrnaOnly.psl.gz
+       gunzip gbMrnaOnly.psl.gz
+    else 
+       hgsql $DB -N -B -e "select * from all_mrna" | cut -f2-22 > gbMrnaOnly.psl
+    fi
 fi
 cat mrna.fa refseq.fa > raw.fa
 
@@ -107,9 +123,10 @@ source create.dirs
 awk '{print $1}' S1.len > S1.lst
 cd $TMPMRNA/run.0
 
+mkdir -p $TMPMRNA/lastz/axt
 #cluster job to run lastz to align mRNAs to genome
 echo "#LOOP" > template
-echo "$SCRIPT/lastz.sh $TWOBIT/\$(path1) \$(path2) 10 62 {check out line $TMPMRNA/lastz/\$(root1)/\$(root2).psl} $TMPMRNA/S1.len $TMPMRNA/S2.len" >> template
+echo "$SCRIPT/lastz.sh $TWOBIT/\$(path1) \$(path2) 10 62 {check out line $TMPMRNA/lastz/\$(root1)/\$(root2).psl} $TMPMRNA/lastz/axt $TMPMRNA/S1.len $TMPMRNA/S2.len" >> template
 echo "#ENDLOOP" >> template
 
 cp ../S1.lst .
