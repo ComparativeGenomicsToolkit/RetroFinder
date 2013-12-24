@@ -16,7 +16,7 @@ GENES = $(DBDIR)/refGene.tab.gz $(DBDIR)/ensGene.tab.gz $(DBDIR)/refGene.tab.gz
 NETHG =  $(DBDIR)/netHg19.txt.gz
 MKDIR = mkdir -p
 
-test:	test996 BC001781 NM_003095 NM_017681 est5Mrna100 overlapTest maxAlignTest 
+test:	test996 
 
 # nothing should be filtered with no arguments
 test%:
