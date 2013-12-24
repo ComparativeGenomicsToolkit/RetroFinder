@@ -1,21 +1,27 @@
 include ../../../common.mk
 
-PSLPSEUDO = /cluster/home/baertsch/bin/x86_64/pslPseudo 
+PSLPSEUDO = ../../../bin/pslPseudo 
 DIFF = diff -u --exclude CVS -r
-DB = hg18
-DBDIR = /cluster/data/$(DB)
+DB = panTro4
+DBDIR = inputData/$(DB)
 BED = $(DBDIR)/bed
 PSEUDO = $(DBDIR)/bed/pseudo
-MRNA = /san/sanvol1/scratch/pseudo/hg18/mrna.2bit
+MRNA = $(DBDIR)/mrna.2bit
 BUILD=gs.19/build36
-TESTCMD = $(DBDIR)/chrom.sizes ${PSEUDO}/rmsk.bed.gz $(PSEUDO)/mouseNet.txt.gz $(PSEUDO)/dogNet.txt.gz $(BED)/simpleRepeat/simpleRepeat.bed $(PSEUDO)/all_mrnaRefSeq.psl.gz 
-OPTIONS = -minAli=0.98 -nearTop=0.005 -verbose=5 -cdsFile=$(PSEUDO)/cds.tab.gz
-NIBLIST = S1.hg18.lst
-GENES = $(PSEUDO)/refGene.tab.gz $(PSEUDO)/mgcGene.tab.gz $(PSEUDO)/sortedKnownGene.tab.gz $(PSEUDO)/rhesusNet.txt.gz
+INFILES = $(DBDIR)/chrom.sizes $(DBDIR)/rmsk.bed.gz $(DBDIR)/netMm10.test.txt.gz $(DBDIR)/netCanFam3.test.txt.gz $(DBDIR)/simpleRepeat.bed.gz $(DBDIR)/all_mrna.test.psl.gz 
+OPTIONS = -minAli=0.97 -nearTop=0.005 -stripVersion -verbose=5 -cdsFile=$(DBDIR)/cds.tab.gz
+NIBLIST = $(DBDIR)/S1.test.lst
+GENES.ALL = $(DBDIR)/refGene.tab.gz $(DBDIR)/mgcGene.tab.gz $(DBDIR)/sortedKnownGene.tab.gz
+GENES = $(DBDIR)/refGene.tab.gz $(DBDIR)/ensGene.tab.gz $(DBDIR)/refGene.tab.gz
+NETHG =  $(DBDIR)/netHg19.txt.gz
+MKDIR = mkdir -p
 
-test:	BC001781 NM_003095 NM_017681 est5Mrna100 overlapTest maxAlignTest 
+test:	test996 BC001781 NM_003095 NM_017681 est5Mrna100 overlapTest maxAlignTest 
 
 # nothing should be filtered with no arguments
+test%:
+	${MAKE} doPseudo name=$@ inPsl=$@.psl filtArgs='' inSizes=chrom.sizes
+
 noopTest:
 	${MAKE} doPseudo name=$@ inPsl=overlap.psl filtArgs=''
 
@@ -50,11 +56,11 @@ outDir=output/${name}
 sortPsl=sort -k 10,10 -k 12,12n -k 13,13n
 doPseudo:
 	@${MKDIR} ${outDir}
-	${PSLPSEUDO} $(OPTIONS) ${filtArgs} $(DB) input/${inPsl} $(TESTCMD) ${outDir}/${name}g.psl ${outDir}/keep.psl.tmp ${outDir}/${name}.raw.bed ${outDir}/${name}.axt ${NIBLIST} $(MRNA) $(GENES) >${outDir}/${name}.log 2>&1
+	${PSLPSEUDO} $(OPTIONS) ${filtArgs} $(DB) input/${inPsl} $(INFILES) ${outDir}/${name}g.psl ${outDir}/keep.psl.tmp ${outDir}/${name}.raw.bed ${outDir}/${name}.axt ${NIBLIST} $(MRNA) $(GENES) $(NETHG) ${outDir}/ortho${name}.tab 
 	tawk -f filterBed.awk ${outDir}/${name}.raw.bed | sort -k1,1 -k2,3n -k4,4 >${outDir}/${name}.sort.bed
 doSave:
 	@${MKDIR} ${outDir}
-	${PSLPSEUDO} $(OPTIONS) ${filtArgs} $(DB) input/${inPsl} $(TESTCMD) ${outDir}/${name}g.psl ${outDir}/keep.psl.tmp ${outDir}/${name}.raw.bed /dev/null ${NIBLIST} $(MRNA) $(GENES) >${outDir}/${name}.log 2>&1
+	${PSLPSEUDO} $(OPTIONS) ${filtArgs} $(DB) input/${inPsl} $(INFILES) ${outDir}/${name}g.psl ${outDir}/keep.psl.tmp ${outDir}/${name}.raw.bed /dev/null ${NIBLIST} $(MRNA) $(GENES) >${outDir}/${name}.log 2>&1
 	tawk -f filterBed.awk ${outDir}/${name}.raw.bed | sort -k1,1 -k2,3n -k4,4 > ${outDir}/${name}.sort.bed
 	bedOverlap -noBin $(outDir}/${name}.sort.bed ${outDir}/${name}.bed
 	tawk '{print $1,$2,$3,$4,$5,$6}' ${outDir}/${name}.bed | overlapSelect expected/{name}.est5.bed stdin ${outDir}/${name}.est5.bed -inFmt=bed
@@ -73,5 +79,3 @@ doPseudoAlt:
 	@${sortPsl} ${outDir}/weird.psl.tmp > ${outDir}/weird.psl
 	@rm -f ${outDir}/keep.psl.tmp ${outDir}/drop.psl.tmp ${outDir}/weird.psl.tmp
 	${DIFF} expected/${name} output/${name}
-clean:
-	rm -rf output
