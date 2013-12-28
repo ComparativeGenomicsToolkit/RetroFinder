@@ -1,6 +1,7 @@
 include ../../../common.mk
 
 PSLPSEUDO = ../../../bin/pslPseudo 
+SCRIPT = ../../pipeline
 DIFF = diff -u --exclude CVS -r
 DB = panTro4
 DBDIR = inputData/$(DB)
@@ -8,19 +9,32 @@ BED = $(DBDIR)/bed
 PSEUDO = $(DBDIR)/bed/pseudo
 MRNA = $(DBDIR)/mrna.2bit
 BUILD=gs.19/build36
-INFILES = $(DBDIR)/chrom.sizes $(DBDIR)/rmsk.test.bed.gz $(DBDIR)/netMm10.test.txt.gz $(DBDIR)/netCanFam3.test.txt.gz $(DBDIR)/simpleRepeat.test.bed.gz $(DBDIR)/all_mrna.test.psl.gz 
-OPTIONS = -minAli=0.97 -nearTop=0.005 -stripVersion -verbose=5 -cdsFile=$(DBDIR)/cds.tab.gz
-NIBLIST = $(DBDIR)/S1.test.lst
+inSizes = $(DBDIR)/chrom.sizes 
+RMSK = $(DBDIR)/rmsk.bed.gz 
+NET1 = $(DBDIR)/netMm10.test.txt.gz 
+NET2 = $(DBDIR)/netCanFam3.test.txt.gz 
+TRF = $(DBDIR)/simpleRepeat.bed.gz 
+MRNA_ALIGN = $(DBDIR)/all_mrna.psl.gz 
+INFILES = $(inSizes) $(RMSK) $(NET1) $(NET2) $(TRF) $(MRNA_ALIGN)
+OPTIONS = -minAli=0.97 -nearTop=0.005 -verbose=5 -cdsFile=$(DBDIR)/cds.tab.gz
+NIBLIST = $(DBDIR)/S1.lst
 GENES.ALL = $(DBDIR)/refGene.tab.gz $(DBDIR)/mgcGene.tab.gz $(DBDIR)/sortedKnownGene.tab.gz
 GENES = $(DBDIR)/refGene.tab.gz $(DBDIR)/ensGene.tab.gz $(DBDIR)/refGene.tab.gz
-NETHG =  $(DBDIR)/netHg19.test.txt.gz
+NET3 =  $(DBDIR)/netHg19.test.txt.gz
 MKDIR = mkdir -p
 
-test:	test996 
+test:	hg18_test11 hg18_test12 hg18_test13 panTro4_test996 
+	${MAKE} doPseudo name=$@ inPsl=$@.psl filtArgs='' inSizes=chrom.sizes
 
 # nothing should be filtered with no arguments
-test%:
-	${MAKE} doPseudo name=$@ inPsl=$@.psl filtArgs='' inSizes=chrom.sizes
+hg17%:
+	${MAKE} DB=hg17 doPseudo name=$@ inPsl=$@.psl filtArgs='' GENES="inputData/hg17/knownGene.tab.gz inputData/hg17/refGene.tab.gz inputData/hg17/mgcGene.tab.gz" NET1=inputData/hg17/netMm8.tab.gz NET2=inputData/hg17/netCanFam2.tab.gz NET3=inputData/hg17/netRheMac2.tab.gz 
+
+hg18%:
+	${MAKE} DB=hg18 PSLPSEUDO=/cluster/home/baertsch/bin/x86_64/pslPseudo oldPseudo name=$@ inPsl=$@.psl filtArgs='-skipBlatMerge -verbose=5 -minAli=0.98 -nearTop=0.005' GENES="inputData/hg18/sortedKnownGene.tab.gz inputData/hg18/refGene.tab.gz inputData/hg18/mgcGenes.tab.gz" NET1=inputData/hg18/netMm8.txt.gz NET2=inputData/hg18/netCanFam2.txt.gz NET3=inputData/hg18/netRheMac2.txt.gz 
+
+panTro4%:
+	${MAKE} DB=panTro4 doPseudo name=$@ inPsl=$@.psl NIBLIST=inputData/panTro4/S1.test.lst filtArgs='-stripVersion -verbose=5 -minAli=0.98 -nearTop=0.005' GENES="inputData/panTro4/ensGene.tab.gz inputData/panTro4/refGene.tab.gz inputData/panTro4/refGene.tab.gz" NET1=inputData/panTro4/netMm10.test.txt.gz NET2=inputData/panTro4/netCanFam3.test.txt.gz NET3=inputData/panTro4/netHg19.test.txt.gz 
 
 noopTest:
 	${MAKE} doPseudo name=$@ inPsl=overlap.psl filtArgs=''
@@ -53,16 +67,25 @@ maxAlignTest:
 #	sizesOpt=-polyASizes=input/${inSizes}
 #endif
 outDir=output/${name}
+expectDir=expected
 sortPsl=sort -k 10,10 -k 12,12n -k 13,13n
 doPseudo:
 	@${MKDIR} ${outDir}
-	${PSLPSEUDO} $(OPTIONS) ${filtArgs} $(DB) input/${inPsl} $(INFILES) ${outDir}/${name}g.psl ${outDir}/keep.psl.tmp ${outDir}/${name}.raw.bed ${outDir}/${name}.axt ${NIBLIST} $(MRNA) $(GENES) $(NETHG) ${outDir}/ortho${name}.tab 
-	tawk -f filterBed.awk ${outDir}/${name}.raw.bed | sort -k1,1 -k2,3n -k4,4 >${outDir}/${name}.sort.bed
+	${PSLPSEUDO} $(OPTIONS) ${filtArgs} $(DB) input/${inPsl} $(INFILES) ${outDir}/${name}g.psl ${outDir}/keep.psl.tmp ${outDir}/${name}.raw.bed ${outDir}/${name}.axt ${NIBLIST} $(MRNA) $(GENES) $(NET3) ${outDir}/ortho${name}.tab > ${name}.log
+	tawk -f $(SCRIPT)/filterBed.awk ${outDir}/${name}.raw.bed | sort -k1,1 -k2,3n -k4,4 >${outDir}/${name}.sort.bed
+	${SCRIPT}/pslPseudoPost ${outDir}/${name}.sort.bed ${outDir}/${name}.bed
+	diff ${expectDir}/${name}.bed ${outDir}/${name}.bed 
+oldPseudo:
+	@${MKDIR} ${outDir}
+	${PSLPSEUDO} $(OPTIONS) ${filtArgs} $(DB) input/${inPsl} $(INFILES) ${outDir}/${name}g.psl ${outDir}/keep.psl.tmp ${outDir}/${name}.raw.bed ${outDir}/${name}.axt ${NIBLIST} $(MRNA) $(GENES) $(NET3) 
+	tawk -f $(SCRIPT)/filterBed.old.awk ${outDir}/${name}.raw.bed | sort -k1,1 -k2,3n -k4,4 >${outDir}/${name}.sort.bed
+	${SCRIPT}/pslPseudoPost ${outDir}/${name}.sort.bed ${outDir}/${name}.bed
+	diff ${expectDir}/${name}.bed ${outDir}/${name}.bed 
 doSave:
 	@${MKDIR} ${outDir}
 	${PSLPSEUDO} $(OPTIONS) ${filtArgs} $(DB) input/${inPsl} $(INFILES) ${outDir}/${name}g.psl ${outDir}/keep.psl.tmp ${outDir}/${name}.raw.bed /dev/null ${NIBLIST} $(MRNA) $(GENES) >${outDir}/${name}.log 2>&1
-	tawk -f filterBed.awk ${outDir}/${name}.raw.bed | sort -k1,1 -k2,3n -k4,4 > ${outDir}/${name}.sort.bed
-	bedOverlap -noBin $(outDir}/${name}.sort.bed ${outDir}/${name}.bed
+	tawk -f $(SCRIPT)/filterBed.awk ${outDir}/${name}.raw.bed | sort -k1,1 -k2,3n -k4,4 > ${outDir}/${name}.sort.bed
+	bedOverlap -noBin ${outDir}/${name}.sort.bed ${outDir}/${name}.bed
 	tawk '{print $1,$2,$3,$4,$5,$6}' ${outDir}/${name}.bed | overlapSelect expected/{name}.est5.bed stdin ${outDir}/${name}.est5.bed -inFmt=bed
 	@${sortPsl} ${outDir}/keep.psl.tmp > ${outDir}/keep.psl
 	@rm -f ${outDir}/keep.psl.tmp
