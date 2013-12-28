@@ -34,7 +34,7 @@ hg18%:
 	${MAKE} DB=hg18 PSLPSEUDO=/cluster/home/baertsch/bin/x86_64/pslPseudo oldPseudo name=$@ inPsl=$@.psl filtArgs='-skipBlatMerge -verbose=5 -minAli=0.98 -nearTop=0.005' GENES="inputData/hg18/sortedKnownGene.tab.gz inputData/hg18/refGene.tab.gz inputData/hg18/mgcGenes.tab.gz" NET1=inputData/hg18/netMm8.txt.gz NET2=inputData/hg18/netCanFam2.txt.gz NET3=inputData/hg18/netRheMac2.txt.gz 
 
 panTro4%:
-	${MAKE} DB=panTro4 doPseudo name=$@ inPsl=$@.psl NIBLIST=inputData/panTro4/S1.test.lst filtArgs='-stripVersion -verbose=5 -minAli=0.98 -nearTop=0.005' GENES="inputData/panTro4/ensGene.tab.gz inputData/panTro4/refGene.tab.gz inputData/panTro4/refGene.tab.gz" NET1=inputData/panTro4/netMm10.test.txt.gz NET2=inputData/panTro4/netCanFam3.test.txt.gz NET3=inputData/panTro4/netHg19.test.txt.gz 
+	${MAKE} DB=panTro4 doPseudo name=$@ inPsl=$@.psl filtArgs='-stripVersion -verbose=5 -minAli=0.98 -nearTop=0.005' GENES="inputData/panTro4/ensGene.tab.gz inputData/panTro4/refGene.tab.gz inputData/panTro4/refGene.tab.gz" NET1=inputData/panTro4/netMm10.test.txt.gz NET2=inputData/panTro4/netCanFam3.test.txt.gz NET3=inputData/panTro4/netHg19.test.txt.gz 
 
 noopTest:
 	${MAKE} doPseudo name=$@ inPsl=overlap.psl filtArgs=''
