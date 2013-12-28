@@ -15,7 +15,9 @@ ICACHE= /hive/users/baertsch/retro/$(DB)/
 GENES = $(PSEUDO)/refGene.tab.gz $(PSEUDO)/mgcGenes.tab.gz $(PSEUDO)/knownGene.tab.gz
 
 
-test: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test13 test14 test15 test16 test17 test18 test19 testRp131 test26 test38 test1987
+test::
+	cd tests ; make test
+#test: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test13 test14 test15 test16 test17 test18 test19 testRp131 test26 test38 test1987
 t%:	input/t%.psl
 	@mkdir -p output
 	${bindir}/pslPseudo $(OPTIONS) $(DB) input/$@.psl $(TESTCMD)  output/$@g.psl output/$@p.psl output/$@l.txt output/$@.axt S1.$(DB).lst $(MRNA) $(GENES) $(PSEUDO)/netRheMac2.txt.gz > $@.log 
