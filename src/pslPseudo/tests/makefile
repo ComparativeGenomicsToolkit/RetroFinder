@@ -24,7 +24,7 @@ NET3 =  $(DBDIR)/netHg19.test.txt.gz
 MKDIR = mkdir -p
 
 test:	hg18_test11 hg18_test12 hg18_test13 panTro4_test996 
-	${MAKE} doPseudo name=$@ inPsl=$@.psl filtArgs='' inSizes=chrom.sizes
+	${MAKE} doPseudo name=$@ inPsl=$@.psl filtArgs='' 
 
 # nothing should be filtered with no arguments
 hg17%:
