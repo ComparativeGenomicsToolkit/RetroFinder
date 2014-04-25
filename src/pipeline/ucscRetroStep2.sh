@@ -2,39 +2,40 @@
 set -bevEu -o pipefail
 source $1
 #align human mrnas to $DB using lastz
-cd $TMPMRNA
+# cd $TMPMRNA
 echo "working directory is $TMPMRNA."
-wc -l run.0/jobList | awk '{print $1}'> jobs.cnt
-find lastz -name \*.psl| wc -l | awk '{print $1}'> jobs.lst
+wc -l $TMPMRNA/run.0/jobList | awk '{print $1}'> $TMPMRNA/jobs.cnt
+# jobs.lst will then contain full path
+find $TMPMRNA/lastz -name \*.psl| wc -l | awk '{print $1}'> $TMPMRNA/jobs.lst
 echo Check Job Count from cluster run
-diff jobs.cnt jobs.lst 
+diff $TMPMRNA/jobs.cnt $TMPMRNA/jobs.lst 
 if [ $? != 0 ]; then
   echo missing jobs aborting
-  wc -l jobs.cnt jobs.lst
+  wc -l $TMPMRNA/jobs.cnt $TMPMRNA/jobs.lst
   exit 3
 fi
 #concatenate, sort (by name, score) and de-dup psls by chrom
-mkdir -p pslFilter
-for i in `awk '{print $1}' S1.len` ; do echo $i ; cat lastz/$i/*.psl | awk '{print $0, $1*3-$2}' | \
+mkdir -p $TMPMRNA/pslFilter
+for i in `awk '{print $1}' $TMPMRNA/S1.len` ; do echo $i ; cat $TMPMRNA/lastz/$i/*.psl | awk '{print $0, $1*3-$2}' | \
  sort -k 10,10 -k 22nr -T /scratch | awk '{OFS=" "; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21}' | \
- ${BINDIR}/pslFilterDups stdin pslFilter/$i.psl  ; done 
+ ${BINDIR}/pslFilterDups stdin $TMPMRNA/pslFilter/$i.psl  ; done 
 
 #chain blocks
 
-find $NIB > nib.lst
-mkdir -p psl
-for i in `awk '{print $1}' S1.len` ; do nohup $TMPMRNA/doChain $i ; done 
+find $NIB > $TMPMRNA/nib.lst
+mkdir -p $TMPMRNA/psl
+for i in `awk '{print $1}' $TMPMRNA/S1.len` ; do nohup $TMPMRNA/doChain $i ; done 
 
 #reattach polyA tail and fix alignments
-mkdir -p pslLift
-for i in `awk '{print $1}' S1.len` ; do liftUp pslLift/$i.psl mrna.lft warn psl/$i.psl -pslQ -nohead ; done
+mkdir -p $TMPMRNA/pslLift
+for i in `awk '{print $1}' $TMPMRNA/S1.len` ; do liftUp $TMPMRNA/pslLift/$i.psl $TMPMRNA/mrna.lft warn $TMPMRNA/psl/$i.psl -pslQ -nohead ; done
 
-cd $TMPMRNA/pslLift
+# cd $TMPMRNA/pslLift
 echo "MRNABASE $MRNABASE"
-pslCat -nohead *psl > $MRNABASE/mrnaBlastz.psl
+pslCat -nohead $TMPMRNA/plsLift/*psl > $MRNABASE/mrnaBlastz.psl
 
-cd $MRNABASE
-sort -k10,10 -k14,14 -k16,16n -k12,12n mrnaBlastz.psl > mrnaBlastz.sort.psl
+# cd $MRNABASE
+sort -k10,10 -k14,14 -k16,16n -k12,12n $MRNABASE/mrnaBlastz.psl > $MRNABASE/mrnaBlastz.sort.psl
 #pslCDnaFilter -minCover=0.05 -minId=0.65 mrnaBlastz.sort.psl mrnaBlastz.65.psl
 ##                       seqs    aligns
 #             total:     223377  11187645
@@ -48,17 +49,17 @@ sort -k10,10 -k14,14 -k16,16n -k12,12n mrnaBlastz.psl > mrnaBlastz.sort.psl
 #     drop minCover:     52526   567156
 #              kept:     223112  6998275
 
-pslCDnaFilter -minCover=0.05 -minId=0.58 mrnaBlastz.sort.psl mrnaBlastz.psl
-rm -f mrnaBlastz.sort.psl.gz
-gzip mrnaBlastz.sort.psl &
+pslCDnaFilter -minCover=0.05 -minId=0.58 $MRNABASE/mrnaBlastz.sort.psl $MRNABASE/mrnaBlastz.psl
+rm -f $MRNABASE/mrnaBlastz.sort.psl.gz
+gzip $MRNABASE/mrnaBlastz.sort.psl &
 
 #split for pipeline cluster run 
 mkdir -p $OUTDIR/split
-${BINDIR}/pslSplit nohead $OUTDIR/split mrnaBlastz.psl -chunkSize=120
+${BINDIR}/pslSplit nohead $OUTDIR/split $MRNABASE/mrnaBlastz.psl -chunkSize=120
 
-cd $OUTDIR/split
-for i in `ls tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > temp.psl ; mv temp.psl $i ; done
-grep chr tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'|uniq  > acc.lst
+# cd $OUTDIR/split
+for i in `ls $OUTDIR/split/tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > $OUTDIR/split/temp.psl ; mv $OUTDIR/split/temp.psl $i ; done
+grep chr $OUTDIR/split/tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'|uniq  > $OUTDIR/split/acc.lst
 
 export TMPDIR=/scratch/tmp
 echo TMPDIR
@@ -66,10 +67,10 @@ echo TMPDIR
 awk -f $SCRIPT/stripversion.awk $MRNABASE/mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrnaBlastz
 
 echo "ucscRetroStep2.sh mrna alignments complete"
-cd $MRNABASE
-cp S1.len $OUTDIR
-cd $OUTDIR
-pwd
+# cd $MRNABASE
+cp $MRNABASE/S1.len $OUTDIR
+# cd $OUTDIR
+# pwd
 
 #load mrna sequences into browser (with version numbers)
 mkdir -p /gbdb/$DB/blastzRetro${VERSION}
