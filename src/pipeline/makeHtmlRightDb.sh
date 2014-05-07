@@ -1,5 +1,5 @@
-#
-set -beEu -o pipefail
+#!/bin/bash
+set -beEu -x -o pipefail
 source $1
 bed=$2
 dir=$3
