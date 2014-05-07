@@ -1,4 +1,5 @@
 #!/bin/bash
+set -beEu -x -o pipefail
 #set -o verbose
 db=$1
 bed=$2
