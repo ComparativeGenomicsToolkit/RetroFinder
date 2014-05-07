@@ -124,7 +124,7 @@ awk '{print $1}' $TMPMRNA/S1.len > $TMPMRNA/S1.lst
 mkdir -p $TMPMRNA/lastz/axt
 #cluster job to run lastz to align mRNAs to genome
 echo "#LOOP" > $TMPMRNA/run.0/template
-echo "$SCRIPT/lastz.sh $TWOBIT/\$(path1) \$(path2) 10 62 {check out line $TMPMRNA/lastz/\$(root1)/\$(root2).psl} $TMPMRNA/lastz/axt/\$(root1) $TMPMRNA/S1.len $TMPMRNA/S2.len" >> $TMPMRNA/run.0/template
+echo "$SCRIPT/lastz.sh $TWOBIT/\$(path1) \$(path2) 10 62 {check out line $TMPMRNA/lastz/\$(root1)/\$(root2).psl} $TMPMRNA/lastz/axt/\$(root1) $TMPMRNA/S1.len $TMPMRNA/S2.len $LASTZPROG" >> $TMPMRNA/run.0/template
 echo "#ENDLOOP" >> $TMPMRNA/run.0/template
 
 cp $TMPMRNA/S1.lst $TMPMRNA/run.0
