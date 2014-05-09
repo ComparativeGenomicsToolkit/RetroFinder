@@ -1,0 +1,176 @@
+Instructions for running retroFinder pipeline:
+1.     Data Prerequisites 
+In order to run the retroFinder pipeline, the following data files are 
+mandatory: 1) set of mRNA sequences (actual or predicted); 2) repeatMasker 
+annotation; 3) simpleRepeat annotation; 4) list of chromosome sizes; 5) 
+predicted gene set and alignments; 6) net annotation for three other genomes - 
+these should be from fairly complete genomes that are evolutionarily close 
+enough to be alignable at the DNA level, the second being the farthest and the 
+third the closest; 7) nib files containing the genome sequence. Optionally, we 
+can provide two additional gene sets to improve the selection of parent genes.  
+
+The retroFinder pipeline obtains its input data from a combination of flat 
+files and a MYSQL database that is a subset of the UCSC genome browser 
+database. If MYSQL is not available, the scripts can be easily modified to read 
+from flat files (genePred and BED formats) instead. For a description of UCSC 
+data formats, visit http://genome.ucsc.edu/FAQ/FAQformat.html.
+2.     Source code and bash scripts
+Source code and scripts are from http://compbio.soe.ucsc.edu/retrogene/. The 
+scripts are in scripts directory and C code under hg/src/pslPseudo. There are 
+dependancies on the kent src tree (See http://genome.ucsc.edu/admin/cvs.html 
+and http://genome.ucsc.edu/FAQ/FAQdownloads.html#download27) which should be 
+installed first. The location of the kent/src/ directory should be set in the 
+first line of retroFinder-1.14/common.mk. Set environment variables USE_BAM=0 
+and USE_SSL=0 before compiling the kent src libraries. 
+3.     Setting up Parameter file
+A default parameter file (DEF) is located in the scripts directory and this 
+should be passed as the first parameter to all of the step scripts in the 
+pipeline. Copy and modify this as needed. 
+The DB variable should be set to the MYSQL database containing the genome to be 
+analyzed. If the RMSK variable is set to a directory, the system will look for 
+files with a .out extension to annotate repeats. If the file is not found, it 
+will be assumed that RMSK is to be the MYSQL table containing the repeatMasker 
+annotation. The scripts assume that a compute cluster is available that is 
+running parasol. Set the CLUSTER variable to point to the node that spawns 
+jobs. The VERSION variable will be appended to the mysql tables to permit 
+multiple concurrent data versions. If GENEPFAM and PFAM tables are not 
+available (optionally used to filter zinc finger and immunoglobin genes), 
+delete those variables from the parameter file. ROOTDIR points to the directory 
+that is accessible by a webserver that will be used to generate webpages for 
+the result sets. SPECIES is a space-delimited list of genome databases that 
+already have retrogene sets. It is used by step6 to generate a composite 
+webpage comparing retrogene sets across species (See Suppl Table 1 for a 
+complete list)
+4.     Scripts to be run before starting pipeline
+
+filterMrna.sh and filterEst.sh extract both mRNAs and ESTs alignments in PSL 
+format from the MYSQL database for expression analysis. The parameter file 
+contains variable
+ settings to define whether or not the alignment tables are split by 
+chromosome. The prerequisite data can be downloaded from the UCSC Genome 
+Browser website (See http://genome.ucsc.edu/FAQ/FAQdownloads.html#download1). 
+If we do not have MYSQL tables for this data, we can skip those steps and just 
+have those files on the zipped and PSL format in the directory and the scripts 
+will use the mRNA and EST flat files without extracting from the database.  If 
+no annotation is available for the genome, then use the script ucscTransMap.sh 
+to map over predicted mRNAs from another genome that does have annotated genes 
+using the UCSC transMap tracks. Similarly, mRNAs for annotated genes should be 
+stored in a file called reqseq.fa, if data is not available, simply create an 
+empty file call refseq.fa to avoid script errors. Variables GENE1-3 should be 
+set to MYSQL tables or flat files containing genePred annotations (see UCSC 
+Genome Browser FAQ for format information ) for three separate gene 
+annotations, if fewer than three are available, then set all three variables to 
+the same table. 
+
+After running filterMrna.sh and filterEst.sh to prepare the 
+expression data and the optional ucscTransMap.sh, the six main scripts 
+ucscRetroStep1.sh through ucscRetroStep6.sh should be run in numerical order. 
+
+5.    Step 1 - Generate data sets for mRNAs, gene annotation, and expression 
+data
+
+The first step in the pipeline (script ucscRetroStep1.sh) requires a set of 
+mRNAs to align to the genome. For genomes with sufficient sequenced mRNAs, 
+these mRNA alignments can be extracted from GenBank using the UCSC GenBank 
+pipeline (gbGetSeqs). If that program is not available, simply extract all 
+mRNAs from GenBank manually and put them in a file called mrna.fa in the 
+$MRNABASE directory, as defined in the parameter file above. 
+
+If insufficient mRNAs are available from GenBank, then mRNAs from gene 
+predictions can be used or transMap mrna can be used instead. The script 
+ucscTransMap.sh will take transmap mrna data from tables (stored in a mysql 
+database) and generate mrna.fa. 
+
+Most of the data is pulled from a browser formatted by MYSQL database.  With 
+the exception of GenBank we allow the user to either pull parent gene 
+annotation from GenBank or transmap or to provide their own mRNA sequences.  
+The pipeline basically requires mRNA sequence of the parent genes as the 
+starting point. If the UTR sequence is included in the mRNA.fa, it will improve 
+the retrogene annotation. 
+
+Once your preliminary data set is ready, we can run UCSC retro step one, 
+passing the parameter file as an argument and the script will then prepare the 
+first cluster job to align the mRNAs to the genome.  The mRNA sequences are 
+copied to a directory name that is stored in a variable in the DEF file 
+[MRNABASE]. Alignments that have a minimum of 58% identity and coverage of 5% 
+will be included in the scoring step and a browser track is created called 
+ucscRetroAli. We set the percent identity parameter to 58% using a standard ROC 
+curve with the Vega training set. This parameter should be tuned depending on 
+the evolutionary distance of the pair of species. Genes under positive 
+selection were sometimes missed and could be better detected with protein 
+alignments.  At the end of the script, the sequences of mRNAs are loaded and 
+the track is called mRNA BLASTZ, which represents the BLASTZ alignment of all 
+the mRNAs to the genome. 
+6.     Step 2 - Alignment 
+The script, ucscRetroStep2.sh, runs a cluster job that aligns each sequence in 
+the file mrna.fa against the genome using LASTZ, a tool for aligning two DNA 
+sequences and inferring scoring parameters automatically 
+(http://www.bx.psu.edu/miller_lab/). Resulting alignments are chained together 
+with axtChain  (Kent WJ et. al, 2003) and filtered by percent identity > 0.58 
+and coverage > 5% using the utility pslCDnaFilter. The alignment is loaded in a 
+table in the browser database LASTZ mRNA and the sequences are loaded into the 
+database ucscRetroSeq table.  
+
+7.     Step 3 - Scoring 
+The scoring step takes the alignments created in the previous step and runs a 
+cluster job to score the features and create a non-overlapping set of retrogene 
+predictions. The scoring program, called pslPseudo, has a number of options 
+that can be set in the parameter file using the RETRO_OPTIONS variable in the 
+DEF file.  Parameters include: -minAli, the minimum alignment score, by default 
+the parent gene must have at least 98% identity with the genome; -nearTop, this 
+allows for parent genes with recent duplications to be included in the 
+pipeline.  By default, any mRNA alignment that is within 0.5% percent identity 
+of the parent gene also is included as a parent.
+Since the pipeline requires the location of repeats, the variable RMSK in the 
+DEF file defines the location of the repeatMasker output data. The variable PDB 
+in the parameter file defines the name of the UCSC MYSQL protein database.
+
+8.     Step 4 - Consolidation
+This script (ucscRetroStep4.sh) concatenates the results from the cluster job 
+in step3 and subsequently checks for overlapping predictions and uses the 
+retrofinder score to find the most likely parent of each putative retrogene. In 
+this way, the original parent can still be identified for retrogenes that have 
+been tandemly duplicated later. Finally, the data is loaded into MYSQL 
+database.  The main feature table is called ucscRetroInfo while ucscRetroAli 
+contains the alignment to the parent gene.  The version number in the parameter 
+file is appended to the table names.
+
+9.    Step 5 - Analysis
+This step (ucscRetroStep5.sh) is only used to determine the level of expression 
+of retrocopies. Counts of the number of transcripts that overlap the retrocopy 
+are noted. To help distinguish protein-coding genes from transcribed 
+pseudogenes, an ORF score is calculated (using bestORF) using a window of 250 
+bases around the retrocopy.  Optionally, immunoglobin domains and zinc fingers 
+are filtered based on the PFAM domain from the parent gene annotation. 
+
+Alignments of mRNA and EST to the genome of interest are used for expression 
+analysis and those are normally extracted from the MYSQL database, or the user 
+can provide zipped PSL files called all_mRNA.psl and ESTfilter.psl. In order to 
+resolve the location of ESTs and mRNAs that align to multiple locations in the 
+genome, the pipeline performs a stricter scoring of these alignments using a 
+utility called pslCDnaGenomeMatch. It works by counting the number of 
+alignments positions that differ between the two loci. If more than four 
+positions in one loci score better than the other, that loci is picked as the 
+location of the transcipt. If there are fewer than four diagnostic positions, 
+then the transcript is discarded.
+
+During step five, each of the predicted retrogenes is classified into two 
+types. Type one is exon shuffling or chimeric retrogene, which is defined as a 
+retrogene overlapping at least one exon of a multi exon gene. Type two is the 
+classification for duplicated retrogenes that are inserted into locations that 
+previously had no gene. Next, the retros are aged; ancient retrogenes are 
+defined as those that do not have a break in orthology as defined by the UCSC 
+net alignments.  Recent retrogenes are ones that were inserted after the 
+speciation event.
+10.    Step 6 - Web pages for displaying Results
+The final step, ucscRetroStep6.sh, generates web pages for both duplicated 
+retrocopies and chimeric retrogenes. It categorizes the retrocopies by age 
+using the breaks in orthology feature (see section 2.2.4). Comparing other 
+datasets can be also quickly generated with the compareRetroset.sh scripts (see 
+section 4 or http://hgwdev.cse.ucsc.edu/~baertsch/retro for example web pages). 
+ The variable ROOTDIR in the DEF file defines the directory where the HTML 
+pages will be created.  The SPECIES parameter in the DEF defines which web 
+pages will be generated; entries should contain mysql database names of the 
+genomes to be displayed.  Counts are displayed on summary pages with click 
+through to each individual example.
+
