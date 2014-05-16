@@ -15,14 +15,14 @@ close CHROMS;
 my $registry = 'Bio::EnsEMBL::Registry';
 
 $registry->load_registry_from_db(
-    -host => 'ensembldb.ensembl.org', # alternatively 'useastdb.ensembl.org'
+    -host => 'useastdb.ensembl.org', # alternatively 'useastdb.ensembl.org'
     -user => 'anonymous'
 );
 
 # get a slice adaptor for the human core database
-my $slice_adaptor = $registry->get_adaptor( 'Human', 'Core', 'Slice' );
+my $slice_adaptor = $registry->get_adaptor( 'Rhesus', 'Core', 'Slice' );
 # get adaptor for transcripts
-my $tr_adaptor = $registry->get_adaptor( 'Human', 'Core', 'Transcript');
+my $tr_adaptor = $registry->get_adaptor( 'Rhesus', 'Core', 'Transcript');
 
 # Get a slice for each chromosome and process to get ids with versions. 
 for my $c (@chroms)
@@ -33,15 +33,13 @@ for my $c (@chroms)
    my $transcripts = $tr_adaptor->fetch_all_by_Slice($slice);
    while ( my $tr = shift @{$transcripts} ) 
    {
-      my $dbId = $tr->dbID();
       my $stableId = $tr->stable_id();
       my $version = $tr->version();
       my $seqObj = $tr->seq();
       my $txSeq = $seqObj->seq();
-      print "Chrom: $c Transcript $stableId [$dbId] Version: $version \n";
       print "Chrom: $c Transcript $stableId.$version \n";
-      #print ">$stableId.$version\n";
-      #print "$txSeq\n";
+      print ">$stableId.$version\n";
+      print "$txSeq\n";
    }
 }
 
