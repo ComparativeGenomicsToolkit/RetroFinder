@@ -21,6 +21,8 @@ if ($#ARGV < 2)
    print "Usage: getEnsembTxSeqsWithVersions.pl <species> <chroms list> <output file> \n";
    print "Chroms list can either be a list of chromosomes for which to retrieve transcript sequences or \'all\' to get all transcripts for an assembly.\n";
    print "Script either gets transcript sequences in FASTA format for specified chromosomes for the latest Ensembl build for a species or all Ensembl transcript sequences for that build.\n";
+   print "Use --all option to get all transcript sequences and without option, 
+ provide a list of chromosomes in a file.\n";
    exit 1;
 }
 
