@@ -21,9 +21,14 @@ else
     echo "Fatal error: Please create $MRNABASE/S1.len from chrom.sizes without random chroms or chrM, and rerun."
     exit 3
 fi
-#pull latest mrna and refseq from genbank 
+#pull latest mrna and refseq from genbank or use alternative sequence source
 if [[ -s $MRNABASE/mrna.fa ]] ; then
     echo "$MRNABASE/mrna.fa exists, extraction from genbank skipped"
+elif [[ $USEALTSEQS == 1 ]] && [[ $ALTSEQSOURCE = "ensGene" ]]; then
+    echo "Using Ensembl transcript sequences, extract from Ensembl database"
+    echo "$SCRIPT/getEnsemblTxSeqsWithVersions.pl --all $GENOMENAME all $MRNABASE/ens.$DB.fa"
+    $SCRIPT/getEnsemblTxSeqsWithVersions.pl --all $ORGNAME all $MRNABASE/ens.$DB.fa
+    ln -s $MRNABASE/mrna.fa $MRNABASE/ens.$DB.fa
 else
     echo "extracting mRNA and refseq from Genbank "
     echo "change non standard lower case characters to N's being careful not to change headers that are upper case"
@@ -45,7 +50,7 @@ else
     else
         hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from all_mrna" > $MRNABASE/all_mrna.psl 
     fi
-    hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from refSeqAli" >> $MRRNABASE/all_mrna.psl
+    hgsql $DB -N -B -e "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from refSeqAli" >> $MRNABASE/all_mrna.psl
     rm -f $MRNABASE/all_mrna.psl.gz
     gzip $MRNABASE/all_mrna.psl
 fi
@@ -84,7 +89,7 @@ cp -p $MRNABASE/trim.fa $TMPMRNA
 
 pwd
 
-faToTwoBit $MRNABASE/raw.fa $MRNBASE/mrna.2bit
+faToTwoBit $MRNABASE/raw.fa $MRNABASE/mrna.2bit
 twoBitToFa $MRNABASE/mrna.2bit stdout | faToTwoBit stdin -stripVersion $MRNABASE/mrnaNoversion.2bit
 faSize $MRNABASE/trim.fa -detailed > $MRNABASE/trim.len
 cp $MRNABASE/trim.len $MRNABASE/S2.len
@@ -106,7 +111,7 @@ mkdir -p $TMPMRNA/lastz
 mkdir -p $TMPMRNA/run.0
 rm -rf $TMPMRNA/run.0
 mkdir -p $TMPMRNA/run.0
-faSplit about $MRNBASE/trim.fa 1000000 $TMPMRNA/split/mrna
+faSplit about $MRNABASE/trim.fa 1000000 $TMPMRNA/split/mrna
 
 #cd $TMPMRNA/split
 ls $TMPRNA/split/mrna*.fa |awk '{print "'$TMPMRNA'/split/"$1}' > $TMPMRNA/S2.lst
