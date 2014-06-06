@@ -99,7 +99,7 @@ mv $MRNABASE/x $MRNABASE/raw.len
 sort $MRNABASE/trim.len > $MRNABASE/x
 mv $MRNABASE/x $MRNABASE/trim.len
 join $MRNABASE/raw.len $MRNABASE/trim.len  > $MRNABASE/both.len
-awk '{print 0,$1,$3,$1,$2}' $MRNABASE/both.len > $MRNABASE/ mrna.lft
+awk '{print 0,$1,$3,$1,$2}' $MRNABASE/both.len > $MRNABASE/mrna.lft
 cp -p $MRNABASE/mrna.lft $TMPMRNA
 cp -p $MRNABASE/S1.len $TMPMRNA
 cp -p $MRNABASE/S2.len $TMPMRNA
