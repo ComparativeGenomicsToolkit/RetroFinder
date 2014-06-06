@@ -14,6 +14,7 @@ KENTBINDIR=/cluster/home/hartera/bin/x86_64
 MRNABASE=/hive/data/genomes/$DB/bed/mrnaBlastz.$VERSION
 TMPMRNA=$RUNDIR/mrnaBlastz/$DB
 TMPEST=$RUNDIR/est/$DB
+USALTSEQS=0
 EST=all_est
 SPLICED_EST=intronEst
 SPLIT_EST=0
