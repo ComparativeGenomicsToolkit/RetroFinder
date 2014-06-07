@@ -114,7 +114,7 @@ mkdir -p $TMPMRNA/run.0
 faSplit about $MRNABASE/trim.fa 1000000 $TMPMRNA/split/mrna
 
 #cd $TMPMRNA/split
-ls $TMPMRNA/split/mrna*.fa |awk '{print "'$TMPMRNA'/split/"$1}' > $TMPMRNA/S2.lst
+ls $TMPMRNA/split/mrna*.fa > $TMPMRNA/S2.lst
 
 # cd .., now in $TMPMRNA
 echo "#!/bin/bash" > $TMPMRNA/doChain
