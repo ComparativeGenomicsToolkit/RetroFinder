@@ -22,7 +22,6 @@ for i in `awk '{print $1}' $TMPMRNA/S1.len` ; do echo $i ; cat $TMPMRNA/lastz/$i
 
 #chain blocks
 
-find $NIB > $TMPMRNA/nib.lst
 mkdir -p $TMPMRNA/psl
 for i in `awk '{print $1}' $TMPMRNA/S1.len` ; do nohup $TMPMRNA/doChain $i ; done 
 
