@@ -119,7 +119,7 @@ ls $TMPMRNA/split/mrna*.fa > $TMPMRNA/S2.lst
 # cd .., now in $TMPMRNA
 echo "#!/bin/bash" > $TMPMRNA/doChain
 echo "BASE=$TMPMRNA" >> $TMPMRNA/doChain
-echo "axtChain -linearGap=loose -verbose=0 -psl \$BASE/pslFilter/\$1.psl $TWOBIT -faQ \$BASE/trim.fa stdout | chainFilter -minScore=4000 stdin | chainToPsl stdin S1.len S2.len nib.lst trim.fa psl/\$1.psl" >> $TMPMRNA/doChain
+echo "axtChain -linearGap=loose -verbose=0 -psl \$BASE/pslFilter/\$1.psl $TWOBIT -faQ \$BASE/trim.fa stdout | chainFilter -minScore=4000 stdin | chainToPsl stdin S1.len S2.len $TWOBIT trim.fa psl/\$1.psl" >> $TMPMRNA/doChain
 chmod +x $TMPMRNA/doChain
 awk '{print "mkdir -p $TMPMRNA/lastz/"$1}' $TMPMRNA/S1.len > $TMPMRNA/create.dirs
 source $TMPMRNA/create.dirs
