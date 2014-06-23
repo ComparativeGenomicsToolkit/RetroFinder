@@ -15,7 +15,8 @@ mkdir -p $OUTDIR/result/axt
 mkdir -p $OUTDIR/log
 mkdir -p $OUTDIR/out
 
-find $NIB -name \*.nib > $OUTDIR/S1.lst
+#find $NIB -name \*.nib > $OUTDIR/S1.lst
+cat $TWOBIT > $OUTDIR/S1.lst
 cp $GENOME/$DB/chrom.sizes $OUTDIR
 
 #cat $RMSK/*.out |awk '{OFS="\t";print $5,$6,$7}' | grep -v position|grep -v sequence | tawk 'length($0)>2{print $0}' > rmsk.bed
@@ -70,7 +71,7 @@ ln $MRNABASE/cds.tab.gz $OUTDIR -s
 # cd $OUTDIR
 mkdir -p $OUTDIR/run.0
 # cd run.0
-wc -l $OUTDIR/split/*.psl |grep -v total | grep -v acc.lst| sort -nr | awk '{print $2}' |sed -e 's,$OUTDIR/split/tmp,,'|sed -e 's/.psl//' > $OUTDIR/run.0/list
+wc -l $OUTDIR/split/*.psl |grep -v total | grep -v $OUTDIR/split/acc.lst| sort -nr | awk '{print $2}' |sed -e 's,\$OUTDIR/split/tmp,,'|sed -e 's/.psl//' > $OUTDIR/run.0/list
 cp $OUTDIR/$1 $OUTDIR/run.0
 echo "#LOOP" > $OUTDIR/run.0/gsub
 echo "$SCRIPT/doBuildpk.sh \$(path1) $OUTDIR/$1 {check out exists $RESULT/pseudoGeneLink\$(path1).bed} " >> $OUTDIR/run.0/gsub
