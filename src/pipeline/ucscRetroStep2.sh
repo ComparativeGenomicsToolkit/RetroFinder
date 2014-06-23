@@ -31,7 +31,7 @@ for i in `awk '{print $1}' $TMPMRNA/S1.len` ; do liftUp $TMPMRNA/pslLift/$i.psl 
 
 # cd $TMPMRNA/pslLift
 echo "MRNABASE $MRNABASE"
-pslCat -nohead $TMPMRNA/plsLift/*psl > $MRNABASE/mrnaBlastz.psl
+pslCat -nohead $TMPMRNA/pslLift/*psl > $MRNABASE/mrnaBlastz.psl
 
 # cd $MRNABASE
 sort -k10,10 -k14,14 -k16,16n -k12,12n $MRNABASE/mrnaBlastz.psl > $MRNABASE/mrnaBlastz.sort.psl
@@ -58,7 +58,7 @@ ${BINDIR}/pslSplit nohead $OUTDIR/split $MRNABASE/mrnaBlastz.psl -chunkSize=120
 
 # cd $OUTDIR/split
 for i in `ls $OUTDIR/split/tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > $OUTDIR/split/temp.psl ; mv $OUTDIR/split/temp.psl $i ; done
-grep chr $OUTDIR/split/tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'|uniq  > $OUTDIR/split/acc.lst
+grep chr $OUTDIR/split/tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'| sort -u > $OUTDIR/split/acc.lst
 
 export TMPDIR=/scratch/tmp
 echo TMPDIR
