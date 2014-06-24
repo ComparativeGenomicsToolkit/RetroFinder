@@ -71,7 +71,7 @@ ln $MRNABASE/cds.tab.gz $OUTDIR -s
 # cd $OUTDIR
 mkdir -p $OUTDIR/run.0
 # cd run.0
-wc -l $OUTDIR/split/*.psl |grep -v total | grep -v $OUTDIR/split/acc.lst| sort -nr | awk '{print $2}' |sed -e 's,\$OUTDIR/split/tmp,,'|sed -e 's/.psl//' > $OUTDIR/run.0/list
+wc -l $OUTDIR/split/*.psl |grep -v total | grep -v $OUTDIR/split/acc.lst| sort -nr | awk '{print $2}' | sed -e "s,$OUTDIR/split/tmp,," | sed -e 's/.psl//' > $OUTDIR/run.0/list
 cp $OUTDIR/$1 $OUTDIR/run.0
 echo "#LOOP" > $OUTDIR/run.0/gsub
 echo "$SCRIPT/doBuildpk.sh \$(path1) $OUTDIR/$1 {check out exists $RESULT/pseudoGeneLink\$(path1).bed} " >> $OUTDIR/run.0/gsub
