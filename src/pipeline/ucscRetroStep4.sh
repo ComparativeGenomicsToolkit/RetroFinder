@@ -35,7 +35,7 @@ wc -l $OUTDIR/pseudoGeneLinkSortFilter.bed
 # pushd $OUT
 cat $OUT/pseudo[0-9]*.psl > $OUTDIR/pseudo.psl #;/bin/rm $OUT/pseudo[0-9]*.psl &
 cat $OUT/ortho*.txt | sed -e 's/.txt//'> $OUTDIR/ortho.txt
-popd
+# popd
 echo Removing Overlaps
 gzip $OUTDIR/pseudoGeneLinkSortFilter.bed
 rm -rf $RESULTSPLIT
