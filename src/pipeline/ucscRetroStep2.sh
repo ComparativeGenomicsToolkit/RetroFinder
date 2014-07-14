@@ -60,7 +60,8 @@ ${BINDIR}/pslSplit nohead $OUTDIR/split $MRNABASE/mrnaBlastz.psl -chunkSize=120
 for i in `ls $OUTDIR/split/tmp*.psl` ; do $SCRIPT/pslQueryUniq $i > $OUTDIR/split/temp.psl ; mv $OUTDIR/split/temp.psl $i ; done
 grep chr $OUTDIR/split/tmp* | awk '{print $1,$10}' | awk -F":" '{print $1,$2}'|awk '{print $1,$3}'| sort -u > $OUTDIR/split/acc.lst
 
-export TMPDIR=/scratch/tmp
+#export TMPDIR=/scratch/tmp
+# TMPDIR is an environment variable that points to /data/tmp
 echo TMPDIR
 #load mrna alignment track into browser
 awk -f $SCRIPT/stripversion.awk $MRNABASE/mrnaBlastz.psl | hgLoadPsl $DB stdin -table=mrnaBlastz
