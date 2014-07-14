@@ -15,7 +15,7 @@ cut -f 10 $OUTDIR/all_mrna_double.sort.psl |sort |uniq > $OUTDIR/all_mrna.double
 $SCRIPT/selectById -not 1 $OUTDIR/all_mrna.doublehit.list 10 $MRNABASE/gbMrnaOnly.psl > $OUTDIR/all_mrna_kept.psl
 faToTwoBit -stripVersion $MRNABASE/mrna.fa $OUTDIR/mrnaNoversion.2bit
 
-pslCDnaGenomeMatch $OUTDIR/all_mrna_double.sort.psl $OUTDIR/S1.len $OUTDIR/mrnaNoversion.2bit /hive/data/genomes/$DB/nib $OUTDIR/all_mrna_double.filter.psl -score=$OUTDIR/all_mrna_double.score -bedOut=$OUTDIR/all_mrna_double.bed  -verbose=3 -minDiff=4 -notAlignPenalty=3 > $OUTDIR/all.log 
+pslCDnaGenomeMatch $OUTDIR/all_mrna_double.sort.psl $OUTDIR/S1.len $OUTDIR/mrnaNoversion.2bit $NIB $OUTDIR/all_mrna_double.filter.psl -score=$OUTDIR/all_mrna_double.score -bedOut=$OUTDIR/all_mrna_double.bed  -verbose=3 -minDiff=4 -notAlignPenalty=3 > $OUTDIR/all.log 
 cat $OUTDIR/all_mrna_kept.psl $OUTDIR/all_mrna_double.filter.psl > $OUTDIR/all_mrnaFiltered.psl
 gzip $OUTDIR/all_mrnaFiltered.psl
 
