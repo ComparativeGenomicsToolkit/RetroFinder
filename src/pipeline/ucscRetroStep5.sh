@@ -29,7 +29,7 @@ wc -l $OUTDIR/pseudoGeneLinkNoOverlap.bed $OUTDIR/pseudoGeneLinkNoOverlapFilter.
 if [[ -n $PFAM ]] 
 then
    #remove immunoglobulins
-    hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where (a1.alias like 'IGH%' or a1.alias like 'IGK%' or a1.alias like 'IGL%') and a1.`kgID = a2.kgID"  > $OUTDIR/kgImmuno.lst
+    hgsql $DB -N -B -e "select a2.alias from kgAlias a1, kgAlias a2 where (a1.alias like 'IGH%' or a1.alias like 'IGK%' or a1.alias like 'IGL%') and a1.kgID = a2.kgID"  > $OUTDIR/kgImmuno.lst
     hgsql $DB -N -B -e "     select gbCdnaInfo.acc
           from gbCdnaInfo, geneName, description 
              where gbCdnaInfo.geneName=geneName.id and gbCdnaInfo.description = description.id and (geneName.name like 'IGH%' or geneName.name like 'IKL%' or geneName.name like 'IGL%')" >> $OUTDIR/kgImmuno.lst
@@ -73,7 +73,7 @@ cut -f 1-12 $OUTDIR/$TABLE.bed > $OUTDIR/retroMrnaInfo.12.bed
 textHistogram -col=5 $OUTDIR/$TABLE.bed -binSize=50 -maxBinCount=50
 echo Creating $OUTDIR/$ALIGN.psl
 awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $OUTDIR/$TABLE.bed > $OUTDIR/pseudoGeneLinkSelect.tab
-pslSelect -qtStart=pseudoGeneLinkSelect.tab $OUTDIR/pseudo.psl $OUTDIR/$ALIGN.psl
+pslSelect -qtStart=$OUTDIR/pseudoGeneLinkSelect.tab $OUTDIR/pseudo.psl $OUTDIR/$ALIGN.psl
 wc -l $OUTDIR/$ALIGN.psl $OUTDIR/pseudoGeneLinkSelect.tab
 hgLoadBed $DB -verbose=9 -renameSqlTable -allowNegativeScores -noBin ucscRetroInfoXX -sqlTable=$KENTDIR/src/hg/lib/ucscRetroInfo.sql $OUTDIR/$TABLE.bed
 mkdir -p $RETRODIR
