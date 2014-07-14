@@ -244,14 +244,31 @@ void addTwoBit(char *file, struct hash *fileHash, struct hash *seqHash)
 /* Add a twoBit file to hashes. */
 {
 struct seqFilePos *sfp;
+struct twoBitIndex *ind = NULL;
 char root[128];
 splitPath(file, NULL, root, NULL);
 AllocVar(sfp);
+/* first store information about the complete twoBit file */
 hashAddSaveName(seqHash, root, sfp, &sfp->name);
 sfp->file = hashStoreName(fileHash, file);
 sfp->isTwoBit = TRUE;
 sfp->twoBitFile = twoBitOpen(file);
 sfp->pos = 0;
+/* then go through the index and make a hash entry for each sequence in the
+ * twoBit file */
+for (ind = sfp->twoBitFile->indexList; ind != NULL; ind = ind->next)
+    {
+    struct seqFilePos *sfp2;
+    AllocVar(sfp2);
+    /* chromosome/scaffold or other sequence name is in the name field */
+    /* sequence name is stored in the name field of the seqFilePos structure */ 
+    hashAddSaveName(seqHash, ind->name, sfp2, &sfp2->name);
+    sfp2->file = hashStoreName(fileHash, file);
+    sfp2->isTwoBit = TRUE;
+    sfp2->twoBitFile = twoBitOpen(file);
+    /* sequence position is set here to the size of the sequence */
+    sfp2->pos = twoBitSeqSize(sfp->twoBitFile, sfp2->name);
+    }
 }
 
 void addFa(char *file, struct hash *fileHash, struct hash *seqHash)
@@ -326,10 +343,10 @@ void hashFileList(char *fileList, struct hash *fileHash, struct hash *seqHash)
 {
 if (endsWith(fileList, ".nib"))
     addNib(fileList, fileHash, seqHash);
-else if (isFa(fileList))
-    addFa(fileList, fileHash, seqHash);
 else if (endsWith(fileList, ".2bit"))
     addTwoBit(fileList, fileHash, seqHash);
+else if (endsWith(fileList, ".fa") || endsWith(fileList, ".fasta"))
+    addFa(fileList, fileHash, seqHash);
 else
     {
     struct lineFile *lf = lineFileOpen(fileList, TRUE);
@@ -428,7 +445,7 @@ return seq;
 void readCachedSeqPart(char *seqName, int start, int size, 
      struct hash *hash, struct dlList *fileCache, 
      struct dnaSeq **retSeq, int *retOffset, boolean *retIsNib)
-/* Read sequence hopefully using file cashe. If sequence is in a nib
+/* Read sequence hopefully using file cache. If sequence is in a nib
  * file just read part of it. */
 {
 struct seqFilePos *sfp = hashMustFindVal(hash, seqName);
@@ -951,9 +968,13 @@ if (tIsNib && psl->strand[1] == '-')
     tOffset = psl->tSize - psl->tEnd;
 verbose(6,"tString len = %d tOffset = %d\n",(int)strlen(tSeq->dna),tOffset);
 if (psl->strand[0] == '-')
+   {
     reverseComplement(qSeq->dna, qSeq->size);
+   }
 if (psl->strand[1] == '-')
+   {
     reverseComplement(tSeq->dna, tSeq->size);
+   }
 for (blockIx=0; blockIx < psl->blockCount; ++blockIx)
     {
     qs = psl->qStarts[blockIx] - qOffset;
@@ -1530,12 +1551,12 @@ if (cdsStr != NULL)
 else
     verbose(5,"no cds %s\n",name);
 
-
 /* convert to axt and compute axt score */
 if (pg->label == PSEUDO || pg->label == EXPRESSED || pg->label == NOTPSEUDO) 
     {
     verbose(2,"pslToAxt %s \n",psl->qName);
     axt = pslToAxt(psl, qHash, tHash, fileCache, &cds);
+    
     if (axt != NULL)
         {
         pg->axtScore = axtScoreFilterRepeats(axt, ss);
