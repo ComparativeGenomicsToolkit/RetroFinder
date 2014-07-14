@@ -44,11 +44,11 @@ ls $OUTDIR/est/*psl > $OUTDIR/run.est/list
 echo "#LOOP" > $OUTDIR/run.est/template
 echo "pslCDnaGenomeMatch \$(path1) S1.len $OUTDIR/est.2bit $NIB $OUTDIR/estOutput/\$(file1).filter.psl -score=$OUTDIR/estLog/\$(file1).mrnaMatch.tab -bedOut=$OUTDIR/estLog/\$(file1).mrnaMis.bed -minDiff=4 -notAlignPenalty=3" >> $OUTDIR/run.est/template
 echo "#ENDLOOP" >> $OUTDIR/run.est/template
-gensub2 list single $OUTDIR/run.est/template $OUTDIR/run.est/spec
+gensub2 $OUTDIR/run.est/list single $OUTDIR/run.est/template $OUTDIR/run.est/spec
 ssh $CLUSTER -T "cd $OUTDIR/run.est ; /parasol/bin/para make spec"
 
 # Now run these commands in $OUTDIR
 find $OUTDIR/est.qName.single.psl $OUTDIR/estOutput -name '*.psl' |xargs cat | sort -k14,14 -k16,16n > $OUTDIR/estFiltered.psl
-gzip $OUTDIR/run.est/estFiltered.psl
+gzip $OUTDIR/estFiltered.psl
 #mkdir -p $OUTDIR/estSplit
 #pslSplitOnTarget est.psl estSplit
