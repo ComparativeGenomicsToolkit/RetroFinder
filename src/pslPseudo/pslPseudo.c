@@ -956,14 +956,13 @@ if (qIsNib && psl->strand[0] == '-')
 else
     qOffset = 0;
 verbose(6,"qString len = %d qOffset = %d\n",(int)strlen(qSeq->dna),qOffset);
-if (tName == NULL || !sameString(tName, psl->tName) || tIsNib)
-    {
-    freeDnaSeq(&tSeq);
-    freez(&tName);
-    tName = cloneString(psl->tName);
-    readCachedSeqPart(tName, psl->tStart, psl->tEnd-psl->tStart, 
+    
+freeDnaSeq(&tSeq);
+freez(&tName);
+tName = cloneString(psl->tName);
+readCachedSeqPart(tName, psl->tStart, psl->tEnd-psl->tStart, 
 	tHash, fileCache, &tSeq, &tOffset, &tIsNib);
-    }
+
 if (tIsNib && psl->strand[1] == '-')
     tOffset = psl->tSize - psl->tEnd;
 verbose(6,"tString len = %d tOffset = %d\n",(int)strlen(tSeq->dna),tOffset);
