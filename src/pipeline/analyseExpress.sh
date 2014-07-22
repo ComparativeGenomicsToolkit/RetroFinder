@@ -37,10 +37,10 @@ cat $OUTDIR/$EXPDIR/$GENE1.multiCDSExon.genePred $OUTDIR/$EXPDIR/$GENE2.multiCDS
 
 ldHgGene $DB rb${GENE1}Multi $OUTDIR/$EXPDIR/${GENE1}.multiCDSExon.genePred -predTab;
 ldHgGene $DB rb${GENE2}Multi $OUTDIR/$EXPDIR/${GENE2}.multiCDSExon.genePred -predTab;
-featureBits $DB ${GENE1}:cds -bed=$OUTDIR/$EXP/$GENE1.cds.bed;
-featureBits $DB ${GENE2}:cds -bed=$OUTDIR/$EXP/$GENE2.cds.bed;
-featureBits $DB rb${GENE1}Multi $OUTDIR/$EXP/$GENE1.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE1.multiCds.bed ;
-featureBits $DB rb${GENE2}Multi $OUTDIR/$EXP/$GENE2.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE2.multiCds.bed ;
+featureBits $DB ${GENE1}:cds -bed=$OUTDIR/$EXPDIR/$GENE1.cds.bed;
+featureBits $DB ${GENE2}:cds -bed=$OUTDIR/$EXPDIR/$GENE2.cds.bed;
+featureBits $DB rb${GENE1}Multi $OUTDIR/$EXPDIR/$GENE1.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE1.multiCds.bed ;
+featureBits $DB rb${GENE2}Multi $OUTDIR/$EXPDIR/$GENE2.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE2.multiCds.bed ;
 
 echo "overlap with ests - use cluster jobs to speed this step"
 mkdir -p $OUTDIR/estSplit
