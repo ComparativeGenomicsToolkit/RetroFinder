@@ -96,7 +96,7 @@ overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE1}.multiCds.bed $OUTD
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/pseudo${GENE1}Cds50.bed -overlapThreshold=0.50
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/pseudo${GENE2}Cds.bed
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed -statsOutput $OUTDIR/$EXPDIR/pseudo${GENE2}Cds.out
-overlapSelect -inCoordCols=0,1,2,5,3 ${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/pseudo${GENE2}Cds50.bed -overlapThreshold=0.50
+overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/pseudo${GENE2}Cds50.bed -overlapThreshold=0.50
 overlapSelect -inCoordCols=0,1,2,5,3 -selectFmt=genePred $OUTDIR/${GENE2}.tab.gz $OUTDIR/$EXPDIR/pseudo${GENE2}Cds.bed $OUTDIR/$EXPDIR/shuffleEns.bed
 overlapSelect -inCoordCols=0,1,2,5,3 -selectFmt=genePred $OUTDIR/$EXPDIR/${GENE2}.multiCDSExon.genePred $OUTDIR/$EXPDIR/pseudo${GENE2}Cds.bed $OUTDIR/$EXPDIR/shuffleEnsMulti.bed
 overlapSelect -selectCoordCols=0,1,2,5,3 -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/pseudo${GENE1}Cds.bed $OUTDIR/$EXPDIR/pseudoEstAll.bed $OUTDIR/$EXPDIR/pseudoEstAllNotShuffle.bed -nonOverlapping
