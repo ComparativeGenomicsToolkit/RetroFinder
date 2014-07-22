@@ -21,7 +21,7 @@ then
 fi
 mkdir -p $OUTDIR/$EXPDIR
 echo -n "Working directory: "
-pwd
+echo $OUTDIR/$EXPDIR
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE1 where exonCount > 1" > $OUTDIR/$EXPDIR/$GENE1.multiExon.genePred
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE2 where exonCount > 1" > $OUTDIR/$EXPDIR/$GENE2.multiExon.genePred
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE3 where exonCount > 1" > $OUTDIR/$EXPDIR/$GENE3.multiExon.genePred
@@ -37,12 +37,10 @@ cat $OUTDIR/$EXPDIR/$GENE1.multiCDSExon.genePred $OUTDIR/$EXPDIR/$GENE2.multiCDS
 
 ldHgGene $DB rb${GENE1}Multi $OUTDIR/$EXPDIR/${GENE1}.multiCDSExon.genePred -predTab;
 ldHgGene $DB rb${GENE2}Multi $OUTDIR/$EXPDIR/${GENE2}.multiCDSExon.genePred -predTab;
-featureBits $DB ${GENE1}:cds -bed=$OUTDIR/$GENE1.cds.bed;
-featureBits $DB ${GENE2}:cds -bed=$OUTDIR/$GENE2.cds.bed;
-featureBits $DB rb${GENE1}Multi $OUTDIR/$GENE1.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE1.multiCds.bed ;
-featureBits $DB rb${GENE2}Multi $OUTDIR/$GENE2.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE2.multiCds.bed ;
-
-pwd
+featureBits $DB ${GENE1}:cds -bed=$OUTDIR/$EXP/$GENE1.cds.bed;
+featureBits $DB ${GENE2}:cds -bed=$OUTDIR/$EXP/$GENE2.cds.bed;
+featureBits $DB rb${GENE1}Multi $OUTDIR/$EXP/$GENE1.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE1.multiCds.bed ;
+featureBits $DB rb${GENE2}Multi $OUTDIR/$EXP/$GENE2.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE2.multiCds.bed ;
 
 echo "overlap with ests - use cluster jobs to speed this step"
 mkdir -p $OUTDIR/estSplit
@@ -84,7 +82,7 @@ $SCRIPT/selectById -tsv 1 $OUTDIR/$EXPDIR/kgProtEvidence.id 1 $OUTDIR/knownGene.
 $SCRIPT/selectById -tsv 1 $OUTDIR/$EXPDIR/kgTransEvidence.id 1 $OUTDIR/knownGene.sort.gp > $OUTDIR/$EXPDIR/knownGeneTrans.gp
 
 overlapSelect $OUTDIR/$EXPDIR/knownGeneProt.gp $OUTDIR/$EXPDIR/${GENE1}.cds.bed $OUTDIR/$EXPDIR/knownGeneProtCds.bed -selectFmt=genePred
-overlapSelect $OUTDIR/$EXPDIR/knownGeneTrans.gp ${GENE1}.cds.bed $OUTDIR/$EXPDIR/knownGeneTransCds.bed -selectFmt=genePred
+overlapSelect $OUTDIR/$EXPDIR/knownGeneTrans.gp $OUTDIR/$EXPDIR/${GENE1}.cds.bed $OUTDIR/$EXPDIR/knownGeneTransCds.bed -selectFmt=genePred
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/knownGeneProtCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/ucscRetroProtein.bed
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/knownGeneTransCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/ucscRetroTranscript.bed
 fi
