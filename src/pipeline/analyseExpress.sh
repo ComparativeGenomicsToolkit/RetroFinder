@@ -46,13 +46,16 @@ pwd
 
 echo "overlap with ests - use cluster jobs to speed this step"
 mkdir -p $OUTDIR/estSplit
-pslSplitOnTarget $OUTDIR/estFiltered.psl.gz estSplit
+# Default max target count is 300 as open a file handle for each target.
+# The human GRCh38 (hg38) assembly has a number of alt alleles and there 
+# are 455 targets so use option to increase the number allowed. 
+pslSplitOnTarget -maxTargetCount=500 $OUTDIR/estFiltered.psl.gz estSplit
 rm -f $OUTDIR/estSplit/jobList
 echo "#LOOP"> $OUTDIR/estSplit/template
-echo "$SCRIPT/estStat.sh \$(root1) {check out line+ pseudoEst.\$(root1).bed}">>
-$OUTDIR/estSplit/template
+echo "$SCRIPT/estStat.sh \$(root1) {check out line pseudoEst.\$(root1).bed}">>$OUTDIR/estSplit/template
 echo "#ENDLOOP">> $OUTDIR/estSplit/template
-awk '{print $1}' $OUTDIR/S1.len |grep -v chrM | gensub2 stdin single $OUTDIR/estSplit/template $OUTDIR/estSplit/jobList
+#awk '{print $1}' $OUTDIR/S1.len |grep -v chrM | gensub2 stdin single $OUTDIR/estSplit/template $OUTDIR/estSplit/jobList
+ls $OUTDIR/estSplit/*psl | sed -e "s,$OUTDIR/estSplit/,," | sed -e 's/.psl//' | grep -v chrM | gensub2 stdin single $OUTDIR/estSplit/template $OUTDIR/estSplit/jobList
 ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
 
 cat $OUTDIR/estSplit/pseudoEst*.bed > $OUTDIR/$EXPDIR/pseudoEstAll.bed
