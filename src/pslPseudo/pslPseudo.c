@@ -269,12 +269,6 @@ else if (endsWith(file, ".2bit"))
     }
 }
 
-void addTwoBit(char *file, struct nibTwoCache *nibTwo)
-/* Add a twoBit file to hashes. */
-{
-    nibTwo = nibTwoCacheNew(file);
-}
-
 void addFa(char *file, struct hash *fileHash, struct hash *seqHash)
 /* Add a fa file to hashes. */
 {
