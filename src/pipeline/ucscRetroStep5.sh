@@ -92,6 +92,9 @@ rm -f $RETRODIR/ucscRetroCds${VERSION}.tab
 cp -p $OUTDIR/ucscRetroCds${VERSION}.tab $RETRODIR
 cp -p $OUTDIR/DEF $RETRODIR
 
+# Get data for count table and create a new table, ucscRetroCountXX.
+hgsql $DB -Ne "create table ucscRetroCount${VERSION} select geneSymbol, count(*) as retroCount, avg(score) as averageScore from ucscRetroInfo${VERSION}, kgXref where kgName = kgID and kgName <> 'noKg' and score > 650  group by geneSymbol having count(*) > 1 order by 2 desc"
+
 #writing TrackDb.ra entry to temp file
 $SCRIPT/makeTrackDb.sh $OUTDIR/$DEF > $OUTDIR/trackDb.retro
 echo "Writing template trackDb.ra entry to $OUTDIR/trackDb.retro"
