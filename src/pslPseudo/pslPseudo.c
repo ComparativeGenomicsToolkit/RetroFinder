@@ -15,8 +15,6 @@
 #include "dnautil.h"
 #include "dnaseq.h"
 #include "nib.h"
-#include "nibTwo.h"
-#include "fa.h"
 #include "dlist.h"
 #include "binRange.h"
 #include "options.h"
@@ -81,13 +79,11 @@ double  wt[12];     /* weights on score function*/
 int minNearTopSize = 10;
 struct genePred *gpList1 = NULL, *gpList2 = NULL, *kgList = NULL, *mrnaGene = NULL;
 FILE *bestFile, *pseudoFile, *linkFile, *axtFile, *orthoFile;
-struct nibTwoCache *twoBitFile = NULL;
+struct twoBitFile *genomeSeqFile = NULL;
+struct twoBitFile *mrnaFile = NULL;
 struct axtScoreScheme *ss = NULL; /* blastz scoring matrix */
 //struct dnaSeq *mrnaList = NULL; 
 struct slName *mrnaList = NULL;/* list of all input mrna sequence names  */
-struct hash *tHash = NULL;  /* seqFilePos value. */
-struct hash *qHash = NULL;  /* seqFilePos value. */
-struct dlList *fileCache = NULL;
 struct hash *fileHash = NULL;  
 char mrnaOverlap[255];
 struct hash *rmskHash = NULL, *trfHash = NULL, *synHash = NULL, *syn2Hash, *syn3Hash, *exprHash = NULL, *qNameHash = NULL;
@@ -97,8 +93,6 @@ bool abortAtEnd = FALSE;
 char orthoNet1[128];
 char orthoNet2[128];
 char orthoNet3[128];
-/* holds information about nibs or twoBit file */
-struct nibTwoCache *nibTwo = NULL;
 
 /* structure for reading net files - read subset of full net*/
 struct netSummary {
@@ -143,25 +137,15 @@ static struct optionSpec optionSpecs[] = {
     {"showall", OPTION_BOOLEAN},
     {NULL, 0}
 };
-struct seqFilePos
-/* Where a sequence is in a file. */
-    {
-    struct filePos *next;	/* Next in list. */
-    char *name;	/* Sequence name. Allocated in hash. */
-    char *file;	/* Sequence file name, allocated in hash. */
-    long pos; /* Position in fa file/size of nib. */
-    bool isNib;	/* True if a nib file. */
-    bool isTwoBit;	/* True if a TwoBit file. */
-    struct twoBitFile *twoBitFile;  /* hanlde to twoBit */
-    };
+
 void usage(int count)
 /* Print usage instructions and exit. */
 {
 errAbort(
     "pslPseudo - analyse repeats and generate genome wide best\n"
     "alignments from a sorted set of local alignments\n"
-    "usage:\n"
-    "    pslPseudo db in.psl sizes.lst rmsk.bed mouseNet.txt dogNet.txt trf.bed all_mrna.psl out.psl outPseudo.psl outPseudoLink.txt out.axt nib.lst mrna.2bit refGene.tab mgcGene.tab kglist.tab rheMac2Net.txt orthoFileName \n\n"
+    "Usage:\n"
+    "    pslPseudo db in.psl sizes.lst rmsk.bed mouseNet.txt dogNet.txt trf.bed all_mrna.psl out.psl outPseudo.psl outPseudoLink.txt out.axt genome.2bit mrna.2bit refGene.tab mgcGene.tab kglist.tab rheMac2Net.txt orthoFileName \n\n"
     "where in.psl is an blat alignment of mrnas sorted by pslSort\n"
     "blastz.psl is an blastz alignment of mrnas sorted by pslSort\n"
     "sizes.lst is a list of chromosome followed by size\n"
@@ -209,91 +193,6 @@ errAbort(
        intronSlop, nearTop, minNearTopSize, maxBlockGap, maxRep, maxTrf, count );
 }
 
-struct cachedFile
-/* File in cache. */
-    {
-    struct cachedFile *next;	/* next in list. */
-    char *name;		/* File name (allocated here) */
-    FILE *f;		/* Open file. */
-    };
-
-boolean isFa(char *file)
-/* Return TRUE if looks like a .fa file. */
-{
-FILE *f = mustOpen(file, "r");
-int c = fgetc(f);
-fclose(f);
-return c == '>';
-}
-
-void addNibTwo(char *file, struct nibTwoCache **ntc, boolean firstTime)
-/* Add a nib file to hash of nibs in nibTwoCache structure or add two bit to 
- * the structure. */
-{
-//struct seqFilePos *sfp;
-struct nibInfo *ni;
-char dir[128];
-char root[128];
-int size;
-FILE *f = NULL;
-
-/* Initialise new nibTwoCache structure if not done already */
-if (*ntc == NULL)
-    {
-    printf("Initialising the nibTwoCache struct \n");
-    *ntc = nibTwoCacheNew(file);
-    printf("path is %s \n", (*ntc)->pathName);
-    fflush(stdout);
-    }
-
-splitPath(file, NULL, root, NULL);
-if (endsWith(file, ".nib")) 
-    {
-    if (firstTime)
-        {
-        splitPath(file, dir, NULL, NULL);
-        printf("File is %s, dir: %s \n", file, dir);
-        fflush(stdout);
-        /* set pathName for nibTwoCache with nib dir */
-        (*ntc)->pathName = dir;
-        firstTime = FALSE;
-        }
-    ni = nibInfoNew(file);
-    // Add nibInfo structure to hash keyed by root name of file
-    hashAddUnique((*ntc)->nibHash, root, ni);
-    }
-else if (endsWith(file, ".2bit"))
-    {
-    if (!firstTime)
-        errAbort("If file is a list of files and 2bit is being used, there should only be one 2bit file.\n");
-    }
-}
-
-void addFa(char *file, struct hash *fileHash, struct hash *seqHash)
-/* Add a fa file to hashes. */
-{
-struct lineFile *lf = lineFileOpen(file, TRUE);
-char *line, *name;
-char *rFile = hashStoreName(fileHash, file);
-
-while (lineFileNext(lf, &line, NULL))
-    {
-    if (line[0] == '>')
-        {
-	struct seqFilePos *sfp;
-	line += 1;
-	name = nextWord(&line);
-	if (name == NULL)
-	   errAbort("bad line %d of %s", lf->lineIx, lf->fileName);
-	AllocVar(sfp);
-	hashAddSaveName(seqHash, name, sfp, &sfp->name);
-	sfp->file = rFile;
-	sfp->pos = lineFileTell(lf);
-	}
-    }
-lineFileClose(&lf);
-}
-
 bool samePrefix(char *string1, char *string2)
 /* check if accessions match ignoring suffix and version */
 {
@@ -334,144 +233,6 @@ if (sameString(name1[0], name2[0]))
     return TRUE;
     }
 return FALSE;
-}
-
-void hashFileList(char *fileList)
-/* Read file list into hash */
-{
-boolean firstTime = TRUE;
-/* input is a single nib file, single two bit file or a file containing
- * a list of nib files */
-printf("About to store the file of seqs\n");
-fflush(stdout);
-if (endsWith(fileList, ".nib") || endsWith(fileList, ".2bit"))
-    addNibTwo(fileList, &nibTwo, firstTime);
-else
-    {
-    printf("File is a list of sequences\n");
-    fflush(stdout);
-    struct lineFile *lf = lineFileOpen(fileList, TRUE);
-    char *row[1];
-    while (lineFileRow(lf, row))
-        {
-	char *file = row[0];
-	addNibTwo(file, &nibTwo, firstTime);
-        firstTime = FALSE;
-	}
-    lineFileClose(&lf);
-    }
-   // printf("File: %s, fileList: %s, isTwoBit: %d \n", nibTwo->pathName, fileList, nibTwo->isTwoBit);
-}
-
-FILE *openFromCache(struct dlList *cache, char *fileName)
-/* Return open file handle via cache.  The simple logic here
- * depends on not more than N files being returned at once. */
-{
-static int maxCacheSize=32;
-int cacheSize = 0;
-struct dlNode *node;
-struct cachedFile *cf;
-
-/* First loop through trying to find it in cache, counting
- * cache size as we go. */
-for (node = cache->head; !dlEnd(node); node = node->next)
-    {
-    ++cacheSize;
-    cf = node->val;
-    if (sameString(fileName, cf->name))
-        {
-	dlRemove(node);
-	dlAddHead(cache, node);
-	return cf->f;
-	}
-    }
-
-/* If cache has reached max size free least recently used. */
-if (cacheSize >= maxCacheSize)
-    {
-    node = dlPopTail(cache);
-    cf = node->val;
-    carefulClose(&cf->f);
-    freeMem(cf->name);
-    freeMem(cf);
-    freeMem(node);
-    }
-
-/* Cache new file. */
-AllocVar(cf);
-cf->name = cloneString(fileName);
-cf->f = mustOpen(fileName, "rb");
-dlAddValHead(cache, cf);
-return cf->f;
-}
-
-//struct dnaSeq *readCachedSeq(char *seqName, struct hash *hash, 
-//	struct dlList *fileCache)
-/* Read sequence hopefully using file cache. */
-/*{
-struct dnaSeq *mrna = NULL;
-struct dnaSeq *qSeq = NULL;
-assert(seqName != NULL);
-struct seqFilePos *sfp = hashMustFindVal(hash, seqName);
-FILE *f = openFromCache(fileCache, sfp->file);
-unsigned options = NIB_MASK_MIXED;
-if (sfp->isNib)
-    {
-    return nibLdPartMasked(options, sfp->file, f, sfp->pos, 0, sfp->pos);
-    }
-else
-    {
-    for (mrna = mrnaList; mrna != NULL ; mrna = mrna->next)
-        if (sameString(mrna->name, seqName))
-            {
-            qSeq = mrna;
-            break;
-            }
-    return qSeq;
-    }
-}
-*/
-
-struct dnaSeq *readSeqFromFaPos(struct seqFilePos *sfp,  FILE *f)
-/* Read part of FA file. */
-{
-struct dnaSeq *seq;
-fseek(f, sfp->pos, SEEK_SET);
-if (!faReadNext(f, "", TRUE, NULL, &seq))
-    errAbort("Couldn't faReadNext on %s in %s\n", sfp->name, sfp->file);
-return seq;
-}
-
-void readCachedSeqPart(char *seqName, int start, int size, 
-     struct hash *hash, struct dlList *fileCache, 
-     struct dnaSeq **retSeq, int *retOffset, boolean *retIsNib)
-/* Read sequence hopefully using file cache. If sequence is in a nib
- * file just read part of it. */
-{
-struct seqFilePos *sfp = hashMustFindVal(hash, seqName);
-FILE *f = openFromCache(fileCache, sfp->file);
-unsigned options = NIB_MASK_MIXED;
-if (sfp->isTwoBit)
-    {
-    verbose(4, "seq %s size %d\n",seqName, size);
-    *retSeq = twoBitReadSeqFrag(sfp->twoBitFile, seqName,
-              start, start+size);
-    //sfp->size = twoBitSeqSize(sfp->twoBitFile, seqName);
-    *retOffset = start;
-    *retIsNib = FALSE;
-    }
-else if (sfp->isNib)
-    {
-    *retSeq = nibLdPartMasked(options, sfp->file, f, sfp->pos, start, size);
-    *retOffset = start;
-    *retIsNib = TRUE;
-    }
-else
-    {
-    *retSeq = readSeqFromFaPos(sfp, f);
-    *retOffset = 0;
-    *retIsNib = FALSE;
-    }
 }
 
 struct hash *readBedCoordToBinKeeper(char *sizeFileName, char *bedFileName, int wordCount)
@@ -706,7 +467,6 @@ int cdnaSize = genePredCdnaSize(gp);
 int cdnaOffset = 0, exonStart, exonSize, exonIx;
 int tOffset = 0;
 boolean tIsNib;
-
 readCachedSeqPart(gp->chrom, txStart, (gp->txEnd)-txStart, 
 	tHash, fileCache, &genoSeq, &tOffset, &tIsNib);
 verbose(5, "get seq %s %d %d\n",gp->chrom, txStart, gp->txEnd);
@@ -878,10 +638,9 @@ if (bestMatch != NULL)
 return gp;
 }
 
-struct axt *pslToAxt(struct psl *psl, struct hash *qHash, struct hash *tHash,
-	struct dlList *fileCache, struct genbankCds *cds)
+struct axt *pslToAxt(struct psl *psl, struct genbankCds *cds)
 {
-static char *tName = NULL, *qName = NULL;
+//static char *tName = NULL, *qName = NULL;
 static struct dnaSeq *tSeq = NULL, *qSeq = NULL;
 static struct slName *mrna;
 struct dyString *q = newDyString(16*1024);
@@ -890,15 +649,12 @@ int blockIx;
 int qs, ts ;
 int lastQ = 0, lastT = 0, size;
 int qOffset = 0;
-int tOffset = 0;
+int tOffset = psl->tStart;
 struct axt *axt = NULL;
-boolean qIsNib = FALSE;
-boolean tIsNib = FALSE;
 char name[512];
 //int cnt = 0;
 
-freeDnaSeq(&qSeq);
-freez(&qName);
+freeDnaSeq(&qSeq);	
 assert(mrnaList != NULL);
 for (mrna = mrnaList; mrna != NULL ; mrna = mrna->next)
     {
@@ -907,8 +663,7 @@ for (mrna = mrnaList; mrna != NULL ; mrna = mrna->next)
     assert(mrna != NULL);
     if (sameString(mrna->name, name))
         {
-        //qSeq = twoBitReadSeqFrag(twoBitFile, name, 0, 0);
-        qSeq = nibTwoCacheSeq(twoBitFile, name);
+        qSeq = twoBitReadSeqFrag(mrnaFile, name, 0, 0);
         toLowerN(qSeq->dna, qSeq->size);
         if (cds != NULL)
             {
@@ -951,22 +706,12 @@ if (qSeq->size != psl->qSize)
     dnaSeqFree(&qSeq);
     return NULL;
     }
-qName = cloneString(name);
-if (qIsNib && psl->strand[0] == '-')
-    qOffset = psl->qSize - psl->qEnd;
-else
-    qOffset = 0;
-verbose(6,"qString len = %d qOffset = %d\n",(int)strlen(qSeq->dna),qOffset);
-    
 freeDnaSeq(&tSeq);
-freez(&tName);
-tName = cloneString(psl->tName);
-readCachedSeqPart(tName, psl->tStart, psl->tEnd-psl->tStart, 
-	tHash, fileCache, &tSeq, &tOffset, &tIsNib);
+// Read region of genome sequence.
+//readCachedSeqPart(tName, psl->tStart, psl->tEnd-psl->tStart, 
+//	tHash, fileCache, &tSeq, &tOffset, &tIsNib);
+tSeq = twoBitReadSeqFrag(genomeSeqFile, psl->tName, psl->tStart, psl->tEnd);
 
-if (tIsNib && psl->strand[1] == '-')
-    tOffset = psl->tSize - psl->tEnd;
-verbose(6,"tString len = %d tOffset = %d\n",(int)strlen(tSeq->dna),tOffset);
 if (psl->strand[0] == '-')
    {
     reverseComplement(qSeq->dna, qSeq->size);
@@ -1020,10 +765,6 @@ dyStringFree(&q);
 dyStringFree(&t);
 dnaSeqFree(&tSeq);
 dnaSeqFree(&qSeq);
-if (qIsNib)
-    freez(&qName);
-if (tIsNib)
-    freez(&tName);
 return axt;
 }
 
@@ -1555,7 +1296,7 @@ else
 if (pg->label == PSEUDO || pg->label == EXPRESSED || pg->label == NOTPSEUDO) 
     {
     verbose(2,"pslToAxt %s \n",psl->qName);
-    axt = pslToAxt(psl, qHash, tHash, fileCache, &cds);
+    axt = pslToAxt(psl, &cds);
     
     if (axt != NULL)
         {
@@ -1896,7 +1637,7 @@ int tOffset = 0;
 boolean doMask = TRUE;
 int retFullSeqSize;
 
-seqSize = nibTwoGetSize(nibTwo, chrom);
+seqSize = twoBitSeqSize(genomeSeqFile, chrom);
 printf("Seq size for %s is %d \n", chrom, seqSize);
 assert(region > 0);
 assert(end != 0);
@@ -1910,7 +1651,8 @@ verbose(2,"search for polyA at %s:%d-%d len %d start %d tSize %d match %d misMat
 if (region == 0)
     return 0;
 assert(region > 0);
-nibTwoCacheSeqPartExt(nibTwo, chrom, seqStart, seqSize, doMask, &retFullSeqSize);
+//nibTwoCacheSeqPartExt(nibTwo, chrom, seqStart, seqSize, doMask, &retFullSeqSize);
+seq = twoBitReadSeqFrag(genomeSeqFile, chrom, start, start+region);
 
 if (strand[0] == '+')
     {
@@ -2298,7 +2040,8 @@ int tOffset;
 char *site = NULL;
 boolean isNib = TRUE;
 tName = cloneString(psl->tName);
-readCachedSeqPart(tName, start, 2, tHash, fileCache, &tSeq, &tOffset, &isNib);
+tSeq = twoBitReadSeqFrag(genomeSeqFile, psl->tName, psl->tStart, psl->tEnd); 
+//readCachedSeqPart(tName, start, 2, tHash, fileCache, &tSeq, &tOffset, &isNib);
 assert (tOffset == start);
 site = cloneStringZ(tSeq->dna, 2);
 if (psl->strand[0] == '-')
@@ -3674,9 +3417,6 @@ ss = axtScoreSchemeDefault();
 /* smaller gap to handle spliced introns */
 ss->gapExtend = 5;
 //fileHash = newHash(0); 
-tHash = newHash(20);  /* seqFilePos value. */
-qHash = newHash(20);  /* seqFilePos value. */
-fileCache = newDlList();
 db = cloneString(argv[1]);
 nibDir = cloneString(argv[11]);
 minAli = optionFloat("minAli", minAli);
@@ -3705,14 +3445,12 @@ initWeights();
 srand(time(NULL));
 //sleep((float)rand()*10/RAND_MAX);
 verbose(1,"Scanning %s\n", argv[13]);
-hashFileList(argv[13]);
+//hashFileList(argv[13]);
 verbose(1,"Loading mrna sequences from %s\n",argv[14]);
 //mrnaList = faReadAllMixed(argv[14]);
-//if (mrnaList == NULL)
-/* mRNA twoBit file, store in nibTwoCache structure */
-twoBitFile = nibTwoCacheNew(argv[14]);
-//if (twoBitFile == NULL)
-  //  errAbort("could not open %s\n",argv[14]);
+/* Open and store information on genome sequence and mRNA sequences */
+genomeSeqFile = twoBitOpen(argv[13]);
+mrnaFile = twoBitOpen(argv[14]);
 mrnaList = twoBitSeqNames(argv[14]);
 verbose(1,"Loading genes from %s\n",argv[15]);
 gpList1 = genePredLoadAll(argv[15]);
@@ -3764,9 +3502,8 @@ genePredFreeList(&gpList1);
 genePredFreeList(&gpList2);
 genePredFreeList(&kgList);
 //freeDnaSeqList(&mrnaList);
-//twoBitClose(&twoBitFile);
-nibTwoCacheFree(&nibTwo);
-nibTwoCacheFree(&twoBitFile);
+twoBitClose(&genomeSeqFile);
+twoBitClose(&mrnaFile);
 
 if (abortAtEnd)
     {
