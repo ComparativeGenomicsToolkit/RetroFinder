@@ -14,7 +14,6 @@
 #include "axt.h"
 #include "dnautil.h"
 #include "dnaseq.h"
-#include "nib.h"
 #include "dlist.h"
 #include "binRange.h"
 #include "options.h"
@@ -369,7 +368,7 @@ axt->symCount = symCount = strlen(t);
 axt->tSym = cloneString(t);
 if (strlen(q) != symCount)
     warn("Symbol count %d != %d inconsistent at t %s:%d and qName %s\n%s\n%s\n",
-    	symCount, (int)strlen(q), psl->tName, psl->tStart, psl->qName, t, q);
+    	symCount, (int)strlen(q), psl->tName, psl->tStart+1, psl->qName, t, q);
 axt->qSym = cloneString(q);
 axt->score = axtScoreFilterRepeats(axt, ss);
 verbose(1,"axt score = %d\n",axt->score);
@@ -689,7 +688,7 @@ for (mrna = mrnaList; mrna != NULL ; mrna = mrna->next)
     }
 if (qSeq == NULL)
     {
-    verbose(5,"mrna sequence data not found %s %s:%d-%d\n",psl->qName, psl->tName, psl->tStart,psl->tEnd);
+    verbose(5,"mrna sequence data not found %s %s:%d-%d\n",psl->qName, psl->tName, psl->tStart+1,psl->tEnd);
     dyStringFree(&q);
     dyStringFree(&t);
     dnaSeqFree(&tSeq);
@@ -754,7 +753,7 @@ for (blockIx=0; blockIx < psl->blockCount; ++blockIx)
 
 if (strlen(q->string) != strlen(t->string))
     warn("Symbol count(t) %d != %d inconsistent at t %s:%d and qName %s\n%s\n%s\n",
-    	(int)strlen(t->string), (int)strlen(q->string), psl->tName, psl->tStart, name, t->string, q->string);
+    	(int)strlen(t->string), (int)strlen(q->string), psl->tName, psl->tStart+1, name, t->string, q->string);
 //if (psl->strand[0] == '-')
 //    {
 //    reverseComplement(q->string, q->stringSize);
@@ -1169,7 +1168,7 @@ if (nHash != NULL)
             netSize[np->level] += netPart;
             overlapSize[np->level] += overlapPart;
             verbose(4,"NET %s %s:%d netSize[%d]=%d retroSize %d part %d tRep %d qN %d overSize %d %s\n",
-                    psl->qName, psl->tName, psl->tStart, np->level, netSize[np->level], 
+                    psl->qName, psl->tName, psl->tStart+1, np->level, netSize[np->level], 
                     retroSize, el->end-el->start, np->tR, np->qN, overlapSize[np->level], np->type );
             if (np->level > maxlevel && netSize[np->level] > MINNETSIZE)
                 {
@@ -1221,7 +1220,7 @@ if (nHash != NULL)
             percentBreak = 101;
         }
     verbose(3,"NET AFTER #score %s %s:%d maxlevel %d  overlap %d percentBreak=%d netSize[max] = %d \n",
-            psl->qName, psl->tName, psl->tStart, maxlevel, overlapSize[maxlevel] , 
+            psl->qName, psl->tName, psl->tStart+1, maxlevel, overlapSize[maxlevel] , 
             percentBreak, netSize[maxlevel]);
     //slFreeList(&elist);
     }
@@ -1278,7 +1277,7 @@ if (gp == NULL)
             pg->name, pg->refSeq );
     if (bestPsl != NULL)
         verbose(5,"%s %s:%d-%d",
-            bestPsl->qName, bestPsl->tName, bestPsl->tStart, bestPsl->tEnd);
+            bestPsl->qName, bestPsl->tName, bestPsl->tStart+1, bestPsl->tEnd);
     verbose(5,"\n");
     }
 
@@ -1333,8 +1332,9 @@ pseudoScore = ( wt[0]*scaledMilliBad
                 ) / ScoreNorm + bump;
 //wt[0] = 0; wt[1] = 0.85; wt[2] = 0.1; wt[3] = 0.2; wt[4] = 0.7; 
 //wt[5] = 1; wt[6] = 1  ; wt[7] = 0.5; wt[8] = 0.5; wt[9] = 1; wt[10] = 1;
+verbose(1, "##polyA Len: %d, ScoreNorm: %4.1f \n", pg->polyAlen, ScoreNorm);
 verbose(1,"##score %d %s %s:%d-%d scr %d milbad %d +%4.1f xon %d +%4.1f retainS %d ax +%4.1f pA +%4.1f net +%4.1f max (%d, %d) procIntrons %d +%4.1f in.cnt %d -%4.1f ov -%4.1f  cov %4.2f*qCov %4.2f log(qSize)%4.1f qSize %d +%4.1f tRep -%4.1f alignGapCount %d -%4.1f norm/%d %s bump+%d \n", 
-                pg->label, psl->qName, psl->tName, psl->tStart, psl->tEnd, pseudoScore, 
+                pg->label, psl->qName, psl->tName, psl->tStart+1, psl->tEnd, pseudoScore, 
                 pg->milliBad, scaledMilliBad/ScoreNorm,
                 pg->exonCover,
                 wt[1]*(log(pg->exonCover+1)/log(2))*600/ScoreNorm , 
@@ -1355,7 +1355,7 @@ verbose(1,"##score %d %s %s:%d-%d scr %d milbad %d +%4.1f xon %d +%4.1f retainS 
                 ScoreNorm, pg->type, bump
                 ) ;
 verbose(1,"###score %d %s %s:%d-%d scr %d milbad +%4.1f ParentExonCover +%4.1f axtScore +%4.1f pA +%4.1f net +%4.1f PInt +%4.1f ic -%4.1f ov -%4.1f cov +%4.1f tRep -%4.1f alignGapCount -%4.1f norm/%d %s bump+%d \n", 
-                pg->label, psl->qName, psl->tName, psl->tStart, psl->tEnd, pseudoScore, 
+                pg->label, psl->qName, psl->tName, psl->tStart+1, psl->tEnd, pseudoScore, 
                 wt[0]*scaledMilliBad/ScoreNorm,
                 wt[1]*(log(pg->exonCover+1)/log(2))*600/ScoreNorm , 
                 wt[2]*(((log(pg->axtScore>0?pg->axtScore:1)/log(2))*170)-1000)/ScoreNorm,
@@ -1464,7 +1464,7 @@ for (i=1; i<blockCount; ++i)
         verbose(6, "YES ");
         }
     verbose(6,"%s:%d (%d < tGap %d) and > %d  qs %d qe %d   ts %d te %d reps %d trf %d \n",
-            psl->tName, psl->tStart,2*abs(qs-qe),tGap, maxBlockGap,  qs,qe, ts, te, reps, trf);
+            psl->tName, psl->tStart+1,2*abs(qs-qe),tGap, maxBlockGap,  qs,qe, ts, te, reps, trf);
     assert(psl != NULL);
     sz = psl->blockSizes[i];
     qe = qs + sz;
@@ -1508,7 +1508,7 @@ int start, size, end;
 int topCount = 0;
 char strand = psl->strand[0];
 
-verbose(5,"%s:%d milliScore %d, threshold %d\n", psl->tName, psl->tStart, milliScore, threshold);
+verbose(5,"%s:%d milliScore %d, threshold %d\n", psl->tName, psl->tStart+1, milliScore, threshold);
 for (blockIx = 0; blockIx < psl->blockCount; ++blockIx)
     {
     start = psl->qStarts[blockIx];
@@ -1619,12 +1619,11 @@ int polyACalc(int start, int end, char *strand, int tSize, char *chrom, int regi
  * sliding window in region of the end of the sequence*/
 /* use the divergence from the gene as the scoring threshold */
 {
-char nibFile[256];
+//char nibFile[256];
 int seqSize;
 struct dnaSeq *seq = NULL;
 int count = 0;
 int length = 0;
-int seqStart = strand[0] == '+' ? end : start - region/2;
 int score[POLYAREGION+1], pStart = 0; 
 //struct seqFilePos *sfp = hashMustFindVal(tHash, chrom);
 //struct nibInfo *ni = hashMustFindVal(tHash, chrom);
@@ -1633,6 +1632,7 @@ int match = 1;
 int misMatch = -1;
 float threshold = divergence/100;
 int tOffset = 0;
+int seqStart = strand[0] == '+' ? end - region/2 : start - region/2;
 /* use mixed case for sequence, repeats in lower case */
 boolean doMask = TRUE;
 int retFullSeqSize;
@@ -1646,18 +1646,19 @@ assert(end != 0);
 assert (seqSize == tSize);
 if (seqStart < 0) seqStart = 0;
 if (seqStart + region > seqSize) region = seqSize - seqStart;
+
 verbose(2,"search for polyA at %s:%d-%d len %d start %d tSize %d match %d misMatch %d %f\n",
-        chrom, seqStart, seqStart+region,region, start, tSize,match,misMatch,divergence);
+        chrom, seqStart+1, seqStart+region,region, start, tSize,match,misMatch,divergence);
 if (region == 0)
     return 0;
 assert(region > 0);
 //nibTwoCacheSeqPartExt(nibTwo, chrom, seqStart, seqSize, doMask, &retFullSeqSize);
-seq = twoBitReadSeqFrag(genomeSeqFile, chrom, start, start+region);
+seq = twoBitReadSeqFrag(genomeSeqFile, chrom, seqStart, seqStart+region);
 
 if (strand[0] == '+')
     {
     assert (seq->size <= POLYAREGION);
-verbose(4,"\n + range=%d %d %s %s\n",seqStart, seqStart+region, seq->dna, chrom );
+verbose(4,"\n + range (0-based start)=%d %d %s %s\n",seqStart, seqStart+region, seq->dna, chrom );
     count = scoreWindow('A',seq->dna,seq->size, score, polyAstart, polyAend, match, misMatch, threshold);
     }
 else
@@ -1868,7 +1869,7 @@ if (index >= 0)
     }
 return offset;
 }
-bool isRepeat(char *chrom, int is, int ie, struct hash *rmskHash, int *retRepCount)
+bool isRepeat (char *chrom, int is, int ie, struct hash *rmskHash, int *retRepCount)
 /* check for repeats from intron*/
 {
 struct binKeeper *bk = NULL;
@@ -1885,14 +1886,14 @@ if (rmskHash != NULL)
         for (el = elist; el != NULL ; el = el->next)
             {
             reps += positiveRangeIntersection(is, ie, el->start, el->end);
-            verbose(5,"    isRep? chkRep %s:%d-%d reps %d ratio %f < 0.7\n",chrom,is, ie, reps,(float)reps/(float)(ie-is) );
+            verbose(5,"    isRep? chkRep %s:%d-%d reps %d ratio %f < 0.7\n",chrom,is+1, ie, reps,(float)reps/(float)(ie-is) );
             }
         slFreeList(&elist);
         if (reps > ie-is)
             {
             reps = ie-is;
             verbose(5,"Warning: too many reps %d in %s:%d-%d size %d\n",
-                            reps, chrom, is, ie, ie-is);
+                            reps, chrom, is+1, ie, ie-is);
             }
         verbose(4,"     check if Intron is repeat: ratio = %f rep %d intron %d \n",
                 (float)reps/(float)(ie-is),reps, ie-is);
@@ -1954,14 +1955,14 @@ if (psl->strand[1] == '-')
     }
 if(*tStart >= *tEnd)
     verbose(1,"start > end %s:%d-%d strand %s %s\n",
-            psl->tName, *tStart, *tEnd, psl->strand, psl->qName);
+            psl->tName, *tStart+1, *tEnd, psl->strand, psl->qName);
 assert(*tStart < *tEnd);
 if (isRepeat(psl->tName, *tStart,*tEnd,rmskHash, &repCnt))
     {
-    verbose(3,"    next intron ret isRpt=TRUE reps %d %s:%d-%d %s %d-%d cnt %d\n",repCnt,psl->tName,*tStart, *tEnd, psl->qName, *qStart, *qEnd, psl->blockCount);
+    verbose(3,"    next intron ret isRpt=TRUE reps %d %s:%d-%d %s %d-%d cnt %d\n",repCnt,psl->tName,*tStart+1, *tEnd, psl->qName, *qStart+1, *qEnd, psl->blockCount);
     return FALSE;
     }
-verbose(3,"    next intron ret isRpt=FALSE reps %d %s:%d-%d %s %d-%d cnt %d\n",repCnt,psl->tName,*tStart, *tEnd, psl->qName, *qStart, *qEnd, psl->blockCount);
+verbose(3,"    next intron ret isRpt=FALSE reps %d %s:%d-%d %s %d-%d cnt %d\n",repCnt,psl->tName,*tStart+1, *tEnd, psl->qName, *qStart+1, *qEnd, psl->blockCount);
 return TRUE;
 }
 
@@ -2350,7 +2351,7 @@ for (i = 0 ; i < gene->blockCount ; i++)
         dyStringPrintf(iString, "%4.1f,%4.1f,",intronG,intronP);
     }
 verbose(2,">>>pslIntronCount %s %s:%d returns %d >1.5 intron size change,   cons intron=%d cons splice=%d\n\n",
-    pseudo->qName, pseudo->tName, pseudo->tStart, count, *conservedIntron, *conservedSplice);
+    pseudo->qName, pseudo->tName, pseudo->tStart+1, count, *conservedIntron, *conservedSplice);
 pslFree(&pseudo);
 pslFree(&gene);
 return count;
@@ -2446,9 +2447,9 @@ if (target->qSize != query->qSize)
     abortAtEnd = TRUE;
     warn("size mismatch parent %s %s:%d-%d %d != %s %d %s:%d-%d \n",
             target->qName, 
-            target->tName, target->tStart, target->tEnd,target->qSize,
+            target->tName, target->tStart+1, target->tEnd,target->qSize,
             query->qName, query->qSize, 
-            query->tName, query->tStart, query->tEnd);
+            query->tName, query->tStart+1, query->tEnd);
     }
 
 for (i = 0 ; i < target->blockCount ; i++)
@@ -2548,8 +2549,8 @@ qqe-qe %d qqe %d qEnd %d qte-qsts %d qte %d qsts %d\n",
     }
 verbose(2, "FINAL COUNT Cons Splices %d %s:%d-%d q %s:%d-%d\n",
      count,
-     target->tName,  target->tStart, target->tEnd,
-     query->tName, query->tStart, query->tEnd);
+     target->tName,  target->tStart+1, target->tEnd,
+     query->tName, query->tStart+1, query->tEnd);
 //pslFree(&targetM);
 //pslFree(&queryM);
 if (swapT)
@@ -2679,7 +2680,7 @@ else
 if(count > targetM->blockCount )
     {
     verbose(1,"error in pslCountExonSpan: %s %s %s:%d-%d %d > targetBlk %d or query Blk %d \n",
-            targetM->qName, query->qName, query->tName,query->tStart, query->tEnd, 
+            targetM->qName, query->qName, query->tName,query->tStart+1, query->tEnd, 
             count, targetM->blockCount, query->blockCount);
     assert(count > targetM->blockCount);
     }
@@ -2838,7 +2839,7 @@ safef(pg->gStrand, sizeof(pg->gStrand), bestStrand);
 pg->milliBad = calcMilliScore(psl);
 pg->coverage = ((psl->match+psl->misMatch+psl->repMatch)*100)/psl->qSize;
 verbose(1,"\nchecking new %s:%d-%d %s best %s:%d-%d milli %d cover %d parent exons %d strand %c \n", 
-         psl->tName, psl->tStart, psl->tEnd, psl->qName,  bestChrom, bestStart, bestEnd, 
+         psl->tName, psl->tStart+1, psl->tEnd, psl->qName,  bestChrom, bestStart+1, bestEnd, 
          pg->milliBad, pg->coverage, pg->parentSpliceCount, psl->strand[0]);
 pg->overStart = pg->overExonCover = pg->kStart = pg->kEnd = pg->rStart = pg->rEnd = pg->mStart = pg->mEnd = -1;
 pg->polyA = polyACalc(psl->tStart, psl->tEnd, psl->strand, psl->tSize, psl->tName, 
@@ -2992,7 +2993,7 @@ if (keepChecking && (pg->intronCount <= 2 /*|| (pg->exonCover - pg->intronCount 
         /* if overlap > 50 bases  and 10% overlap with pseudogene, then skip */
         {
         verbose(1,"NO %s:%d-%d %s expressed blat mrna %s %d bases overlap %f %%\n",
-                psl->tName, psl->tStart, psl->tEnd, psl->qName,mrnaOverlap, 
+                psl->tName, psl->tStart+1, psl->tEnd, psl->qName,mrnaOverlap, 
                 maxOverlap, (float)maxOverlap/(float)psl->qSize);
         dyStringAppend(reason,"expressed");
         pg->overName = cloneString(mPsl->qName); 
@@ -3134,12 +3135,12 @@ for (psl = pslList; psl != NULL; psl = psl->next)
 
     assert (psl!= NULL);
     milliScore = calcMilliScore(psl);
-    verbose(2,"checking %s %s:%d-%d milliScore %d milliMin %d\n",psl->qName, psl->tName, psl->tStart, psl->tEnd, milliScore, milliMin);
+    verbose(2,"checking %s %s:%d-%d milliScore %d milliMin %d\n",psl->qName, psl->tName, psl->tStart+1, psl->tEnd, milliScore, milliMin);
     if (milliScore >= milliMin)
 	{
 	++goodAliCount;
 	milliScore += sizeFactor(psl, rmskHash, trfHash);
-        verbose(5,"@ %s %s:%d\n", psl->qName, psl->tName, psl->tStart);
+        verbose(5,"@ %s %s:%d\n", psl->qName, psl->tName, psl->tStart+1);
 	for (blockIx = 0; blockIx < psl->blockCount; ++blockIx)
 	    {
 	    int start = psl->qStarts[blockIx];
@@ -3150,11 +3151,11 @@ for (psl = pslList; psl != NULL; psl = psl->next)
 	        reverseIntRange(&start, &end, psl->qSize);
 	    if (start < 0 || end > psl->qSize || psl->qSize > qSize)
 		{
-		warn("Error: qName %s tName %s qSize %d psl->qSize %d start %d end %d",
+		warn("Error: qName %s tName %s qSize %d psl->qSize %d start (0 based) %d end %d",
 		    psl->qName, psl->tName, qSize, psl->qSize, start, end);
 		}
             verbose(5,"milliScore: %d qName: %s tName: %s:%d-%d qSize: %d psl->qSize %d i %d start %d end %d \n",
-                    milliScore, psl->qName, psl->tName, psl->tStart, psl->tEnd, qSize, i, psl->qSize, start, end);
+                    milliScore, psl->qName, psl->tName, psl->tStart+1, psl->tEnd, qSize, i, psl->qSize, start, end);
 	    for (i=start; i<end; ++i)
 		{
                 assert(i<=qSize);
@@ -3179,7 +3180,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
     verbose(3,"milli %d > %d match %d > %d score: %d best %d qName %s tName %s:%d-%d \n",
             calcMilliScore(psl), milliMin, 
             (psl->match + psl->repMatch + psl->misMatch) , round(minCover * psl->qSize),
-            score, bestScore, psl->qName, psl->tName, psl->tStart, psl->tEnd );
+            score, bestScore, psl->qName, psl->tName, psl->tStart+1, psl->tEnd );
     if (
         calcMilliScore(psl) >= milliMin && closeToTop(psl, scoreTrack, score) 
         && (psl->match + psl->repMatch + psl->misMatch) >= round(minCover * psl->qSize))
@@ -3198,7 +3199,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
             bestChrom = cloneString(psl->tName);
             bestScore = score;
             safef(bestStrand, sizeof(bestStrand), psl->strand );
-            verbose(2,"BEST score: %d tName %s:%d \n",score,psl->tName,psl->tStart);
+            verbose(2,"BEST score: %d tName %s:%d \n",score,psl->tName,psl->tStart+1);
             }
         if (score  > bestSEScore )
             {
@@ -3208,7 +3209,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
             bestSEChrom = cloneString(psl->tName);
             bestSEScore = score  ;
             safef(bestSEStrand, sizeof(bestSEStrand), psl->strand );
-            verbose(2,"BEST single Exon score: %d tName %s:%d \n",score,psl->tName,psl->tStart);
+            verbose(2,"BEST single Exon score: %d tName %s:%d \n",score,psl->tName,psl->tStart+1);
             }
         if (pslMerge->blockCount > maxExons )
             maxExons = pslMerge->blockCount;
@@ -3219,7 +3220,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
         verbose(3,"NOT BEST milli %d > %d match %d > %d score: %d best %d qName %s tName %s:%d-%d \n",
             calcMilliScore(psl), milliMin, 
             (psl->match + psl->repMatch + psl->misMatch) , round(minCover * psl->qSize),
-            score, bestScore, psl->qName, psl->tName, psl->tStart, psl->tEnd );
+            score, bestScore, psl->qName, psl->tName, psl->tStart+1, psl->tEnd );
         }
     }
 if (bestScore== 0)
@@ -3232,16 +3233,16 @@ if (bestScore== 0)
     safef(bestStrand , sizeof(bestStrand), bestSEStrand) ;
     }
 if (bestChrom != NULL)
-    verbose(2,"---DONE finding best--- %s:%d-%d\n",bestChrom, bestStart, bestEnd);
+    verbose(2,"---DONE finding best--- %s:%d-%d\n",bestChrom, bestStart+1, bestEnd);
 /* output parent genes, retrogenes, and calculate feature vector */
 for (psl = pslList; psl != NULL; psl = psl->next)
 {
 int score = calcSizedScore(psl, rmskHash, trfHash);
 
-verbose(2,"checking qName for extension %s \n",psl->qName, psl->tName, psl->tStart, psl->tEnd);
+verbose(2,"checking qName for extension %s \n",psl->qName, psl->tName, psl->tStart+1, psl->tEnd);
 if (strstr(psl->qName, "-") == NULL)
     {
-    verbose(2,"skipping score step for blat alignment %s %s:%d-%d\n",psl->qName, psl->tName, psl->tStart, psl->tEnd);
+    verbose(2,"skipping score step for blat alignment %s %s:%d-%d\n",psl->qName, psl->tName, psl->tStart+1, psl->tEnd);
     continue;
     }
 if (
@@ -3249,7 +3250,7 @@ if (
     && psl->match + psl->misMatch + psl->repMatch >= minCover * psl->qSize)
         {
         verbose(3,"\n##not checking %s:%d-%d %s best %s:%d-%d milliscore %d threshold %d aligning %d / qSize %d  closeToTop %d\n", 
-             psl->tName, psl->tStart, psl->tEnd, psl->qName,  bestChrom, bestStart, bestEnd, 
+             psl->tName, psl->tStart+1, psl->tEnd, psl->qName,  bestChrom, bestStart+1, bestEnd, 
              calcMilliScore(psl), milliMin, psl->match + psl->misMatch + psl->repMatch,psl->qSize ,closeToTop(psl, scoreTrack, score) );
         pslTabOut(psl, bestFile);
         }
@@ -3313,7 +3314,7 @@ else
         aPsl = el->val;
         if (sameString(el->name, choppedName))
             {
-            verbose(3, "adding blat alignment %s:%d-%d %s\n",aPsl->tName, aPsl->tStart, aPsl->tEnd, aPsl->qName);
+            verbose(3, "adding blat alignment %s:%d-%d %s\n",aPsl->tName, aPsl->tStart+1, aPsl->tEnd, aPsl->qName);
             slAddHead(pslList, aPsl);
             }
         else
