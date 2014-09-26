@@ -122,34 +122,74 @@ sort -k4,4 $OUTDIR/$TABLE.bed > $OUTDIR/$TABLE.sort.bed
 # of the join into awk and output a tab-separated file inot ortho.filter.txt.  
 sort -k4,4 $OUTDIR/ortho.txt | join -1 4 -2 1 -o 2.1 2.2 2.3 $OUTDIR/$TABLE.sort.bed -|awk '{$1=$1;OFS="\t";print $0}' > $OUTDIR/ortho.filter.txt
 
+# Get a count of lines in the retronMrnaInfo files before and after filtering
 wc -l $OUTDIR/retroMrnaInfo.raw.bed $OUTDIR/retroMrnaInfoLessZnf.bed $OUTDIR/retroMrnaInfoZnf.bed $OUTDIR/$TABLE.bed
+# Get the first 12 fields of ucscRetroInfo$VERSION.bed and output as BED12
+# file to retroMrnaInfo.12.bed.
+# NOTE: retroMrnaInfo.12.bed does not seem to be used anywhere. 
 cut -f 1-12 $OUTDIR/$TABLE.bed > $OUTDIR/retroMrnaInfo.12.bed
+# Create a histogram of retrogene scores from ucscRetroInfo$VERSION with 
+# bin size of 50
 textHistogram -col=5 $OUTDIR/$TABLE.bed -binSize=50 -maxBinCount=50
+# Next steps are to create ucscRetroAli$VERSION.psl 
 echo Creating $OUTDIR/$ALIGN.psl
+# Create a pseudogene select file using the 4th, 1st and 2nd fields of 
+# ucscRetroInfo7.bed - these are the name (retrogene id), chrom, chromStart.
 awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $OUTDIR/$TABLE.bed > $OUTDIR/pseudoGeneLinkSelect.tab
+# Use pslSelect to select records from the pseudo.psl file using
+# pseudoGeneLinkSelect.tab and therefore create the ucscRetroAli$VERSION.psl
+# PSL file that corresponds to records in ucscRetroInfo$VERSION.bed. 
 pslSelect -qtStart=$OUTDIR/pseudoGeneLinkSelect.tab $OUTDIR/pseudo.psl $OUTDIR/$ALIGN.psl
+# Get count of lines in ucscRetroAli$VERSION.pls and pseudoGeneLinkSelect.tab -
+# these should be the same. 
 wc -l $OUTDIR/$ALIGN.psl $OUTDIR/pseudoGeneLinkSelect.tab
+# Load the BED file ucscRetroInfo$VERSION.bed in to the temporary table, 
+# ucscRetroInfoXX with no bin index and allowing negative scores.
 hgLoadBed $DB -verbose=9 -renameSqlTable -allowNegativeScores -noBin ucscRetroInfoXX -sqlTable=$KENTDIR/src/hg/lib/ucscRetroInfo.sql $OUTDIR/$TABLE.bed
+# Make $RETRODIR directory - /hive/data/genomes/$DB/bed/retro
 mkdir -p $RETRODIR
+# Remove old ucscRetroInfo$VERSION.bed from this directory.
 rm -f $RETRODIR/$TABLE.bed
+# Copy current ucscRetroInfo$VERSION.bed to this directory. 
 cp -p $OUTDIR/$TABLE.bed $RETRODIR
+# Drop the ucscRetroInfo$VERSION table from the database if it exists.
 hgsql $DB -e "drop table if exists $TABLE;"
+# Rename the ucscRetroInfoXX table to ucscRetroInfo$VERSION
 hgsql $DB -e "alter table ucscRetroInfoXX rename $TABLE;"
+# Load the PSL file into a ucscRetroAli$VERSION Table.
 hgLoadPsl $DB $OUTDIR/$ALIGN.psl
+# Remove ucscRetroAli$VERSION.psl from /hive/data/genomes/$DB/bed/retro
+# if it already exists there. 
 rm -f $RETRODIR/$ALIGN.psl
+# Copy over the ucscRetroAli$VERSION.psl file to the 
+# /hive/data/genomes/$DB/bed/retro directory.
 cp -p $OUTDIR/$ALIGN.psl $RETRODIR
+# Load the filtered ortho file, ortho.filter.txt, into a 
+# ucscRetroOrtho$VERSION table
 hgLoadSqlTab $DB ${ORTHOTABLE} $KENTDIR/src/hg/lib/ucscRetroOrtho.sql $OUTDIR/ortho.filter.txt
-
+# Create the ucscRetroCds$VERSION.tab file from cds.tag.gz extracting
+# id.version and CDS range.
 zcat $OUTDIR/cds.tab.gz |tawk '{print $1"."$2,$3}' | sort | uniq > $OUTDIR/ucscRetroCds${VERSION}.tab 
+# Load the ucscRetroCds$VERSION.tab file into a ucscRetroCds$VERSION table. 
 hgLoadSqlTab $DB ucscRetroCds${VERSION} $KENTDIR/src/hg/lib/ucscRetroCds.sql $OUTDIR/ucscRetroCds${VERSION}.tab
+# Remove any existing ucscRetroCds$VERSION.tab file from 
+# /hive/data/genomes/$DB/retro
 rm -f $RETRODIR/ucscRetroCds${VERSION}.tab
+# Copy the ucscRetroCds$VERSION.tab file to the /hive/data/genomes/$DB/bed/retro
+# directory.
 cp -p $OUTDIR/ucscRetroCds${VERSION}.tab $RETRODIR
+# Copy the DEF file to the /hive/data/genomes/$DB/bed/retro directory.
 cp -p $OUTDIR/DEF $RETRODIR
 
-# Get data for count table and create a new table, ucscRetroCountXX.
+# Get data for count table and create a new table, ucscRetroCount$VERSION - 
+# select gene symbol, retrogene count, and average score for those retrogenes 
+# (providing score > 650), group by geneSymbol having count(*) > 1 and order 
+# by count in descending order and put into a new table ucscRetroCount$VERSION.
 hgsql $DB -Ne "create table ucscRetroCount${VERSION} select geneSymbol, count(*) as retroCount, avg(score) as averageScore from ucscRetroInfo${VERSION}, kgXref where kgName = kgID and kgName <> 'noKg' and score > 650  group by geneSymbol having count(*) > 1 order by 2 desc"
 
 #writing TrackDb.ra entry to temp file
+# Use script and DEF file to make a trackDb entry in trackDb.retro. Need to 
+# add this manually to the appropriate trackDb.ra file and edit it.
 $SCRIPT/makeTrackDb.sh $OUTDIR/$DEF > $OUTDIR/trackDb.retro
 echo "Writing template trackDb.ra entry to $OUTDIR/trackDb.retro"
 
