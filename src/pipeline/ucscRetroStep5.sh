@@ -1,10 +1,36 @@
 #!/bin/bash 
+# Summary: Post processes results from the pslPseudo cluster run (RetroFinder
+# run) and filters out the zinc finger, immunoglobulin, NBFP, and olfactory
+# receptor retrogenes if PFAM is defined in the DEF file. Filter these 
+# retrogenes out from the file of retrogene predictions filtered on score 
+# - retroMrnaInfo.raw.bed - to create the ucscRetroInfo$VERSION.bed file that 
+# is loaded into the ucscRetroInfo$VERSION table. From the ortho.txt file, 
+# select the relevant records based on those in the ucscRetroInfo$VERSION.bed 
+# file and create ortho.filter.txt which is loaded into the database table, 
+# ucscRetroOrtHo$VERSION. Similarly, use the ucscRetroInfo$VERSION.bed file 
+# to select records for the same retrogene from pseudo.psl to create 
+# ucscRetroAli$VERSION.psl which is loaded into the ucscRetroAli$VERSION table.
+# The id.version and CDS range are extracted from the cds.tab.gz file to a 
+# tab-separated file which is loaded into the database table, 
+# ucscRetroCds$VERSION. Data is extracted for counts for retrogenes by gene
+# symbol where the score > 650 and the average score is calculated and count >1
+# and the result is sorted by count in descending order and loaded into a
+# ucscRetroCount$VERSION table. Files loaded into tables are copied to 
+# /hive/data/genomes/$DB/bed/retro.
+
+# So basically filter on score and remove zinc finger, immunoglobulin, NBFP, 
+# and olfactory receptor retrogenes if PFAM is defined in the DEF file to create
+# the ucscRetroInfo$VERSION.bed file and load into database as 
+# ucscRetroInfo$VERSION. Prepare files for ucscRetro{Ortho,Ali,Cds}$VERSION 
+# and load these tables. Query tables to create ucscRetroCount$VERSION which 
+# is a count of retrogenes and their average score for each parent gene 
+# where count >1 and each retrogene score > 650. 
 # post process cluster jobs that runs retroFinder
 # and then filters out zinc fingers and immunoglobin retros if PFAM is defined in the DEF file.
 # the retro results, alignments and cds coding of the parent mapped to the retro is loaded into the database.
 #
 # script analyzeExpress.sh is called at the end to check for expression level of retros.
-#
+
 DEF=$1
 source $DEF
 set -beEu -o pipefail
