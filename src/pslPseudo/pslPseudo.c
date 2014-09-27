@@ -49,7 +49,6 @@
 static char const rcsid[] = "$Id: pslPseudo.c,v 1.18 2012/09/22 15:17:05 baertsch Exp $";
 
 char *db;
-char *nibDir;
 char *mrnaSeq;
 int verbosity = 1;
 float minAli = 0.98;
@@ -3419,7 +3418,6 @@ ss = axtScoreSchemeDefault();
 ss->gapExtend = 5;
 //fileHash = newHash(0); 
 db = cloneString(argv[1]);
-nibDir = cloneString(argv[11]);
 minAli = optionFloat("minAli", minAli);
 maxRep = optionFloat("maxRep", maxRep);
 maxTrf = optionFloat("maxTrf", maxTrf);
