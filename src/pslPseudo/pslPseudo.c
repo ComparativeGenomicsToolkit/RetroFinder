@@ -877,6 +877,7 @@ return 0;
 
 int calcMilliScore(struct psl *psl)
 /* Figure out percentage score. */
+/* Is this really a percentage? for BLAT, use 100.0 - milliBad * 0.1 */
 {
 return 1000-pslCalcMilliBad(psl, TRUE);
 }
@@ -1402,9 +1403,11 @@ struct binKeeper *bk;
 int intronCount = 0, tGap;
 
 *baseCount = 0;
+/* psl should not be NULL and if there are <=1 blocks then return 0 */
 assert (psl != NULL);
 if (blockCount <= 1)
     return 0;
+/* get size of first block and the mRNA and genomic coords for the end of block */
 sz = psl->blockSizes[0];
 qe = psl->qStarts[0] + sz;
 te = psl->tStarts[0] + sz;
@@ -1418,6 +1421,10 @@ for (i=1; i<blockCount; ++i)
     ts = psl->tStarts[i];
     teRegion = psl->tStarts[i] + psl->blockSizes[i];
 
+    /* if repeatMasker hash and trf hash are not NULL then find the 
+     binKeeper for tName (chrom) and if this is not NULL then get the 
+     list of trf repeats for the range tStart to End and count the total
+     number of bases of trf repeats the intersect with gap. */
     if (rmskHash != NULL)
         {
         if (trfHash != NULL)
@@ -1435,6 +1442,8 @@ for (i=1; i<blockCount; ++i)
                 slFreeList(&elist);
                 }
             }
+        /* then do the same for RepeatMasker repeats counting the total 
+           number of repeat bases that intersect with the gap. */
         bk = hashFindVal(rmskHash, psl->tName);
         if (bk != NULL)
             {
@@ -1453,11 +1462,13 @@ for (i=1; i<blockCount; ++i)
     /* don't subtract repeats if the entire region is masked */
     if ( regionReps + 10 >= teRegion - tsRegion )
         reps = 0;
-
+    /* why multiple repeat bases by 1.5? */
     tGap = ts - te - reps*1.5 - trf;
+    /* why is 2*abs(qs-qe) used */
     if (2*abs(qs - qe) <= tGap && tGap >= maxBlockGap ) 
         /* don't count q gaps in mrna as introns , if they are similar in size to tGap*/
         {
+        /* increment intron count and baseCount */
         intronCount++;
         *baseCount += tGap - (2*abs(qs-qe));
         verbose(6, "YES ");
@@ -1465,6 +1476,7 @@ for (i=1; i<blockCount; ++i)
     verbose(6,"%s:%d (%d < tGap %d) and > %d  qs %d qe %d   ts %d te %d reps %d trf %d \n",
             psl->tName, psl->tStart+1,2*abs(qs-qe),tGap, maxBlockGap,  qs,qe, ts, te, reps, trf);
     assert(psl != NULL);
+    /* values for next round */
     sz = psl->blockSizes[i];
     qe = qs + sz;
     te = ts + sz;
@@ -1481,7 +1493,9 @@ int score;
 int bases;
 if (ignoreSize) return 0;
 assert(psl != NULL);
+/* how did you decide on this score? */
 score = 4*round(sqrt(psl->match + psl->repMatch/4));
+/* if noIntrons not specified then take these into account */
 if (!noIntrons)
     {
     int bonus = intronFactor(psl, rmskHash, trfHash, &bases) * 3;
@@ -1519,6 +1533,8 @@ for (blockIx = 0; blockIx < psl->blockCount; ++blockIx)
     for (i=start; i<end; ++i)
 	{
         verbose(6,"s=%d tc=%d ",scoreTrack[i],topCount);
+        /* not sure I see how this gives values close to the top scorer */
+        /* also means that the threshold >= topscorer that has that base */
 	if (scoreTrack[i] <= threshold)
 	    {
 	    if (++topCount >= minNearTopSize)
@@ -1710,6 +1726,7 @@ verbose(4, "\n");
     stopIdx = psl->blockCount;
     idxIncr = 1;
 
+/* go through the aligned blocks of the PSL */
 for (iBlk = startIdx; iBlk != stopIdx; iBlk += idxIncr)
     {
     int  tStart = psl->tStarts[iBlk];
@@ -1750,6 +1767,7 @@ for (iBlk = startIdx; iBlk != stopIdx; iBlk += idxIncr)
 	}
     else
         {
+        /* why is this qdiff not tdiff */
         outPsl->blockSizes[iExon] += size + qdiff ;
         verbose(5, " MERGE tdiff %d < %d tStart %d out.tStarts[%d] %d size %d outPsl->blkSmize %d tdiff %d qdiff %d tStart %d\n",
                 tdiff, insertMergeSize, tStart, iExon, outPsl->tStarts[iExon], size, outPsl->blockSizes[iExon], tdiff, qdiff, psl->tStart);
@@ -1763,6 +1781,8 @@ verbose(5, "\n");
     }
 
 verbose(5, "before last step merge %s %d ",psl->qName, outPsl->blockCount);
+/* calculate ii as the sum of block sizes in outPsl this variable is not used
+ * elsewhere */
 for (blockIx = 0; blockIx < outPsl->blockCount; ++blockIx)
     {
     verbose(5, "%d-%d, ",outPsl->qStarts[blockIx], 
@@ -1771,6 +1791,7 @@ for (blockIx = 0; blockIx < outPsl->blockCount; ++blockIx)
     }
 verbose(5, "\n");
 
+/* do you need to revese the int range for a PSL? */
 if (psl->strand[0] == '-')
     for (iBlk = 0; iBlk != outPsl->blockCount; iBlk += 1)
         {
@@ -1782,7 +1803,8 @@ if (psl->strand[0] == '-')
             assert(qStart >= 0);
         if (qStart+outPsl->blockSizes[iBlk] > outPsl->qSize)
             assert(qStart+outPsl->blockSizes[iBlk] <= outPsl->qSize);
-        }       
+        }     
+/* set other fields in the outPsl, mostly just copying over from psl */ 
 outPsl->blockCount = iExon+1;
 outPsl->match = psl->match;
 outPsl->misMatch = psl->misMatch;
@@ -3146,6 +3168,8 @@ for (psl = pslList; psl != NULL; psl = psl->next)
 	    int size = psl->blockSizes[blockIx];
 	    int end = start+size;
 	    int i;
+            /* if on - strand, reverse coords so always checking same sequence
+               and therefore the same bases in the same order */
             if (strand == '-')
 	        reverseIntRange(&start, &end, psl->qSize);
 	    if (start < 0 || end > psl->qSize || psl->qSize > qSize)
@@ -3155,6 +3179,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
 		}
             verbose(5,"milliScore: %d qName: %s tName: %s:%d-%d qSize: %d psl->qSize %d i %d start %d end %d \n",
                     milliScore, psl->qName, psl->tName, psl->tStart+1, psl->tEnd, qSize, i, psl->qSize, start, end);
+            /* picking highest scoring PSL for each base of the alignment */
 	    for (i=start; i<end; ++i)
 		{
                 assert(i<=qSize);
@@ -3285,6 +3310,7 @@ void addBlatAlignment( char *name, struct psl **pslList)
 char choppedName[256];
 struct hashEl *el, *elist = NULL;
 assert(name!=NULL);
+/* Remove the suffix from the name (id) and result is in choppedName */
 safef(choppedName, sizeof(choppedName), "%s",name);
 chopSuffix(choppedName);
 elist = hashLookup(qNameHash, choppedName);
@@ -3357,6 +3383,7 @@ verbose(1,"Processing %s to %s and %s\n", inName, bestAliName, pseudoFileName);
  if (!noHead)
      pslWriteHead(bestFile);
 safef(lastName, sizeof(lastName),"nofile");
+/* read input split PSL file line by line */
 while (lineFileNext(in, &line, &lineSize))
     {
     if ((++aliCount & 0x1ffff) == 0)
@@ -3372,6 +3399,7 @@ while (lineFileNext(in, &line, &lineSize))
     if (stripVersion)
         chopSuffix(psl->qName);
     verbose(2,"scoring %s version %d lastName %s\n",psl->qName, stripVersion, lastName);
+    /* if new qName encountered, not the same as the last one read */
     if (!samePrefix(lastName, psl->qName))
 	{
         if (!skipBlatMerge)
@@ -3386,6 +3414,7 @@ while (lineFileNext(in, &line, &lineSize))
 	}
     slAddHead(&pslList, psl);
     }
+/* why is this here */
 addBlatAlignment(lastName, &pslList);
 //slReverse(&pslList);
 pslList = 0x0;
@@ -3417,6 +3446,7 @@ ss = axtScoreSchemeDefault();
 /* smaller gap to handle spliced introns */
 ss->gapExtend = 5;
 //fileHash = newHash(0); 
+// database name
 db = cloneString(argv[1]);
 minAli = optionFloat("minAli", minAli);
 maxRep = optionFloat("maxRep", maxRep);
@@ -3450,14 +3480,18 @@ verbose(1,"Loading mrna sequences from %s\n",argv[14]);
 /* Open and store information on genome sequence and mRNA sequences */
 genomeSeqFile = twoBitOpen(argv[13]);
 mrnaFile = twoBitOpen(argv[14]);
+/* get list of ids from mrna 2bit file */
 mrnaList = twoBitSeqNames(argv[14]);
 verbose(1,"Loading genes from %s\n",argv[15]);
+/* store genePreds from GENE2 in a list */
 gpList1 = genePredLoadAll(argv[15]);
 verbose(1,"Loading genes from %s\n",argv[16]);
+/* store genePreds from GENE3 in a list */
 gpList2 = genePredLoadAll(argv[16]);
 //gprKg = genePredReaderFile(argv[16], NULL);
 //kgLis = genePredReaderAll(gprKg);
 verbose(1,"Loading genes from %s\n",argv[17]);
+/* store genePreds from GENE1 (knownGene or equivalent) in a list */
 kgList = genePredLoadAll(argv[17]);
 //mrnaGene = genePredLoadAll(argv[18]);
 
