@@ -1,5 +1,8 @@
 /* pslPseudo - analyse repeats and generate list of processed pseudogenes
  * from a genome wide, sorted by mRNA .psl alignment file.
+ * 
+ * If you are looking at this for the first time, start by reading the initWeights function. It describes the features and weights that make up
+ * the score function.
  */
 #include "common.h"
 #include "linefile.h"
@@ -980,17 +983,31 @@ ucscRetroOrthoOutput(puro3, orthoFile, '\t','\n');
 void initWeights()
 {
 /*
-    0 = + milliBad
-  2 1 = + exon Coverage
-  8 2 = + log axtScore
-  1 3 = + log polyAlen
-  5 4 = + max(overlapMouse overlapDog)
-    5 = + processedIntrons
-  3 6 = + intronCount ^.5
-  4 7 = - log maxOverlap
-  7 8 = + coverage *((qSize-qEnd)/qSize)
-  6 9 = - repeats
+    0 = + milliBad - measures the divergence from between the parent gene and the retro (1000=perfect match, 600 is very low homology)
+    1 = + exon Coverage - counts how many exons from the parent gene are "covered" by the alignment to the retrogene.
+    2 = + log axtScore - lastz score between the parent and the retrogene
+    3 = + log polyAlen - length of the polyA tail inserted into the retro location
+    4 = + max(overlapMouse overlapDog) - max(overlap with break in synteny with other two species )
+    5 = + processedIntrons - count of the number of introns from the parent that were removed in the retro location
+    6 = + intronCount ^.5
+    7 = - log maxOverlap - downweight retros that have evidence of expression - 
+		 percentage of bases from retro that overlap all_mnra.psl (arg #8) 
+    8 = + coverage *((qSize-qEnd)/qSize)
+    9 = - repeats
     10 =- alignGapCount
+
+pseudoScore = ( wt[0]*scaledMilliBad
+                + wt[1]*(log(pg->exonCover+1)/log(2))*600       
+                + wt[2]*(((log(pg->axtScore>0?pg->axtScore:1)/log(2))*170)-1000)   
+                + wt[3]*(log(pg->polyAlen+2)*200)                               
+                + wt[4]*(overlapOrtholog*10)                            
+                + wt[5]*(((log(pg->processedIntrons > 0 ? (pg->processedIntrons)+1 : 1))/log(2))*1200 ) 
+                - wt[6]*pow(pg->intronCount,0.5)*1200                   
+                - wt[7]*(maxOverlap*300)                       
+                + wt[8]*scaledCoverage 
+                - wt[9]*(pg->tReps*10)
+                - wt[10]*(pg->alignGapCount) 
+                ) / ScoreNorm + bump;
 
  */
 wt[0] = 1; wt[1] = 1; wt[2] = 0.1; wt[3] = 0.2; wt[4] = 0.7; 
@@ -2742,7 +2759,7 @@ return (float)trf/(float)(psl->match+psl->misMatch);
 }
 
 int overlapMrna(struct psl *psl, int *exonOverlapCount, struct psl **overlapPsl, int *exonCount)
-/* count bases that mrna overlaps with pseudogenes. If self match then don't filter it.*/
+/* count bases that mrna (exprHash) overlaps with pseudogenes. If self match then don't filter it.*/
 /* exonOverlapCount has number of exons in matched mRna */
 {
 int maxOverlap = 0;
@@ -2781,7 +2798,8 @@ if (exprHash != NULL)
                     //cds.start = cds.end = -1;
                     //genbankCdsParse(cdsStr, &cds);
 
-                    if (mPslMerge->blockCount > 0)
+                    if (mPslMerge->blockCount > 0) /* mPslMerge contains overlap of retro with all_mrna.psl. 
+						no need to loop through intersection blocks, if only one */
                         {
                         for (blockIx = 0; blockIx < mPslMerge->blockCount; ++blockIx)
                             {
@@ -2796,17 +2814,23 @@ if (exprHash != NULL)
                         mrnaBases += positiveRangeIntersection(psl->tStart, psl->tEnd, mPsl->tStart, mPsl->tEnd);
     //                    verbose(6,"blk merge %d %s %d ec %d\n",mPslMerge->blockCount, mPsl->qName, mrnaBases, *exonOverlapCount);
                         }
+		    /* mrnaBases now contains overlap between retro and all_mrna.psl */
                     verbose(6,"MRNABASES %d block cnt %d maxOverlap %d exonOverlapCount %d \
                             %s %s %d-%d best so far %s\n",
                             mrnaBases, mPslMerge->blockCount, maxOverlap, *exonOverlapCount, 
                             mPslMerge->qName, mPslMerge->qName, mPslMerge->tStart, mPslMerge->tEnd, mrnaOverlap);
+		    /* must have at least 50 bases overlap to be consider "expressed" retro */
+		    /* pick mRNA with greatest overlap with retro */
+ 		    /* Refseq mRNA take priority over non-refseq mRNA */
                     if (mrnaBases > 50 && (mPslMerge->blockCount > 0) && 
+				/* throw out small alignment blocks less than 50bp */
                             (((int)mPslMerge->blockCount > *exonOverlapCount) || 
                              (((int)mPslMerge->blockCount == *exonOverlapCount) && 
                               ((mrnaBases > maxOverlap) || (startsWith("NM",mPslMerge->qName) && !startsWith("NM",mrnaOverlap)) 
                                )))
                        )
                         {
+			/* return # of overlapping exons , bases and qName of best overalapping mRNA*/
                             *exonOverlapCount = (int)mPslMerge->blockCount;
                             safef(mrnaOverlap,255,"%s",mPslMerge->qName);
                             maxOverlap = mrnaBases;
@@ -2869,7 +2893,9 @@ pg->polyAlen = abs(polyAend-polyAstart)+1;
 pg->polyAstart = polyAstart;
 /* count # of alignments that span introns */
 //pg->exonCover = pslCountExonSpan(bestPsl, psl, maxBlockGap, rmskHash, &tReps, &qReps) ;
+/* calc introns processed in retro in two ways and blocks and exons covered into RETRO*/
 calcIntrons(psl, maxBlockGap, bestPsl, &processedIntrons, &intronCount, &qBlockCover, &pseudoExonCount);
+/* reverse the paramters to calculate number of exons covered in parent */
 if (bestPsl != NULL)
     calcIntrons(bestPsl, maxBlockGap, psl, NULL, NULL, &exonCover, NULL);
 pg->exonCover = exonCover;
@@ -3192,6 +3218,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
 	    }
 	}
     }
+/* scoreTrack contains best alignment score per base of retro */
 verbose(2,"---finding best---\n");
 /* Print out any alignments that are within minTop% of top score for at least . */
 bestScore = 0;
@@ -3258,7 +3285,9 @@ if (bestScore== 0)
     }
 if (bestChrom != NULL)
     verbose(2,"---DONE finding best--- %s:%d-%d\n",bestChrom, bestStart+1, bestEnd);
+/* bestPsl contains "best" parent alignment for each retro */
 /* output parent genes, retrogenes, and calculate feature vector */
+/* this is the main loop */
 for (psl = pslList; psl != NULL; psl = psl->next)
 {
 int score = calcSizedScore(psl, rmskHash, trfHash);

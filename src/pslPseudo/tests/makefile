@@ -17,7 +17,7 @@ TRF = $(DBDIR)/simpleRepeat.bed.gz
 MRNA_ALIGN = $(DBDIR)/all_mrna.psl.gz 
 INFILES = $(inSizes) $(RMSK) $(NET1) $(NET2) $(TRF) $(MRNA_ALIGN)
 OPTIONS = -nearTop=0.005 -verbose=5 -cdsFile=$(DBDIR)/cds.tab.gz
-NIBLIST = $(DBDIR)/S1.lst
+NIBLIST = $(DBDIR)/$(DB).2bit
 GENES.ALL = $(DBDIR)/refGene.tab.gz $(DBDIR)/mgcGene.tab.gz $(DBDIR)/sortedKnownGene.tab.gz
 GENES = $(DBDIR)/refGene.tab.gz $(DBDIR)/ensGene.tab.gz $(DBDIR)/refGene.tab.gz
 NET3 =  $(DBDIR)/netHg19.test.txt.gz
