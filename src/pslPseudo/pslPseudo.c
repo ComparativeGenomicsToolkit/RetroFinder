@@ -3289,31 +3289,34 @@ if (bestChrom != NULL)
 /* output parent genes, retrogenes, and calculate feature vector */
 /* this is the main loop */
 for (psl = pslList; psl != NULL; psl = psl->next)
-{
-int score = calcSizedScore(psl, rmskHash, trfHash);
-
-verbose(2,"checking qName for extension %s \n",psl->qName, psl->tName, psl->tStart+1, psl->tEnd);
-if (strstr(psl->qName, "-") == NULL)
     {
-    verbose(2,"skipping score step for blat alignment %s %s:%d-%d\n",psl->qName, psl->tName, psl->tStart+1, psl->tEnd);
-    continue;
-    }
-if (
-    calcMilliScore(psl) >= milliMin && closeToTop(psl, scoreTrack, score) 
-    && psl->match + psl->misMatch + psl->repMatch >= minCover * psl->qSize)
+    int score = calcSizedScore(psl, rmskHash, trfHash);
+
+    verbose(2,"checking qName for extension %s \n",psl->qName, psl->tName, psl->tStart+1, psl->tEnd);
+    if (strstr(psl->qName, "-") == NULL)
+        {
+        verbose(2,"skipping score step for blat alignment %s %s:%d-%d\n",psl->qName, psl->tName, psl->tStart+1, psl->tEnd);
+        continue;
+        }
+    if (
+        calcMilliScore(psl) >= milliMin && closeToTop(psl, scoreTrack, score) 
+        && psl->match + psl->misMatch + psl->repMatch >= minCover * psl->qSize)
         {
         verbose(3,"\n##not checking %s:%d-%d %s best %s:%d-%d milliscore %d threshold %d aligning %d / qSize %d  closeToTop %d\n", 
              psl->tName, psl->tStart+1, psl->tEnd, psl->qName,  bestChrom, bestStart+1, bestEnd, 
              calcMilliScore(psl), milliMin, psl->match + psl->misMatch + psl->repMatch,psl->qSize ,closeToTop(psl, scoreTrack, score) );
+        /* write out the PSL for these best alignments to a tab-separated file
+           (arg9) */
         pslTabOut(psl, bestFile);
         }
-else 
-    {
-    /* calculate various features of pseudogene and output feature records */
-    pseudoFeaturesCalc(psl, bestPsl, maxExons, bestAliCount, 
+    else 
+        {
+        /* calculate various features of pseudogene and 
+           output feature records */
+        pseudoFeaturesCalc(psl, bestPsl, maxExons, bestAliCount, 
             bestChrom, bestStart, bestEnd, bestStrand );
+        }
     }
-}
 freeMem(scoreTrack);
 }
 
