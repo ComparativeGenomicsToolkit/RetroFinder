@@ -1412,7 +1412,7 @@ outputNoLinkScore(psl, pg, overlapOrtho1, overlapOrtho2, overlapOrtho3);
 int intronFactor(struct psl *psl, struct hash *rmskHash, struct hash *trfHash, int *baseCount)
 /* Figure approx number of introns.  
  * An intron in this case is just a gap of 0 bases in query and
- * maxBlockGap or more in target iwth repeats masked. */
+ * maxBlockGap or more in target with repeats masked. */
 {
 int i, blockCount = psl->blockCount  ;
 int ts, qs, te, qe, sz, tsRegion, teRegion;
@@ -1575,6 +1575,9 @@ int i=0, j=0, max=2, count = 0;
 
 assert(match >= 0);
 assert(misMatch <= 0);
+/* go through the sequence one base at a time and score each one, adding 1 to
+ * the previous scores if it matches char c and -1 if it doesn't. this will 
+ * find high scoring runs of the character c. */
 for (i=0 ; i<size ; i++)
     {
     int prevScore = (i > 0) ? score[i-1] : 0;
@@ -1583,6 +1586,9 @@ for (i=0 ; i<size ; i++)
         score[i] = prevScore+match;
     else
         score[i] = prevScore+misMatch;
+    /* if the score is greater than max (2 initially), then
+     * reset max to this score and set the end of the run of char c to 
+     * this position and go back to find the beginning of the run of c chars */
     if (score[i] >= max)
         {
         max = score[i];
@@ -1599,7 +1605,7 @@ for (i=0 ; i<size ; i++)
         score[i] = 0;
     }
 assert (*end < size);
-/* traceback to find start */
+/* traceback to find start of the run of char c*/
 for (i=*end ; i>=0 ; i--)
     if (score[i] == 0)
         {
@@ -1670,11 +1676,9 @@ boolean doMask = TRUE;
 int retFullSeqSize;
 
 seqSize = twoBitSeqSize(genomeSeqFile, chrom);
-printf("Seq size for %s is %d \n", chrom, seqSize);
 assert(region > 0);
 assert(end != 0);
 *polyAstart = 0 , *polyAend = 0;
-//safef(nibFile, sizeof(nibFile), "%s/%s.nib", nibDir, chrom);
 assert (seqSize == tSize);
 if (seqStart < 0) seqStart = 0;
 if (seqStart + region > seqSize) region = seqSize - seqStart;
@@ -1699,9 +1703,13 @@ else
 verbose(4,"\n - range=%d %d %s %s\n",seqStart, seqStart+region, seq->dna, chrom );
     count = scoreWindow('T',seq->dna,seq->size, score, polyAend, polyAstart, match, misMatch, threshold);
     }
+/* add genomic base position of start of window to search for polyA tail */
 pStart += seqStart;
+/* get genomic coordinate of polyAstart */
 *polyAstart += seqStart;
+/* get genomic coordinate of polyAEnd */
 *polyAend += seqStart;
+/* calculate length of polyA tail */
 length = (strand[0]=='+'?*polyAend-*polyAstart:(*polyAstart)-(*polyAend))+1;
 verbose(4,"\npolyA is %d from end. seqStart=%d %s polyS/E %d-%d exact matches %d length %d \n",
         strand[0]=='+'?*polyAstart-seqStart:*polyAend-seqStart+seq->size, 
@@ -2113,6 +2121,7 @@ for (i = 0 ; i < psl->blockCount ; i++)
         }
     else
         tdiff = 9999999;
+    /* merges blocks together if target gap is less than a certain size */
     while (tdiff < maxBlockGap && i< (psl->blockCount)-1)
         {
         i++;
@@ -2153,6 +2162,7 @@ int intronsPresent = 0;
 int intronsPresentBases = 0;
 int intronsSpliced = 0;
 int exonCount = 0;
+/* go through the aligned blocks of the PSL */
 for (i = 0 ; i < psl->blockCount ; i++)
     {
     int qs = psl->qStarts[i];
@@ -2174,14 +2184,18 @@ for (i = 0 ; i < psl->blockCount ; i++)
         {
         tsNext = psl->tStarts[i+1];
         qsNext = psl->qStarts[i+1];
+        /* get size of gap between current block and next for target */
         tdiff = tsNext - te;
         verbose(6, "%s tdiff %d = tsNext %d - te %d\n",psl->qName, tdiff, tsNext, te);
+        /* get size of gap between current block and the next for query */
         qdiff = qsNext - qe;
         }
     else
         tdiff = 9999999;
+    /* set cumulative tdiff to tidff */
     cumTdiff = tdiff;
     qsStart = qs;
+    /* increment exon count */
     exonCount++;
 /* combine blocks that are close together */
     while (tdiff < maxBlockGap && i< (psl->blockCount)-1)
@@ -2204,20 +2218,28 @@ for (i = 0 ; i < psl->blockCount ; i++)
         cumTdiff += tdiff;
         oldte = te;
         }
+    /* get number of repeats bases in this gap region and calculate the
+       number of non-repeat bases in the gap */
     isRep = isRepeat(psl->tName, te,tsNext,rmskHash, &repCnt);
     verbose(6, "%s %s:%d-%d exon %d reps = %d tdiff %d rep ratio %f isRep %d\n",
             psl->qName, psl->tName, te, tsNext, i, repCnt, tdiff, (float)repCnt/tdiff, isRep);
     tdiff -= repCnt;
     verbose(6, "%s tdiff %d -= repCnt  %d \n",psl->qName, tdiff, repCnt);
     //assert (repCnt >= 0);
+    /* if the psl query is on the - strand, then get query start and end
+       relative to the - strand */ 
     oqs = qs; oqe = qe;
     if (psl->strand[0] == '-')
         reverseIntRange(&oqs, &oqe, psl->qSize);
+    /* calculate the gap ratio as a percentage of the proportion of 
+     * query gap over target gap */
     if (tdiff > 0)
         gapRatio = qdiff*100/tdiff;
     else
         gapRatio = 100;
     verbose(5, "%d-%d/%d  ",oqs,oqe,gapRatio); 
+    /* If this gap is an intron increment the intron count and add the 
+     * number of bases to the cumulative total of bases */
     if (gapRatio < 30 && tdiff > minIntronSize && 
             i < (psl->blockCount)-1 && !isRep)
         {
@@ -2227,6 +2249,9 @@ for (i = 0 ; i < psl->blockCount ; i++)
         intronsPresent++;
         intronsPresentBases += bases;
         }
+    /* if a nestedPsl is provided get the number of overlapping bases 
+       and keep a cumulative count of the bases and keep a count of the total
+       number of exons and spliced introns */
     if (nestedPsl != NULL)
         {
         int numBlocks = 0;
@@ -2256,6 +2281,7 @@ if (pseudoExonCount != NULL)
 if (retBlockCover != NULL)
     *retBlockCover = blocksCovered;
 }
+
 int pslCountIntrons(struct psl *genePsl, struct psl *pseudoPsl, int maxBlockGap, 
         struct hash *rmskHash , int slop, struct dyString *iString , int *conservedIntron, int *conservedSplice, int *pseudoExonCount)
 /* return number of introns aligned between parent and retro have a size ratio greater than intronRatio (1.5)
@@ -2448,8 +2474,9 @@ return teReps;
 }
 
 int countRetainedSpliceSites(struct psl *target, struct psl *query, int spliceDrift)
-/* count number of splice sites from parent gene that are within spliceDrift bases of splice site in retro */
-/* splice site is measure relative to q coordinates */
+/* count number of splice sites from parent gene that are within spliceDrift 
+ * bases of splice site in retro. splice site is measured relative to the 
+ * query coordinates */
 {
 int count = 0, i;
 bool swapT = FALSE, swapQ = FALSE;
@@ -2466,6 +2493,7 @@ verbose(5, "countRetainSS t strand %s %s ",target->strand, target->tName);
 printPslQBlocks(target, FALSE);
 verbose(5, "countRetainSS q strand %s %s ",query->strand, query->tName);
 printPslQBlocks(query, FALSE);
+/* if either the target or query PSL strand is - then reverse coordinates so relative to - strand */
 if (target->strand[0] == '-')
     {
     pslRc(target);
@@ -2480,6 +2508,7 @@ verbose(4, "countRetainSS target blocks %d %s ",target->blockCount, target->stra
 printPslQBlocks(target, FALSE);
 verbose(4, "countRetainSS query blocks %d %s ",query->blockCount,query->strand);
 printPslQBlocks(query, FALSE);
+/* query size for target PSL and query PSL should be the same else abort with warning message */
 if (target->qSize != query->qSize)
     {
     abortAtEnd = TRUE;
@@ -2591,10 +2620,12 @@ verbose(2, "FINAL COUNT Cons Splices %d %s:%d-%d q %s:%d-%d\n",
      query->tName, query->tStart+1, query->tEnd);
 //pslFree(&targetM);
 //pslFree(&queryM);
+/* if target or query PSL coords were swapped then revrse them again */
 if (swapT)
     pslRc(target);
 if (swapQ)
     pslRc(query);
+/* if second strand is '-' then set to null */
 if (query->strand[1] == '+')
     query->strand[1] = '\0';
 if (target->strand[1] == '+')
@@ -2871,6 +2902,7 @@ bool keepChecking = TRUE;
 int intronBases;
 int pseudoExonCount = 0;
 
+/* set and initalise the ucscRetroInfo struct */
 AllocVar(pg);
 pg->name = cloneString(psl->qName);
 pg->parentSpliceCount = (maxExons*2)-2; /* really splice sites */
@@ -2898,11 +2930,13 @@ calcIntrons(psl, maxBlockGap, bestPsl, &processedIntrons, &intronCount, &qBlockC
 /* reverse the paramters to calculate number of exons covered in parent */
 if (bestPsl != NULL)
     calcIntrons(bestPsl, maxBlockGap, psl, NULL, NULL, &exonCover, NULL);
+/* if bestPsl is NULL and exonCover not calculated this will be set to 0 */
 pg->exonCover = exonCover;
 pg->retroExonCount = pseudoExonCount;
 pg->processedIntrons = processedIntrons;
 pg->intronCount = intronCount;
 //pslCountIntrons(bestPsl, psl, maxBlockGap, rmskHash, intronSlop, iString, &conservedIntrons, &conservedSpliceSites) ;
+/* target is bestPsl, query is psl */
 pg->conservedSpliceSites = countRetainedSpliceSites(bestPsl, psl , spliceDrift);
 /* reduced intronsProcessed by conserved splice site count */
 pg->processedIntrons -= pg->conservedSpliceSites;
