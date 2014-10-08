@@ -2942,6 +2942,8 @@ pg->conservedSpliceSites = countRetainedSpliceSites(bestPsl, psl , spliceDrift);
 pg->processedIntrons -= pg->conservedSpliceSites;
 if (pg->processedIntrons < 0)
     pg->processedIntrons = 0;
+/* Calculate the ratio of simple repeat based to aligned non-repeat bases 
+ * (matches + mismatches) */
 trfRatio = calcTrf(psl, trfHash);
 verbose(4, "%s calcIntrons.ExonsSpliced_exon_covered - conserved_SS -> %d-%d=%d calcIntrons.intronCount %d trfRatio %4.2f\n", 
         psl->qName, pg->exonCover,pg->conservedSpliceSites, 
@@ -2949,6 +2951,7 @@ verbose(4, "%s calcIntrons.ExonsSpliced_exon_covered - conserved_SS -> %d-%d=%d 
 //if (bestPsl == NULL)
 //    pg->intronCount = pg->alignGapCount;
 
+/* find overlapping gene annotations */
 geneOverlap = 0;
 genePredFree(&kg); 
 genePredFree(&gp); 
