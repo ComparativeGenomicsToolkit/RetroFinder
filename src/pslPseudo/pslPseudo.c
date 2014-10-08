@@ -529,7 +529,7 @@ dyStringAppendN(aRes, aSeq, aGap);
 dyStringAppendMultiC(bRes, '-', aGap);
 }
 
-struct genePred *getOveralappingGene2(struct genePred **list, char *table, char *chrom, int cStart, int cEnd, char *name, int *retOverlap)
+struct genePred *getOverlappingGene(struct genePred **list, char *table, char *chrom, int cStart, int cEnd, char *name, int *retOverlap)
 {
 /* read all genes from a table find the gene with the biggest overlap. 
    Cache the list of genes to so we only read it once */
@@ -1482,6 +1482,8 @@ for (i=1; i<blockCount; ++i)
     /* why multiple repeat bases by 1.5? */
     tGap = ts - te - reps*1.5 - trf;
     /* why is 2*abs(qs-qe) used */
+    /* only counts it if qGap small compared to tGap, if same then some
+       other insertion */
     if (2*abs(qs - qe) <= tGap && tGap >= maxBlockGap ) 
         /* don't count q gaps in mrna as introns , if they are similar in size to tGap*/
         {
@@ -2958,7 +2960,7 @@ genePredFree(&gp);
 genePredFree(&mgc); 
 if (bestPsl != NULL)
     {
-    kg = getOveralappingGene2(&kgList, "knownGene", bestPsl->tName, bestPsl->tStart, 
+    kg = getOverlappingGene(&kgList, "knownGene", bestPsl->tName, bestPsl->tStart, 
                         bestPsl->tEnd , bestPsl->qName, &geneOverlap);
     if (kg != NULL)
         {
@@ -2973,7 +2975,7 @@ if (bestPsl != NULL)
         {
         pg->kgName = cloneString("noKg");
         }
-    gp = getOveralappingGene2(&gpList1, "refGene", bestPsl->tName, bestPsl->tStart, 
+    gp = getOverlappingGene(&gpList1, "refGene", bestPsl->tName, bestPsl->tStart, 
                         bestPsl->tEnd , bestPsl->qName, &geneOverlap);
     if (gp != NULL)
         {
@@ -2985,7 +2987,7 @@ if (bestPsl != NULL)
         {
         pg->refSeq = cloneString("noRefSeq");
         }
-    mgc = getOveralappingGene2(&gpList2, "mgcGenes", bestPsl->tName, bestPsl->tStart, 
+    mgc = getOverlappingGene(&gpList2, "mgcGenes", bestPsl->tName, bestPsl->tStart, 
                         bestPsl->tEnd , bestPsl->qName, &geneOverlap);
     if (mgc != NULL)
         {
