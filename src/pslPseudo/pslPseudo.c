@@ -426,7 +426,9 @@ return dotIdx;
 char *getCdsForAcc(char *acc)
 /* look up a cds, trying with and without version */
 {
+/* get the CDS for acc */
 char *cdsStr = cdsQuery(acc);
+/* if it is not found then try using the accession without version number */
 if (cdsStr == NULL)
     {
     int dotIdx = getGbVersionIdx(acc);
@@ -523,9 +525,13 @@ void writeGap(struct dyString *aRes, int aGap, char *aSeq, struct dyString *bRes
  *         ag-  */
 
 {
+/* append bGap '-' characters to end of aRes */
 dyStringAppendMultiC(aRes, '-', bGap);
+/* bSeq is appended to bRes */
 dyStringAppendN(bRes, bSeq, bGap);
+/* aSeq is appended to aRes */
 dyStringAppendN(aRes, aSeq, aGap);
+/* append aGap '-' characters to end of bRes */
 dyStringAppendMultiC(bRes, '-', aGap);
 }
 
@@ -819,6 +825,10 @@ int cdsEnd = -1;
 
 if (*list == NULL)
     return FALSE;
+/* go through the gene list and count overlapping bases between exons of the 
+ * genePreds in the list and cStart to cEnd range if on the same chrom 
+ * and if coordinates and name have a match then return TRUE and the genePred
+ * and overlap */
 for (el = *list; el != NULL; el = el->next)
     {
     if (chrom != NULL && el->chrom != NULL)
@@ -857,6 +867,7 @@ for (el = *list; el != NULL; el = el->next)
 verbose(5, "genePred not found %s\n",name);
 return FALSE;
 }
+
 int getGenePred(struct ucscRetroInfo *pg, struct psl *psl, struct genePred **retGp)
 /* return 0 if no gene pred or positive number to bump the score to favor parents with CDS annotation */
 {
@@ -1014,6 +1025,7 @@ wt[0] = 1; wt[1] = 1; wt[2] = 0.1; wt[3] = 0.2; wt[4] = 0.7;
 wt[5] = 1; wt[6] = 1; wt[7] = 0.5; wt[8] = 1; wt[9] = 1; wt[10] = 1;
 
 }
+
 float axtScoreKAKU(struct axtScoreScheme *ss, int symCount, char *qSym, char *tSym, struct ucscRetroInfo *pg)
 /* Return score of ratio of non-syn positions vs utr mutations given cds. */
 {
@@ -1299,6 +1311,8 @@ if (gp == NULL)
     }
 
 char *cdsStr = getCdsForAcc(name);
+/* parses the CDS from cdsStr and stores the start (0-based coord) and end in 
+ * the cds struct */ 
 if (cdsStr != NULL)
     {
     genbankCdsParse(cdsStr, &cds);
@@ -2792,8 +2806,9 @@ return (float)trf/(float)(psl->match+psl->misMatch);
 }
 
 int overlapMrna(struct psl *psl, int *exonOverlapCount, struct psl **overlapPsl, int *exonCount)
-/* count bases that mrna (exprHash) overlaps with pseudogenes. If self match then don't filter it.*/
-/* exonOverlapCount has number of exons in matched mRna */
+/* Count bases that mRNA (exprHash) overlaps with pseudogenes. If self match 
+ * then don't filter it.*/
+/* exonOverlapCount has number of exons in matched mRNA */
 {
 int maxOverlap = 0;
 //char *maxCds = NULL;
@@ -2852,7 +2867,8 @@ if (exprHash != NULL)
                             %s %s %d-%d best so far %s\n",
                             mrnaBases, mPslMerge->blockCount, maxOverlap, *exonOverlapCount, 
                             mPslMerge->qName, mPslMerge->qName, mPslMerge->tStart, mPslMerge->tEnd, mrnaOverlap);
-		    /* must have at least 50 bases overlap to be consider "expressed" retro */
+		    /* must have at least 50 bases overlap to be consider 
+                      * "expressed" retro */
 		    /* pick mRNA with greatest overlap with retro */
  		    /* Refseq mRNA take priority over non-refseq mRNA */
                     if (mrnaBases > 50 && (mPslMerge->blockCount > 0) && 
@@ -2863,7 +2879,8 @@ if (exprHash != NULL)
                                )))
                        )
                         {
-			/* return # of overlapping exons , bases and qName of best overalapping mRNA*/
+			/* return # of                      overlapping exons, bases and qName 
+                         * of best overlapping mRNA*/
                             *exonOverlapCount = (int)mPslMerge->blockCount;
                             safef(mrnaOverlap,255,"%s",mPslMerge->qName);
                             maxOverlap = mrnaBases;
@@ -2957,7 +2974,9 @@ verbose(4, "%s calcIntrons.ExonsSpliced_exon_covered - conserved_SS -> %d-%d=%d 
 geneOverlap = 0;
 genePredFree(&kg); 
 genePredFree(&gp); 
-genePredFree(&mgc); 
+genePredFree(&mgc);
+/* if bestPsl (parent) is not NULL then find best overlapping genePred from
+ * three genesets that are input to the program */ 
 if (bestPsl != NULL)
     {
     kg = getOverlappingGene(&kgList, "knownGene", bestPsl->tName, bestPsl->tStart, 
@@ -3016,6 +3035,8 @@ if (trfRatio > maxTrf)
     }
 /* blat sometimes overlaps parts of the same mrna , filter these */
 
+/* if this is quite repetitive and there is an intersection between the parent
+ * start and end and the retro start and end and they are on the same chrom */
 if ( keepChecking && positiveRangeIntersection(bestStart, bestEnd, psl->tStart, psl->tEnd) && 
             sameString(psl->tName, bestChrom))
    {
@@ -3053,6 +3074,7 @@ if (keepChecking && rmskHash != NULL)
 
     }
 pg->tReps = round((float)(rep*100)/(float)(psl->match+(psl->misMatch)));
+/* label predictions with high repeat coverage as NOTPSEUDO */
 if ((float)rep/(float)(psl->match+(psl->misMatch)) > maxRep )
     {
     verbose(1,"NO %s reps %.3f %.3f\n",psl->tName,(float)rep/(float)(psl->match+(psl->misMatch)) , maxRep);
@@ -3061,6 +3083,9 @@ if ((float)rep/(float)(psl->match+(psl->misMatch)) > maxRep )
     keepChecking = FALSE;
     }
 
+/* for retros with low number of introns and certain score and low repeats, 
+ * check mRNAs aligned by BLAT for overlap and therefore signs of the retro
+ * being expressed */
 if (keepChecking && (pg->intronCount <= 2 /*|| (pg->exonCover - pg->intronCount > INTRONMAGIC)*/) && 
     /*maxExons > 1 && */ pg->bestAliCount > 0 && bestChrom != NULL &&
     (calcMilliScore(psl) >= milliMinPseudo && trfRatio < maxTrf && (pg->exonCover-pg->conservedSpliceSites) > 0 &&
@@ -3161,7 +3186,7 @@ else
         dyStringAppend(reason,"milliBad;");
     if (psl->match + psl->misMatch + psl->repMatch < minCoverPseudo * (float)psl->qSize)
         dyStringAppend(reason,"coverage;");
-
+   /* NOTE: This is doing the same thing in both if and else */
    if (bestPsl == NULL)
        {
        pg->label = NOTPSEUDO;
