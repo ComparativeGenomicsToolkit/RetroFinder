@@ -1931,6 +1931,7 @@ if (index >= 0)
     }
 return offset;
 }
+
 bool isRepeat (char *chrom, int is, int ie, struct hash *rmskHash, int *retRepCount)
 /* check for repeats from intron*/
 {
@@ -2436,6 +2437,7 @@ pslFree(&pseudo);
 pslFree(&gene);
 return count;
 }
+
 bool pslInRange(struct psl *psl, int i)
 /* check if block index is out of range of psl */
 {
@@ -2648,6 +2650,7 @@ if (target->strand[1] == '+')
     target->strand[1] = '\0';
 return count;
 }
+
 int pslCountExonSpan(struct psl *target, struct psl *query, int maxBlockGap, struct hash *rmskHash , int *tReps, int *qReps)
 /* count the number of blocks in the query that overlap the target */
 /* merge blocks that are closer than maxBlockGap */
