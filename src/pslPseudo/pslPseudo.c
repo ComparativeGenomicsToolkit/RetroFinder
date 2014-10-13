@@ -1902,61 +1902,6 @@ if (retRepCount != NULL)
 return FALSE;
 }
 
-bool getNextIntron(struct psl *psl, int i, int *tStart, int *tEnd, int *qStart, int *qEnd, struct hash *rmskHash)
-/* get next boundaries indexed intron */
-/* t coords are virtual 0 = start of psl*/
-/* return false of no next intron */
-{
-int repCnt = 0;
-verbose(3,"    getNextIntron %s %s: %c total blocks %d\n",
-        psl->qName, psl->tName,  psl->strand[0], psl->blockCount);
-if (i+1 >= psl->blockCount)
-    {
-    verbose(3,"   no next exon, cannot check for introns i=%d > blockcount=%d\n",i,psl->blockCount);
-    return FALSE;
-    }
-if (psl->strand[1] == '-')
-    {
-    i = psl->blockCount - i -1;
-    *qStart = psl->qStarts[i-1] + psl->blockSizes[i-1];
-    *tEnd = psl->tStarts[i]-2;
-    *tStart = psl->tStarts[i-1] + psl->blockSizes[i-1];
-    *qEnd = psl->qStarts[i];
-//    *tStart = psl->tEnd - *tStart;
-//    *tEnd = psl->tEnd - *tEnd;
-    }
-else
-    {
-    *qEnd = psl->qStarts[i+1];
-    *tEnd = psl->tStarts[i+1];
-    assert(i < psl->blockCount);
-    *qStart = psl->qStarts[i] + psl->blockSizes[i];
-    *tStart = psl->tStarts[i] + psl->blockSizes[i];
-    if(*tStart < psl->tStart)
-        verbose(4,"    i %d blk %d *tStart %d psl->tStart %d qName %s %s\n",
-                i, psl->blockCount, *tStart, psl->tStart, psl->qName, 
-                psl->tName);
-    assert(*tStart >= psl->tStart);
-//    *tStart = *tStart - psl->tStart;
-//    *tEnd = *tEnd - psl->tStart;
-    }
-if (psl->strand[1] == '-')
-    {
-    reverseIntRange(tStart, tEnd, psl->tSize);
-    }
-if(*tStart >= *tEnd)
-    verbose(1,"start > end %s:%d-%d strand %s %s\n",
-            psl->tName, *tStart+1, *tEnd, psl->strand, psl->qName);
-assert(*tStart < *tEnd);
-if (isRepeat(psl->tName, *tStart,*tEnd,rmskHash, &repCnt))
-    {
-    verbose(3,"    next intron ret isRpt=TRUE reps %d %s:%d-%d %s %d-%d cnt %d\n",repCnt,psl->tName,*tStart+1, *tEnd, psl->qName, *qStart+1, *qEnd, psl->blockCount);
-    return FALSE;
-    }
-verbose(3,"    next intron ret isRpt=FALSE reps %d %s:%d-%d %s %d-%d cnt %d\n",repCnt,psl->tName,*tStart+1, *tEnd, psl->qName, *qStart+1, *qEnd, psl->blockCount);
-return TRUE;
-}
-
 /* get overlap of q blocks and set the number of overlapping blocks to numBlocks */
 int getQOverlap(struct psl *psl, int start, int end, int *numBlocks)
 {
@@ -2521,8 +2466,6 @@ pg->polyA = polyACalc(psl->tStart, psl->tEnd, psl->strand, psl->tSize, psl->tNam
                 POLYAREGION, &polyAstart, &polyAend, pg->milliBad/10);
 pg->polyAlen = abs(polyAend-polyAstart)+1;
 pg->polyAstart = polyAstart;
-/* count # of alignments that span introns */
-//pg->exonCover = pslCountExonSpan(bestPsl, psl, maxBlockGap, rmskHash, &tReps, &qReps) ;
 /* calc introns processed in retro in two ways and blocks and exons covered into RETRO*/
 calcIntrons(psl, maxBlockGap, bestPsl, &processedIntrons, &intronCount, &qBlockCover, &pseudoExonCount);
 /* reverse the paramters to calculate number of exons covered in parent */
