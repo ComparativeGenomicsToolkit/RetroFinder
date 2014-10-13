@@ -9,8 +9,6 @@
 #include "hash.h"
 #include "memalloc.h"
 #include "jksql.h"
-//#include "hdb.h"
-//#include "sqlnum.h"
 #include "psl.h"
 #include "obscure.h"
 #include "bed.h"
@@ -28,7 +26,6 @@
 #include "twoBit.h"
 #include "chainNet.h"
 #include "genbank.h"
-//#include "scoreWindow.h" TODO fix this
 #include "verbose.h"
 
 #define ScoreNorm 7
@@ -83,7 +80,6 @@ FILE *bestFile, *pseudoFile, *linkFile, *axtFile, *orthoFile;
 struct twoBitFile *genomeSeqFile = NULL;
 struct twoBitFile *mrnaFile = NULL;
 struct axtScoreScheme *ss = NULL; /* blastz scoring matrix */
-//struct dnaSeq *mrnaList = NULL; 
 struct slName *mrnaList = NULL;/* list of all input mrna sequence names  */
 struct hash *fileHash = NULL;  
 char mrnaOverlap[255];
@@ -301,19 +297,6 @@ lineFileClose(&lf);
 return hash;
 }
 
-/* get accession before version and suffix */
-char *getPrefix(char *acc)
-{
-char *name[3];
-static char buf[255];
-int splitCount = 0;
-safef(buf, sizeof(buf), "%s",acc);
-splitCount = chopString(buf, ".", name, ArraySize(name));
-if (splitCount == 0)
-    safef(name[0], sizeof(buf), "%s",acc);
-return name[0];
-}
-
 struct axt *axtCreate(char *q, char *t, int size, struct psl *psl)
 /* create axt */
 {
@@ -353,10 +336,6 @@ if (strlen(q) != symCount)
 axt->qSym = cloneString(q);
 axt->score = axtScoreFilterRepeats(axt, ss);
 verbose(1,"axt score = %d\n",axt->score);
-//for (i=0; i<size ; i++) 
-//    fputc(t[i],f);
-//for (i=0; i<size ; i++) 
-//    fputc(q[i],f);
 return axt;
 }
 
@@ -425,20 +404,6 @@ else
 return cdsStr;
 }
 
-#ifdef junk
-int genePredCdnaSize(struct genePred *gp)
-/* Return total size of all exons. */
-{
-int totalSize = 0;
-int exonIx;
-
-for (exonIx = 0; exonIx < gp->exonCount; ++exonIx)
-    {
-    totalSize += (gp->exonEnds[exonIx] - gp->exonStarts[exonIx]);
-    }
-return totalSize;
-}
-
 void getCdsInMrna(struct genePred *gp, int *retCdsStart, int *retCdsEnd)
 /* Given a gene prediction, figure out the
  * CDS start and end in mRNA coordinates. */
@@ -468,12 +433,10 @@ dyStringAppendN(aRes, aSeq, gapSize);
 dyStringAppendMultiC(bRes, '-', gapSize);
 }
 
-
 void writeGap(struct dyString *aRes, int aGap, char *aSeq, struct dyString *bRes, int bGap, char *bSeq)
 /* Write double - gap.  Something like:
  *         --c
  *         ag-  */
-
 {
 /* append bGap '-' characters to end of aRes */
 dyStringAppendMultiC(aRes, '-', bGap);
@@ -493,38 +456,7 @@ struct genePred *getOverlappingGene(struct genePred **list, char *table, char *c
 struct genePred *el = NULL, *bestMatch = NULL, *gp = NULL;
 int overlap = 0 , bestOverlap = 0, i;
 int *eFrames;
-//char query[256];
-//struct genePred *gene;
-//struct sqlConnection *conn;
-//struct sqlResult *sr;
-//char **row;
-//struct psl *psl;
 
-
-/*if (*list == NULL)
-    {
-    printf("Loading Predictions from %s\n",table);
-    AllocVar(*list);
-    conn = hAllocConn(db);
-    AllocVar(gene);
-    safef(query, sizeof(query), "select * from %s", table);
-    sr = sqlGetResult(conn, query);
-    while ((row = sqlNextRow(sr)) != NULL){
-        if (!sameString(table,"all_mrna"))
-            {
-            el = genePredLoad(row);
-            }
-        else
-            {
-            psl = pslLoad(row);
-            el = genePredFromPsl2(psl, 0, NULL, genePredStdInsertMergeSize);
-            }
-        slAddHead(list, el);
-        }
-    slReverse(list);
-    sqlFreeResult(&sr);
-    hFreeConn(&conn);
-    }*/
 for (el = *list; el != NULL; el = el->next)
     {
     if (chrom != NULL && el->chrom != NULL)
@@ -597,7 +529,6 @@ return gp;
 
 struct axt *pslToAxt(struct psl *psl, struct genbankCds *cds)
 {
-//static char *tName = NULL, *qName = NULL;
 static struct dnaSeq *tSeq = NULL, *qSeq = NULL;
 static struct slName *mrna;
 struct dyString *q = newDyString(16*1024);
@@ -609,7 +540,6 @@ int qOffset = 0;
 int tOffset = psl->tStart;
 struct axt *axt = NULL;
 char name[512];
-//int cnt = 0;
 
 freeDnaSeq(&qSeq);	
 assert(mrnaList != NULL);
@@ -665,8 +595,6 @@ if (qSeq->size != psl->qSize)
     }
 freeDnaSeq(&tSeq);
 // Read region of genome sequence.
-//readCachedSeqPart(tName, psl->tStart, psl->tEnd-psl->tStart, 
-//	tHash, fileCache, &tSeq, &tOffset, &tIsNib);
 tSeq = twoBitReadSeqFrag(genomeSeqFile, psl->tName, psl->tStart, psl->tEnd);
 
 if (psl->strand[0] == '-')
@@ -772,7 +700,6 @@ int overlap = 0 , bestOverlap = 0, i;
 int cdsStart = -1;
 int cdsEnd = -1;
 
-
 if (*list == NULL)
     return FALSE;
 /* go through the gene list and count overlapping bases between exons of the 
@@ -819,7 +746,8 @@ return FALSE;
 }
 
 int getGenePred(struct ucscRetroInfo *pg, struct psl *psl, struct genePred **retGp)
-/* return 0 if no gene pred or positive number to bump the score to favor parents with CDS annotation */
+/* return 0 if no gene pred or positive number to bump the score to 
+ * favor parents with CDS annotation */
 {
 int geneOverlap = 0;
 char name[512];
@@ -848,7 +776,6 @@ return 1000-pslCalcMilliBad(psl, TRUE);
 
 void outputNoLinkScore(struct psl *psl, struct ucscRetroInfo *pg, 
                 int overlapOrtho1, int overlapOrtho2, int overlapOrtho3)
-    
 /* output bed record with pseudogene details */
 {
 struct ucscRetroOrtho *puro1 = NULL;
@@ -859,8 +786,6 @@ int i, *chromStarts, chromStart;
 AllocVar(puro1);
 AllocVar(puro2);
 AllocVar(puro3);
-//pg->oldScore = (pg->milliBad - (100-log(pg->polyAlen)*20) - (overlapOrtho1*2) - (100-pg->coverage) 
-//        + log(psl->match+psl->repMatch)*100)/2 ;
 
 pg->chrom = cloneString(psl->tName);
 pg->chromStart = pg->thickStart = chromStart = psl->tStart;
@@ -884,7 +809,6 @@ if (psl->strand[1] == '-')
 for (i=0; i<blockCount; ++i)
     chromStarts[i] -= chromStart;
 
-//bedOutputN( bed , 12, linkFile, '\t', '\t');
 if (pg->type == NULL)
     pg->type = cloneString("NONE");
 if (strlen(pg->type)<=1)
@@ -919,26 +843,6 @@ ucscRetroOrthoOutput(puro3, orthoFile, '\t','\n');
 //ucscRetroOrthoFree(&puro1);
 //ucscRetroOrthoFree(&puro2);
 //ucscRetroOrthoFree(&puro3);
-        /* bed 1-12 */
-        /* 13             14        15    16         17           18  */
-//        retroExonCount, axtScore, type, bestgName, bestgStart, bestgEnd, 
-        /*   19  */
-//        (bestStrand[0] == '+' || bestStrand[0] == '-') ? bestStrand : "0", 
-        /* 20                21           22 */
-//        parentSpliceCount, geneOverlap, polyA, 
-        /* polyAstart 23*/
-//        (psl->strand[0] == '+') ? polyAstart - psl->tEnd : psl->tStart - polyAstart , 
-        /* 24           25              26      27 */
-//        exonCover, intronCount, bestAliCount, psl->match+psl->repMatch, 
-        /* 28              29               30   */
-//        psl->qSize, psl->qSize-psl->qEnd, rep,  
-        /* 31      32      33        34         35              36,                37        38          */
-//        coverage, label, milliBad, alignGapCount, conservedIntrons, consSplice, maxOverlap, 
-        /* 39      40      41        42             43                44,         45        */
-//        *refSeq , rStart, rEnd, *mgc , mStart , mEnd , *kgName , kStart , kEnd , *overName , overStart , overExonCover , 
-        /* 46       47      48     49    50       51      52       53       54      55         56          57 */
-//        overStrand[3] , posConf , polyAlen
-        /* 58             59        60 */
 }
 
 void initWeights()
@@ -976,117 +880,9 @@ wt[5] = 1; wt[6] = 1; wt[7] = 0.5; wt[8] = 1; wt[9] = 1; wt[10] = 1;
 
 }
 
-float axtScoreKAKU(struct axtScoreScheme *ss, int symCount, char *qSym, char *tSym, struct ucscRetroInfo *pg)
-/* Return score of ratio of non-syn positions vs utr mutations given cds. */
-{
-int i;
-char q,t;
-boolean lastGap = FALSE;
-int ka = 0;
-int kc = 0;
-int codingMatch = 0;
-int utrMatch = 0;
-int ku = 0;
-int ks = 0;
-int phase = 0;
-int codingLen = 0;
-int utrLen = 0;
-int ksLen = 0;
-int tGapLen = 0;
-int qGapLen = 0;
-float kaNorm = 0.0;
-float kuNorm = 0.0;
-float kcNorm = 0.0;
-float ksNorm = 0.0;
-float ksuNorm = 0.0;
-float dn, ds;
-int len = 0;
-int phaseCount[3];
-int kaLen = 0;
-
-phaseCount[0] = 0;
-phaseCount[1] = 0;
-phaseCount[2] = 0;
-dnaUtilOpen();
-verbose(1," axtKAKU symCount %d %s\n",symCount,qSym);
-for (i=0; i<symCount; ++i)
-    {
-    q = qSym[i];
-    t = tSym[i];
-    if (q != '-' && t != '-')
-        {
-        if (isupper(q))
-            {
-            codingLen++;
-            if (toupper(t)!=toupper(q))
-                {
-                kc++;
-                if (phase < 2)
-                    ka++;
-                verbose(6,"kaks mismatch t %c q %c phase %d ka %d\n",t,q,phase, ka);
-                phaseCount[phase]++;
-                }
-            else 
-                {
-                codingMatch++;
-                }
-            }
-        else
-            {
-            if (toupper(t)!=toupper(q))
-                ku++;
-            else 
-                utrMatch++;
-            utrLen++;
-            }
-	lastGap = FALSE;
-	}
-    else
-        {
-        if (t == '-')
-            tGapLen++;
-        if (q == '-')
-            qGapLen++;
-        if (t == '-' && q != '-')
-            codingLen++;
-        }
-    phase++;
-    phase = phase % 3;
-    len++;
-    }
-ks = phaseCount[2];
-ksLen = round(0.3333*codingLen);
-kaLen = codingLen - ksLen;
-if (ksLen == 0 || kaLen == 0 || codingLen == 0) 
-    {
-    verbose(4, "kslen %d kaLen %d codingLen %d are zero , no kaks calc\n",ksLen, kaLen, codingLen ); 
-    return (float)-1;
-    }
-kaNorm = (float)ka/kaLen ;
-ksNorm = (float)ks/(float)ksLen ;
-ds=-3 * log (1-(4* ksNorm/3))/4;
-dn=-3 * log (1-(4* kaNorm/3))/4;
-verbose(4, "# %s kaks %4.2f kaNorm/ksNorm %4.2f ka %d kaLen %d ks %d kslen %d ks/kslen %4.2f dn %4.2f ds %4.2f dn/ds %4.2f\n",pg->name, (float)ka/(float)ks, kaNorm/ksNorm, ka , kaLen, ks, ksLen, ksNorm, dn, ds, dn/ds);
-return kaNorm/ksNorm;
-if (ksLen == 0 || kaLen == 0 || utrLen == 0 || codingLen == 0) 
-    {
-    verbose(1,"kslen %d kalen %d utrlen %d codinglen %d zero, no kaku\n", ksLen,  kaLen, utrLen, codingLen) ;
-    return (float)-1;
-    }
-kcNorm = (float)kc/codingLen ;
-kuNorm = (float)ku/utrLen;
-ksuNorm = (float)ku+ks/(utrLen+ksLen);
-verbose(3, "%s type %d age %d intronSpl %d kc %d coding match %d cdslen %d kc/coding %4.2f ka %d kaLen %d ka/klen %4.2f\n",
-        pg->name, pg->label, pg->milliBad, pg->processedIntrons, kc, codingMatch, codingLen, kcNorm, ka, kaLen, kaNorm); 
-verbose(3, "%s ku %d utrMatch %d utrLen %d ku/utr %4.2f ka/ku %4.2f ks %d kslen %d ks/ksLen %4.2f ka/ks %4.2f Ka/ku %4.2f ka/ks+u %4.2f kc/ku %4.2f phase %d tgap %d qgap %d\n",
-        pg->name, ku, utrMatch, utrLen, kuNorm, kaNorm/kuNorm, ks, ksLen, ksNorm, kaNorm/ksNorm, kaNorm/kuNorm, kaNorm/ksuNorm, kcNorm/kuNorm, phase, tGapLen, qGapLen);
-return kaNorm/kuNorm;
-}
-
 int netOverlap(struct psl *psl, struct hash *nHash)
 /* calculate if pseudogene overlaps the syntenic diagonal with another species */
 {
-//int overlap = 0;
 int percentBreak = 0;
 if (nHash != NULL)
     {
@@ -1095,7 +891,6 @@ if (nHash != NULL)
     int gapSize[MAX_NET_LEVELS];
     int overlapSize[MAX_NET_LEVELS];
     int rptSize = 0;
-    //float coverage = 0.0;
     struct binKeeper *bk = hashFindVal(nHash, psl->tName);
     struct binElement *el;
     struct binElement *rptlist = NULL;
@@ -1282,11 +1077,6 @@ if (pg->label == PSEUDO || pg->label == EXPRESSED || pg->label == NOTPSEUDO)
         {
         pg->axtScore = axtScoreFilterRepeats(axt, ss);
         verbose(6,"qseq %s %s\n",psl->qName, axt->qSym);
-        //pg->kaku = axtScoreKAKU(ss, axt->symCount , axt->qSym, axt->tSym, pg);
-        //verbose(3,"%s kaku %4.3f label %d axt Score %d q len %d t len %d \n",
-        //        pg->name, pg->kaku, pg->label, pg->axtScore, (int)strlen(axt->qSym), (int)strlen(axt->tSym) );
-        //axtWrite(axt, axtFile);
-        //axtFree(&axt);
         }
     else
         verbose(2,"no axt Score %d qname %s\n",pg->axtScore, psl->qName);
@@ -1374,7 +1164,7 @@ outputNoLinkScore(psl, pg, overlapOrtho1, overlapOrtho2, overlapOrtho3);
 }
 
 int intronFactor(struct psl *psl, struct hash *rmskHash, struct hash *trfHash, int *baseCount)
-/* Figure approx number of introns.  
+/* Figure out the approximate number of introns.  
  * An intron in this case is just a gap of 0 bases in query and
  * maxBlockGap or more in target with repeats masked. */
 {
@@ -1601,15 +1391,11 @@ int polyACalc(int start, int end, char *strand, int tSize, char *chrom, int regi
  * sliding window in region of the end of the sequence*/
 /* use the divergence from the gene as the scoring threshold */
 {
-//char nibFile[256];
 int seqSize;
 struct dnaSeq *seq = NULL;
 int count = 0;
 int length = 0;
 int score[POLYAREGION+1], pStart = 0; 
-//struct seqFilePos *sfp = hashMustFindVal(tHash, chrom);
-//struct nibInfo *ni = hashMustFindVal(tHash, chrom);
-//FILE *f = ni->f;
 int match = 1;
 int misMatch = -1;
 float threshold = divergence/100;
@@ -1632,7 +1418,6 @@ verbose(2,"search for polyA at %s:%d-%d len %d start %d tSize %d match %d misMat
 if (region == 0)
     return 0;
 assert(region > 0);
-//nibTwoCacheSeqPartExt(nibTwo, chrom, seqStart, seqSize, doMask, &retFullSeqSize);
 seq = twoBitReadSeqFrag(genomeSeqFile, chrom, seqStart, seqStart+region);
 
 if (strand[0] == '+')
@@ -1813,51 +1598,6 @@ for (blockIx = 0; blockIx < outPsl->blockCount; ++blockIx)
     verbose(5, "%d-%d, ",outPsl->tStarts[blockIx], 
             outPsl->tStarts[blockIx]+outPsl->blockSizes[blockIx]);
 verbose(5, "\n");
-}
-
-int interpolateStart(struct psl *gene, struct psl *pseudo)
-/* estimate how much of the 5' end of the pseudogene was truncated */
-    /* not used */
-{
-int qs = pseudo->qStarts[0];
-int qe = pseudo->qStarts[0]+pseudo->blockSizes[0];
-int gs, ge, qExonStart = 0;
-int geneBegin = gene->tStart;
-int j, index = -1;
-int offset = 0, bestOverlap = 0;
-int exonStart = 0;
-assert(pseudo!= NULL);
-assert(gene!= NULL);
-if (gene->strand[0] == '-')
-    geneBegin = gene->tEnd;
-for (j = 0 ; j < gene->blockCount ; j++)
-    {
-    int i = j;
-    if (gene->strand[0] == '-')
-        i = gene->blockCount - j -1;
-    gs = gene->qStarts[i];
-    ge = gene->qStarts[i]+gene->blockSizes[i];
-    if (gene->strand[0] == '-')
-        reverseIntRange(&gs, &ge, gene->qSize);
-    int overlap = positiveRangeIntersection(qs, qe, gs, ge);
-    if (overlap > bestOverlap)
-        {
-        bestOverlap = overlap;
-        index = i;
-        exonStart = gene->tStarts[i];
-        qExonStart = gs;
-        if (gene->strand[0] == '-')
-            exonStart = exonStart + gene->blockSizes[i];
-        }
-    }
-if (index >= 0)
-    {
-    if (gene->strand[0] == '+')
-        offset = exonStart - geneBegin + qs - qExonStart;
-    else
-        offset = geneBegin - exonStart + qs - qExonStart;
-    }
-return offset;
 }
 
 bool isRepeat (char *chrom, int is, int ie, struct hash *rmskHash, int *retRepCount)
@@ -2151,10 +1891,6 @@ bool swapT = FALSE, swapQ = FALSE;
 if (target == NULL || query == NULL)
     return 0;
 
-//AllocVar(targetM);
-//AllocVar(queryM);
-//pslMergeBlocks(target, targetM, maxBlockGap);
-//pslMergeBlocks(query, queryM, maxBlockGap);
 verbose(5, "countRetainSS t strand %s %s ",target->strand, target->tName);
 printPslQBlocks(target, FALSE);
 verbose(5, "countRetainSS q strand %s %s ",query->strand, query->tName);
@@ -2284,8 +2020,6 @@ verbose(2, "FINAL COUNT Cons Splices %d %s:%d-%d q %s:%d-%d\n",
      count,
      target->tName,  target->tStart+1, target->tEnd,
      query->tName, query->tStart+1, query->tEnd);
-//pslFree(&targetM);
-//pslFree(&queryM);
 /* if target or query PSL coords were swapped then revrse them again */
 if (swapT)
     pslRc(target);
@@ -2335,7 +2069,6 @@ int overlapMrna(struct psl *psl, int *exonOverlapCount, struct psl **overlapPsl,
 /* exonOverlapCount has number of exons in matched mRNA */
 {
 int maxOverlap = 0;
-//char *maxCds = NULL;
 safef(mrnaOverlap,255,"NONE");
 if (exprHash != NULL)
     {
@@ -2357,18 +2090,11 @@ if (exprHash != NULL)
                 assert (psl->tName != NULL);
                 if (differentString(psl->qName, mPsl->qName))
                     {
-                    //char *cdsStr = getCdsForAcc(psl->qName);
-                    //AllocVar(mPslMerge);
-                    //pslMergeBlocks(mPsl, mPslMerge, 10);
                     mPslMerge = mPsl;
                     if (exonCount != NULL)
                         *exonCount = mPsl->blockCount;
                     assert(mPslMerge != NULL);
                     verbose(6,"blk %d %s %d ec %d\n",mPslMerge->blockCount, mPsl->qName, mrnaBases, *exonOverlapCount);
-                    //if (cdsStr != NULL)
-                    //    verbose(3, "%s cds %s\n",mPsl->qName, cdsStr);
-                    //cds.start = cds.end = -1;
-                    //genbankCdsParse(cdsStr, &cds);
 
                     if (mPslMerge->blockCount > 0) /* mPslMerge contains overlap of retro with all_mrna.psl. 
 						no need to loop through intersection blocks, if only one */
@@ -2408,10 +2134,8 @@ if (exprHash != NULL)
                             *exonOverlapCount = (int)mPslMerge->blockCount;
                             safef(mrnaOverlap,255,"%s",mPslMerge->qName);
                             maxOverlap = mrnaBases;
-                            //maxCds = cdsStr;
                             *overlapPsl = mPslMerge;
                         }
-                    //pslFree(&mPslMerge);
                     }
                 }
             }
@@ -2506,9 +2230,6 @@ if (bestPsl != NULL)
         {
         pg->kStart = kg->txStart;
         pg->kEnd = kg->txEnd;
-//        if (kg->name2 != NULL)
-//            pg->kgName = cloneString(kg->name2);
-//        else
         pg->kgName = cloneString(kg->name);
         }
     else
@@ -2615,9 +2336,6 @@ if (keepChecking && (pg->intronCount <= 2 /*|| (pg->exonCover - pg->intronCount 
     struct psl *mPsl = NULL;
     int exonOverlapCount = -1;
     int exonCount = -1;
-
-    //struct genePred *gene = getOveralappingGene2(&gpList1, "refGene", psl->tName, psl->tStart, 
-    //                    psl->tEnd , psl->qName, &geneOverlap);
     int maxOverlap = overlapMrna(psl, &exonOverlapCount, &mPsl, &exonCount);
     pg->maxOverlap = maxOverlap;
     if ((float)maxOverlap/(float)(psl->match+psl->misMatch+psl->repMatch) > splicedOverlapRatio 
@@ -2638,14 +2356,6 @@ if (keepChecking && (pg->intronCount <= 2 /*|| (pg->exonCover - pg->intronCount 
         keepChecking = FALSE;
         }
 
-
-/*        if (pg->overlapMouse>= 40 && bestPsl == NULL)
-       {
-        verbose(1,"NO. %s %d diag %s %d  bestChrom %s\n",psl->qName, 
-                pg->overlapMouse, psl->tName, psl->tStart, bestChrom);
-       dyStringAppend(reason,"diagonal;");
-       keepChecking = FALSE;
-       }*/
     if (keepChecking)
        {
        verbose(2,"YES %s %d rr %3.1f rl %d ln %d %s iF %d maxE %d bestAli %d isp %d millibad %d match %d cover %3.1f rp %d polyA %d len %d start %d overlap ratio %d/%d %s\n",
@@ -2726,7 +2436,6 @@ else
     }
 dyStringFree(&iString);
 dyStringFree(&reason);
-//ucscRetroInfo(&pg);
 }
 
 void processBestMulti(char *acc, struct psl *pslList)
@@ -3050,7 +2759,6 @@ verbose(1,"Processed %d alignments\n", aliCount);
 int main(int argc, char *argv[])
 /* Process command line. */
 {
-//struct genePredReader *gprKg;
 char *cdsFile = NULL;
 
 optionInit(&argc, argv, optionSpecs);
@@ -3063,7 +2771,7 @@ verbose(1,"version is %s\n",rcsid);
 ss = axtScoreSchemeDefault();
 /* smaller gap to handle spliced introns */
 ss->gapExtend = 5;
-//fileHash = newHash(0); 
+
 // database name
 db = cloneString(argv[1]);
 minAli = optionFloat("minAli", minAli);
@@ -3106,15 +2814,9 @@ gpList1 = genePredLoadAll(argv[15]);
 verbose(1,"Loading genes from %s\n",argv[16]);
 /* store genePreds from GENE3 in a list */
 gpList2 = genePredLoadAll(argv[16]);
-//gprKg = genePredReaderFile(argv[16], NULL);
-//kgLis = genePredReaderAll(gprKg);
 verbose(1,"Loading genes from %s\n",argv[17]);
 /* store genePreds from GENE1 (knownGene or equivalent) in a list */
 kgList = genePredLoadAll(argv[17]);
-//mrnaGene = genePredLoadAll(argv[18]);
-
-//verbose(1,"Loading Syntenic Bed %s\n",argv[5]);
-//synHash = readBedCoordToBinKeeper(argv[3], argv[5], BEDCOUNT);
 verbose(1,"Loading net %s\n",argv[5]);
 splitPath(argv[5], NULL, orthoNet1, NULL);
 synHash = readNetToBinKeeper(argv[3], argv[5]);
