@@ -194,7 +194,7 @@ errAbort(
        intronSlop, nearTop, minNearTopSize, maxBlockGap, maxRep, maxTrf, count );
 }
 
-bool samePrefix(char *string1, char *string2)
+bool samePrefix(char *string1, char *string2, char sep)
 /* check if accessions match ignoring suffix and version */
 {
 char buf1[256], buf2[256];
@@ -202,29 +202,8 @@ char *name1[3];
 char *name2[3];
 safef(buf1, sizeof(buf1), "%s",string1);
 safef(buf2, sizeof(buf2), "%s",string2);
-chopString(buf1, ".", name1, ArraySize(name1));
-chopString(buf2, ".", name2, ArraySize(name2));
-if (name1[0] == NULL)
-    name1[0] = string1;
-if (name2[0] == NULL)
-    name2[0] = string2;
-if (sameString(name1[0], name2[0]))
-    {
-    return TRUE;
-    }
-return FALSE;
-}
-
-bool samePrefixBeforeDash(char *string1, char *string2)
-/* check if accessions match ignoring suffix after dash*/
-{
-char buf1[256], buf2[256];
-char *name1[3];
-char *name2[3];
-safef(buf1, sizeof(buf1), "%s",string1);
-safef(buf2, sizeof(buf2), "%s",string2);
-chopString(buf1, "-", name1, ArraySize(name1));
-chopString(buf2, "-", name2, ArraySize(name2));
+chopString(buf1, sep, name1, ArraySize(name1));
+chopString(buf2, sep, name2, ArraySize(name2));
 if (name1[0] == NULL)
     name1[0] = string1;
 if (name2[0] == NULL)
@@ -458,35 +437,6 @@ for (exonIx = 0; exonIx < gp->exonCount; ++exonIx)
     totalSize += (gp->exonEnds[exonIx] - gp->exonStarts[exonIx]);
     }
 return totalSize;
-}
-
-struct dnaSeq *getCdnaSeq(struct genePred *gp)
-/* Load in cDNA sequence associated with gene prediction. */
-{
-int txStart = gp->txStart;
-struct dnaSeq *genoSeq = NULL; //hDnaFromSeq(gp->chrom, txStart, gp->txEnd,  dnaLower);
-struct dnaSeq *cdnaSeq;
-int cdnaSize = genePredCdnaSize(gp);
-int cdnaOffset = 0, exonStart, exonSize, exonIx;
-int tOffset = 0;
-boolean tIsNib;
-readCachedSeqPart(gp->chrom, txStart, (gp->txEnd)-txStart, 
-	tHash, fileCache, &genoSeq, &tOffset, &tIsNib);
-verbose(5, "get seq %s %d %d\n",gp->chrom, txStart, gp->txEnd);
-assert(genoSeq != NULL);
-AllocVar(cdnaSeq);
-cdnaSeq->dna = needMem(cdnaSize+1);
-cdnaSeq->size = cdnaSize;
-for (exonIx = 0; exonIx < gp->exonCount; ++exonIx)
-    {
-    exonStart = gp->exonStarts[exonIx];
-    exonSize = gp->exonEnds[exonIx] - exonStart;
-    memcpy(cdnaSeq->dna + cdnaOffset, genoSeq->dna + (exonStart - txStart), exonSize);
-    cdnaOffset += exonSize;
-    }
-assert(cdnaOffset == cdnaSeq->size);
-freeDnaSeq(&genoSeq);
-return cdnaSeq;
 }
 
 void getCdsInMrna(struct genePred *gp, int *retCdsStart, int *retCdsEnd)
@@ -2029,93 +1979,6 @@ verbose(3,"    next intron ret isRpt=FALSE reps %d %s:%d-%d %s %d-%d cnt %d\n",r
 return TRUE;
 }
 
-void exciseRepeats(struct psl *psl, struct hash *rmskHash)
-/* remove repeats from intron, readjust t coordinates */
-{
-struct binKeeper *bk = NULL;
-struct binElement *elist = NULL, *el = NULL;
-int i;
-unsigned *outReps = needMem(psl->blockCount*sizeof(unsigned));
-
-for (i = 0 ; i < psl->blockCount-1 ; i++)
-    {
-    int is = psl->tStarts[i] + psl->blockSizes[i];
-    int ie = psl->tStarts[i+1] ;
-    outReps[i] = 0;
-    /* skip exons that overlap repeats */
-    if (rmskHash != NULL)
-        {
-        int reps = 0;
-        bk = hashFindVal(rmskHash, psl->tName);
-        if (bk != NULL)
-            {
-            elist = binKeeperFindSorted(bk, is, ie) ;
-            for (el = elist; el != NULL ; el = el->next)
-                {
-                reps += positiveRangeIntersection(is, ie, el->start, el->end);
-                }
-            slFreeList(&elist);
-            if (reps > ie-is)
-                {
-                reps = ie-is;
-                verbose(5,"Warning: too many reps %d in st %d in end %d\n",reps, is, ie);
-                }
-            outReps[i] = reps;
-            }
-        }
-    }
-/* shrink the repeats from the gene */
-for (i = 0 ; i < psl->blockCount-1 ; i++)
-    {
-    int j;
-    for (j = i ; j < psl->blockCount-1 ; j++)
-        psl->tStarts[j+1] -= outReps[i];
-    psl->tEnd -= outReps[i];
-    assert(psl->tEnd > psl->tStarts[i+1]);
-    }
-freeMem(outReps);
-/*
-outPsl->blockCount = psl->blockCount;
-outPsl->match = psl->match;
-outPsl->misMatch = psl->misMatch;
-outPsl->repMatch = psl->repMatch;
-outPsl->nCount = psl->nCount;
-outPsl->qNumInsert = psl->qNumInsert;
-outPsl->qBaseInsert = psl->qBaseInsert;
-outPsl->tNumInsert = psl->tNumInsert;
-outPsl->tBaseInsert = psl->tBaseInsert;
-strcpy(outPsl->strand, psl->strand);
-outPsl->qName = cloneString(psl->qName);
-outPsl->qSize = psl->qSize;
-outPsl->qStart = psl->qStart;
-outPsl->qEnd = psl->qEnd;
-outPsl->tName = cloneString(psl->tName);
-outPsl->tSize = psl->tSize;
-outPsl->tStart = psl->tStart;
-outPsl->tEnd = psl->tEnd;
-*/
-}
-char *getSpliceSite(struct psl *psl, int start)
-/* get sequence for splice site */
-{
-char *tName ;
-struct dnaSeq *tSeq;
-int tOffset;
-char *site = NULL;
-boolean isNib = TRUE;
-tName = cloneString(psl->tName);
-tSeq = twoBitReadSeqFrag(genomeSeqFile, psl->tName, psl->tStart, psl->tEnd); 
-//readCachedSeqPart(tName, start, 2, tHash, fileCache, &tSeq, &tOffset, &isNib);
-assert (tOffset == start);
-site = cloneStringZ(tSeq->dna, 2);
-if (psl->strand[0] == '-')
-    {
-    reverseComplement(site, 2);
-    }
-freeDnaSeq(&tSeq);
-freez(&tName);
-return site;
-}
 /* get overlap of q blocks and set the number of overlapping blocks to numBlocks */
 int getQOverlap(struct psl *psl, int start, int end, int *numBlocks)
 {
@@ -2167,6 +2030,7 @@ for (i = 0 ; i < psl->blockCount ; i++)
 *numBlocks = blocks;
 return total;
 }
+
 /* count Spliced introns and retain Introns */
 void calcIntrons(struct psl *psl, int maxBlockGap, struct psl *nestedPsl, 
         int *retProcessedIntrons, int *retIntronCount, int *retBlockCover, int *pseudoExonCount)
@@ -2297,145 +2161,6 @@ if (pseudoExonCount != NULL)
     *pseudoExonCount = exonCount;
 if (retBlockCover != NULL)
     *retBlockCover = blocksCovered;
-}
-
-int pslCountIntrons(struct psl *genePsl, struct psl *pseudoPsl, int maxBlockGap, 
-        struct hash *rmskHash , int slop, struct dyString *iString , int *conservedIntron, int *conservedSplice, int *pseudoExonCount)
-/* return number of introns aligned between parent and retro have a size ratio greater than intronRatio (1.5)
- * also count of conserved introns in retro that match parent gene introns based on q position allowing some slop
- * also check bases and see if consensus splice sites are conserved */
-{
-struct psl *gene , *pseudo;
-int count = 0;
-int i,j;
-int gts = 0, gte = 0, gqs = 0, gqe = 0; /* gene intron boundaries */
-int pts = 0, pte = 0, pqs = 0, pqe = 0; /* pseudoegene intron boundaries */
-//int offset = 0; /* 5' truncation of pseudogene */
-
-if (genePsl == NULL )
-    {
-    verbose(3," pslCountIntrons failed no parent %s \n", pseudoPsl->qName);
-    return 0;
-    }
-if (pseudoPsl == NULL)
-    {
-    verbose(3," pslCountIntrons failed no pseudo \n");
-    return 0;
-    }
-
-if (genePsl->blockCount == 1)
-    {
-    verbose(3," pslCountIntrons failed single exon parent %s \n", pseudoPsl->qName);
-    return 0;
-    }
-AllocVar(gene);
-AllocVar(pseudo);
-pslMergeBlocks(genePsl, gene, maxBlockGap);
-pslMergeBlocks(pseudoPsl, pseudo, maxBlockGap);
-if (pseudoExonCount != NULL)
-    *pseudoExonCount = pseudoPsl->blockCount;
-if (gene->strand[0] == '-')
-    {
-    pslRc(gene);
-    }
-if (pseudo->strand[0] == '-')
-    {
-    pslRc(pseudo);
-    }
-//if (!skipExciseRepeats)
-//    {
-//    exciseRepeats(gene, rmskHash );
-//    exciseRepeats(pseudo, rmskHash );
-//    }
-//offset = interpolateStart(gene, pseudo);
-verbose(3,">>>pslCountIntrons %s gene cnt %d pseudocnt %d\n",pseudo->qName, gene->blockCount, pseudo->blockCount);
-for (i = 0 ; i < gene->blockCount ; i++)
-    {
-    float intronG = 0.0;
-    float intronP = 0.0;
-    verbose (3, " gene block %d ",i);
-    if (!getNextIntron(gene, i, &gts, &gte, &gqs, &gqe, rmskHash))
-        if (i+1 >= gene->blockCount)
-            break;
-    for (j = 0 ; j < pseudo->blockCount ; j++)
-        {
-        verbose (6, " gene %d pseudogene blk %d ",i, j);
-        if (!getNextIntron(pseudo, j, &pts, &pte, &pqs, &pqe, rmskHash))
-            {
-            verbose(6," NO gt %d-%d %d pt (%c) %d-%d %d  >> gq %d-%d pq %d-%d << \n",
-                    gts,gte,gte-gts,pseudo->strand[0],pts,pte,pte-pts,gqs,gqe,pqs,pqe);
-            if (i+1 >= gene->blockCount)
-                break;     /* done, get next exon on gene */
-            else
-                continue;  /* repeat, keep looking */
-            }
-        intronG = gte-gts;
-        intronP = pte-pts;
-        verbose(6, " g %d-%d p %d-%d | stSlp %d + endSlp %d < slop %d inG %4.1f inP %4.1f",
-                gqs,gqe,pqs,pqe, abs(gqs-pqs), abs(gqe-pqe), slop, intronG, intronP) ;
-
-        if (abs(gqs-pqs) + abs(gqe-pqe) < slop) 
-//                || ((abs(gqs-pqs) < slop && intronG/intronP) < intronRatio)
-//                || ((abs(gqe-pqe) < slop && intronG/intronP) < intronRatio))
-            {
-            char *gd = NULL, *ga = NULL, *pd = NULL, *pa = NULL;
-            if (genePsl->strand[0] == '+')
-                {
-                gd = getSpliceSite(genePsl, gts); /* donor */
-                ga = getSpliceSite(genePsl, gte); /* acceptor */
-                }
-            else
-                {
-                gd = getSpliceSite(genePsl, gte); /* donor */
-                ga = getSpliceSite(genePsl, gts); /* acceptor */
-                }
-            if (pseudoPsl->strand[0] == '+')
-                {
-                pd = getSpliceSite(pseudoPsl, pts); /* donor */
-                pa = getSpliceSite(pseudoPsl, pte); /* acceptor */
-                }
-            else
-                {
-                pd = getSpliceSite(pseudoPsl, pte); /* donor */
-                pa = getSpliceSite(pseudoPsl, pts); /* acceptor */
-                }
-            if (sameString(gd,pd) && sameString(gd,"GT") )
-                {
-                *conservedSplice = (*conservedSplice) + 1;
-                verbose(3," \nconserved splice site %s acc %s %d\n",gd,pd, *conservedIntron);
-                }
-            if (sameString(ga,pa) && sameString(ga,"AG"))
-                {
-                *conservedSplice = (*conservedSplice) + 1;
-                verbose(3," \nconserved splice site %s acc %s %d\n",ga,pa, *conservedIntron);
-                }
-            verbose(3," \nconserved intron part1 gt %d-%d %3.0f pt %d-%d %3.0f  gq %d-%d pq %d-%d ratio %f gd %s ga %s pd %s pa %s diffS %d diffE %d slop %d\n"
-                    ,gts,gte,intronG,pts,pte,intronP,gqs,gqe,pqs,pqe,
-                    intronG/intronP, gd, ga, pd, pa,  
-                    abs(gqs-pqs) , abs(gqe-pqe) , slop); 
-            if (intronP > 500 || (intronG/intronP) < intronRatio)
-                {
-                count++;
-                verbose(2," \n** Yes ** count = %d gt %d-%d %d pt %d-%d %d  gq %d-%d pq %d-%d \n",
-                        count,gts,gte,gte-gts,pts,pte,pte-pts,gqs,gqe,pqs,pqe);
-                }
-            freez(&gd); freez(&ga); freez(&pd); freez(&pa);
-            *conservedIntron = (*conservedIntron) + 1;
-            }
-        else
-            {
-            verbose(6," gt %d-%d %d pt %d-%d %d  >> gq %d-%d pq %d-%d <<\n",
-                    gts,gte,gte-gts,pts,pte,pte-pts,gqs,gqe,pqs,pqe);
-            verbose(3," NO \n");
-            }
-        }
-        dyStringPrintf(iString, "%4.1f,%4.1f,",intronG,intronP);
-    }
-verbose(2,">>>pslIntronCount %s %s:%d returns %d >1.5 intron size change,   cons intron=%d cons splice=%d\n\n",
-    pseudo->qName, pseudo->tName, pseudo->tStart+1, count, *conservedIntron, *conservedSplice);
-pslFree(&pseudo);
-pslFree(&gene);
-return count;
 }
 
 bool pslInRange(struct psl *psl, int i)
@@ -3459,6 +3184,7 @@ struct lineFile *in = pslFileOpen(inName);
 int lineSize;
 char *line;
 char *words[32];
+char sep = ".";
 int wordCount;
 struct psl *pslList = NULL, *psl;
 char lastName[256] = "nofile";
@@ -3499,7 +3225,7 @@ while (lineFileNext(in, &line, &lineSize))
         chopSuffix(psl->qName);
     verbose(2,"scoring %s version %d lastName %s\n",psl->qName, stripVersion, lastName);
     /* if new qName encountered, not the same as the last one read */
-    if (!samePrefix(lastName, psl->qName))
+    if (!samePrefix(lastName, psl->qName, sep))
 	{
         if (!skipBlatMerge)
             addBlatAlignment(lastName, &pslList);
