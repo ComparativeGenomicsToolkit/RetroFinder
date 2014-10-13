@@ -2503,7 +2503,7 @@ verbose(4, "COUNT EXON COVER = %d %s\n",count, query->qName);
 return count;
 }
 
-float calcTrf(struct psl *psl, struct hash *trfHash)
+float calcTrfRatio(struct psl *psl, struct hash *trfHash)
 /* calc ratio of simple repeats overlap to aligning bases */
 {
 int trf = 0;
@@ -2691,7 +2691,7 @@ if (pg->processedIntrons < 0)
     pg->processedIntrons = 0;
 /* Calculate the ratio of simple repeat based to aligned non-repeat bases 
  * (matches + mismatches) */
-trfRatio = calcTrf(psl, trfHash);
+trfRatio = calcTrfRatio(psl, trfHash);
 verbose(4, "%s calcIntrons.ExonsSpliced_exon_covered - conserved_SS -> %d-%d=%d calcIntrons.intronCount %d trfRatio %4.2f\n", 
         psl->qName, pg->exonCover,pg->conservedSpliceSites, 
         pg->exonCover-pg->conservedSpliceSites, pg->intronCount, trfRatio);
