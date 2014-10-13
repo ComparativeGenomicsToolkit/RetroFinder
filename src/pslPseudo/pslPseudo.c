@@ -1595,28 +1595,6 @@ else
 return count;
 }
    
-
-#ifdef NEVER
-int countCharsInWindow(char c, char *s, int size, int winSize, int *start)
-/* Count number of characters matching c in s in a sliding window of size winSize. return start of polyA tail */
-{
-int i=0, count=0, maxCount=0, j=0;
-for (j=0 ; j<=size-winSize ; j++)
-    {
-    count = 0;
-    for (i=j; i<winSize+j ; i++)
-        {
-        assert (i < size);
-        if (toupper(s[i]) == toupper(c) )
-            count++;
-        }
-    maxCount = max(maxCount, count);
-    *start = j;
-    }
-return maxCount;
-}
-#endif
-
 int polyACalc(int start, int end, char *strand, int tSize, char *chrom, int region, 
         int *polyAstart, int *polyAend, float divergence)
 /* get size of polyA tail in genomic dna , count bases in a 
