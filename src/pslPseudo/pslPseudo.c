@@ -198,8 +198,8 @@ char *name1[3];
 char *name2[3];
 safef(buf1, sizeof(buf1), "%s",string1);
 safef(buf2, sizeof(buf2), "%s",string2);
-chopString(buf1, sep, name1, ArraySize(name1));
-chopString(buf2, sep, name2, ArraySize(name2));
+chopString(buf1, &sep, name1, ArraySize(name1));
+chopString(buf2, &sep, name2, ArraySize(name2));
 if (name1[0] == NULL)
     name1[0] = string1;
 if (name2[0] == NULL)
@@ -424,7 +424,6 @@ for (exonIx = 0; exonIx < gp->exonCount; ++exonIx)
 *retCdsStart = missingStart;
 *retCdsEnd = totalSize - missingEnd;
 }
-#endif
 
 void writeInsert(struct dyString *aRes, struct dyString *bRes, char *aSeq, int gapSize)
 /* Write out gap, possibly shortened, to aRes, bRes. */
@@ -448,7 +447,7 @@ dyStringAppendN(aRes, aSeq, aGap);
 dyStringAppendMultiC(bRes, '-', aGap);
 }
 
-struct genePred *getOverlappingGene(struct genePred **list, char *table, char *chrom, int cStart, int cEnd, char *name, int *retOverlap)
+struct genePred *getOverlappingGene2(struct genePred **list, char *table, char *chrom, int cStart, int cEnd, char *name, int *retOverlap)
 {
 /* read all genes from a table find the gene with the biggest overlap. 
    Cache the list of genes to so we only read it once */
@@ -2224,7 +2223,7 @@ genePredFree(&mgc);
  * three genesets that are input to the program */ 
 if (bestPsl != NULL)
     {
-    kg = getOverlappingGene(&kgList, "knownGene", bestPsl->tName, bestPsl->tStart, 
+    kg = getOverlappingGene2(&kgList, "knownGene", bestPsl->tName, bestPsl->tStart, 
                         bestPsl->tEnd , bestPsl->qName, &geneOverlap);
     if (kg != NULL)
         {
@@ -2236,7 +2235,7 @@ if (bestPsl != NULL)
         {
         pg->kgName = cloneString("noKg");
         }
-    gp = getOverlappingGene(&gpList1, "refGene", bestPsl->tName, bestPsl->tStart, 
+    gp = getOverlappingGene2(&gpList1, "refGene", bestPsl->tName, bestPsl->tStart, 
                         bestPsl->tEnd , bestPsl->qName, &geneOverlap);
     if (gp != NULL)
         {
@@ -2248,7 +2247,7 @@ if (bestPsl != NULL)
         {
         pg->refSeq = cloneString("noRefSeq");
         }
-    mgc = getOverlappingGene(&gpList2, "mgcGenes", bestPsl->tName, bestPsl->tStart, 
+    mgc = getOverlappingGene2(&gpList2, "mgcGenes", bestPsl->tName, bestPsl->tStart, 
                         bestPsl->tEnd , bestPsl->qName, &geneOverlap);
     if (mgc != NULL)
         {
@@ -2686,7 +2685,7 @@ struct lineFile *in = pslFileOpen(inName);
 int lineSize;
 char *line;
 char *words[32];
-char sep = ".";
+char sep = '.';
 int wordCount;
 struct psl *pslList = NULL, *psl;
 char lastName[256] = "nofile";
