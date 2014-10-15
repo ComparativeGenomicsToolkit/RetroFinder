@@ -1,8 +1,8 @@
 #!/bin/bash 
 #
 # Summary: Create a 2bit file of mRNA sequences. For Blat alignments of mRNAs, 
-# filter to remove mRNA with multiple hits that are ambigouous by picking the best
-# hits. 
+# filter to remove mRNA alignments with multiple hits that are ambigouous by 
+# picking the best hits so the output is a filtered Blat aligned mRNAs PSL file.
 #
 set -beEu -o pipefail
 source $1
