@@ -960,8 +960,10 @@ if (nHash != NULL)
     if (maxlevel > 1 && rptSize > 0)
         if (gapSize[maxlevel-1] > netSize[maxlevel])
             {
+            /* reduce break in net by size of repeats */
             gapSize[maxlevel-1] -= rptSize;
             if (gapSize[maxlevel-1] < netSize[maxlevel])
+                /* dont reduce gap more than size of break in net */
                 gapSize[maxlevel-1] = netSize[maxlevel]+1;
             verbose(4, "NET gap reduced by %d to %d\n",rptSize, gapSize[maxlevel-1]);
             assert(gapSize[maxlevel-1]);
