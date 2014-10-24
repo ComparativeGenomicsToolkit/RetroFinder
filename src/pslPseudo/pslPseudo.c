@@ -468,6 +468,7 @@ for (el = *list; el != NULL; el = el->next)
                 overlap += positiveRangeIntersection(cStart,cEnd, el->exonStarts[i], el->exonEnds[i]) ;
                 }
             if (overlap > 20 && sameString(parentName, el->name))
+                /* filter out noise alignments that have very small overlap */
                 {
                 bestMatch = el;
                 bestOverlap = overlap;
@@ -2416,17 +2417,10 @@ else
         dyStringAppend(reason,"milliBad;");
     if (psl->match + psl->misMatch + psl->repMatch < minCoverPseudo * (float)psl->qSize)
         dyStringAppend(reason,"coverage;");
-   /* NOTE: This is doing the same thing in both if and else */
-   if (bestParentPsl == NULL)
-       {
-       pg->label = NOTPSEUDO;
-       outputLink(psl, pg, reason, bestParentPsl);
-       }
-    else
-       {
-       pg->label = NOTPSEUDO;
-       outputLink(psl, pg, reason, bestParentPsl);
-       }
+
+    pg->label = NOTPSEUDO;
+    outputLink(psl, pg, reason, bestParentPsl);
+
     verbose(2,"NO. %s %s %d rr %3.1f rl %d ln %d %s iF %d maxE %d bestAli %d isp %d score %d match %d cover %3.1f rp %d\n",
         reason->string, psl->qName,psl->tStart,((float)rep/(float)(psl->tEnd-psl->tStart) ),rep, 
         psl->tEnd-psl->tStart,psl->tName, pg->intronCount, maxExons , pg->bestAliCount, pg->exonCover,
