@@ -447,7 +447,7 @@ dyStringAppendN(aRes, aSeq, aGap);
 dyStringAppendMultiC(bRes, '-', aGap);
 }
 
-struct genePred *getOverlappingGene2(struct genePred **list, char *table, char *chrom, int cStart, int cEnd, char *name, int *retOverlap)
+struct genePred *getOverlappingGene2(struct genePred **list, char *table, char *chrom, int cStart, int cEnd, char *parentName, int *retOverlap)
 {
 /* read all genes from a table find the gene with the biggest overlap. 
    Cache the list of genes to so we only read it once */
@@ -467,7 +467,7 @@ for (el = *list; el != NULL; el = el->next)
                 {
                 overlap += positiveRangeIntersection(cStart,cEnd, el->exonStarts[i], el->exonEnds[i]) ;
                 }
-            if (overlap > 20 && sameString(name, el->name))
+            if (overlap > 20 && sameString(parentName, el->name))
                 {
                 bestMatch = el;
                 bestOverlap = overlap;
