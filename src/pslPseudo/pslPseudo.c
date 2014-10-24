@@ -1001,7 +1001,7 @@ assert (percentBreak < 130);
 return percentBreak;
 }
 
-void outputLink(struct psl *psl, struct ucscRetroInfo *pg , struct dyString *reason, struct psl *bestPsl)
+void outputLink(struct psl *psl, struct ucscRetroInfo *pg , struct dyString *reason, struct psl *bestParentPsl)
    /* char *type, char *bestqName, char *besttName, 
                 int besttStart, int besttEnd, int maxExons, int geneOverlap, 
                 char *bestStrand, int polyA, int polyAstart, int label, 
@@ -1043,14 +1043,14 @@ cds.end = 0;
 
 /* map orf from parent and write genePred */
 /* bump score more for knownGene, mgc and refSeq parents or parents valid ORF */
-bump = getGenePred(pg, bestPsl, &gp);
+bump = getGenePred(pg, bestParentPsl, &gp);
 if (gp == NULL)
     {
     verbose(5,"%s no genePred %s ",
             pg->name, pg->refSeq );
-    if (bestPsl != NULL)
+    if (bestParentPsl != NULL)
         verbose(5,"%s %s:%d-%d",
-            bestPsl->qName, bestPsl->tName, bestPsl->tStart+1, bestPsl->tEnd);
+            bestParentPsl->qName, bestParentPsl->tName, bestParentPsl->tStart+1, bestParentPsl->tEnd);
     verbose(5,"\n");
     }
 
@@ -2144,7 +2144,7 @@ if (exprHash != NULL)
 return maxOverlap ;
 }
 
-void pseudoFeaturesCalc(struct psl *psl, struct psl *bestPsl, int maxExons, int bestAliCount, 
+void pseudoFeaturesCalc(struct psl *psl, struct psl *bestParentPsl, int maxExons, int bestAliCount, 
         char *bestChrom, int bestStart, int bestEnd, char *bestStrand) 
 /* calculate features of retroGene */
 {
@@ -2190,17 +2190,17 @@ pg->polyA = polyACalc(psl->tStart, psl->tEnd, psl->strand, psl->tSize, psl->tNam
 pg->polyAlen = abs(polyAend-polyAstart)+1;
 pg->polyAstart = polyAstart;
 /* calc introns processed in retro in two ways and blocks and exons covered into RETRO*/
-calcIntrons(psl, maxBlockGap, bestPsl, &processedIntrons, &intronCount, &qBlockCover, &pseudoExonCount);
+calcIntrons(psl, maxBlockGap, bestParentPsl, &processedIntrons, &intronCount, &qBlockCover, &pseudoExonCount);
 /* reverse the paramters to calculate number of exons covered in parent */
-if (bestPsl != NULL)
-    calcIntrons(bestPsl, maxBlockGap, psl, NULL, NULL, &exonCover, NULL);
-/* if bestPsl is NULL and exonCover not calculated this will be set to 0 */
+if (bestParentPsl != NULL)
+    calcIntrons(bestParentPsl, maxBlockGap, psl, NULL, NULL, &exonCover, NULL);
+/* if bestParentPsl is NULL and exonCover not calculated this will be set to 0 */
 pg->exonCover = exonCover;
 pg->retroExonCount = pseudoExonCount;
 pg->processedIntrons = processedIntrons;
 pg->intronCount = intronCount;
-/* target is bestPsl, query is psl */
-pg->conservedSpliceSites = countRetainedSpliceSites(bestPsl, psl , spliceDrift);
+/* target is bestParentPsl, query is psl */
+pg->conservedSpliceSites = countRetainedSpliceSites(bestParentPsl, psl , spliceDrift);
 /* reduced intronsProcessed by conserved splice site count */
 pg->processedIntrons -= pg->conservedSpliceSites;
 if (pg->processedIntrons < 0)
@@ -2211,7 +2211,7 @@ trfRatio = calcTrfRatio(psl, trfHash);
 verbose(4, "%s calcIntrons.ExonsSpliced_exon_covered - conserved_SS -> %d-%d=%d calcIntrons.intronCount %d trfRatio %4.2f\n", 
         psl->qName, pg->exonCover,pg->conservedSpliceSites, 
         pg->exonCover-pg->conservedSpliceSites, pg->intronCount, trfRatio);
-//if (bestPsl == NULL)
+//if (bestParentPsl == NULL)
 //    pg->intronCount = pg->alignGapCount;
 
 /* find overlapping gene annotations */
@@ -2219,12 +2219,12 @@ geneOverlap = 0;
 genePredFree(&kg); 
 genePredFree(&gp); 
 genePredFree(&mgc);
-/* if bestPsl (parent) is not NULL then find best overlapping genePred from
+/* if bestParentPsl (parent) is not NULL then find best overlapping genePred from
  * three genesets that are input to the program */ 
-if (bestPsl != NULL)
+if (bestParentPsl != NULL)
     {
-    kg = getOverlappingGene2(&kgList, "knownGene", bestPsl->tName, bestPsl->tStart, 
-                        bestPsl->tEnd , bestPsl->qName, &geneOverlap);
+    kg = getOverlappingGene2(&kgList, "knownGene", bestParentPsl->tName, bestParentPsl->tStart, 
+                        bestParentPsl->tEnd , bestParentPsl->qName, &geneOverlap);
     if (kg != NULL)
         {
         pg->kStart = kg->txStart;
@@ -2235,8 +2235,8 @@ if (bestPsl != NULL)
         {
         pg->kgName = cloneString("noKg");
         }
-    gp = getOverlappingGene2(&gpList1, "refGene", bestPsl->tName, bestPsl->tStart, 
-                        bestPsl->tEnd , bestPsl->qName, &geneOverlap);
+    gp = getOverlappingGene2(&gpList1, "refGene", bestParentPsl->tName, bestParentPsl->tStart, 
+                        bestParentPsl->tEnd , bestParentPsl->qName, &geneOverlap);
     if (gp != NULL)
         {
         pg->refSeq = cloneString(gp->name);
@@ -2247,8 +2247,8 @@ if (bestPsl != NULL)
         {
         pg->refSeq = cloneString("noRefSeq");
         }
-    mgc = getOverlappingGene2(&gpList2, "mgcGenes", bestPsl->tName, bestPsl->tStart, 
-                        bestPsl->tEnd , bestPsl->qName, &geneOverlap);
+    mgc = getOverlappingGene2(&gpList2, "mgcGenes", bestParentPsl->tName, bestParentPsl->tStart, 
+                        bestParentPsl->tEnd , bestParentPsl->qName, &geneOverlap);
     if (mgc != NULL)
         {
         pg->mgc = cloneString(mgc->name);
@@ -2351,7 +2351,7 @@ if (keepChecking && (pg->intronCount <= 2 /*|| (pg->exonCover - pg->intronCount 
         strncpy(pg->overStrand, mPsl->strand , sizeof(pg->overStrand));
         //pslFree(&mPsl);
         pg->label = EXPRESSED;
-        outputLink(psl, pg, reason, bestPsl);
+        outputLink(psl, pg, reason, bestParentPsl);
         keepChecking = FALSE;
         }
 
@@ -2373,32 +2373,32 @@ if (keepChecking && (pg->intronCount <= 2 /*|| (pg->exonCover - pg->intronCount 
 
            dyStringAppend(reason,"singleExon;");
            pg->label = PSEUDO;
-           outputLink(psl, pg, reason, bestPsl);
+           outputLink(psl, pg, reason, bestParentPsl);
            }
-       else if (bestPsl == NULL)
+       else if (bestParentPsl == NULL)
            {
            dyStringAppend(reason,"noBest;");
            pg->label = NOTPSEUDO;
-           outputLink(psl, pg, reason, bestPsl);
+           outputLink(psl, pg, reason, bestParentPsl);
            }
        else if (kg == NULL && mgc == NULL && gp == NULL)
            {
            dyStringAppend(reason,"mrna");
            pg->label = PSEUDO;
-           outputLink(psl, pg, reason, bestPsl);
+           outputLink(psl, pg, reason, bestParentPsl);
            }
        else
            {
            dyStringAppend(reason,"pseudogene");
            pg->label = PSEUDO;
-           outputLink(psl, pg, reason, bestPsl);
+           outputLink(psl, pg, reason, bestParentPsl);
            }
            keepChecking = FALSE;
        }
     }
 else
     {
-    if (bestPsl == NULL)
+    if (bestParentPsl == NULL)
         dyStringAppend(reason,"noBest;");
     if (pg->exonCover < 1)
         dyStringAppend(reason,"exonCover;");
@@ -2417,15 +2417,15 @@ else
     if (psl->match + psl->misMatch + psl->repMatch < minCoverPseudo * (float)psl->qSize)
         dyStringAppend(reason,"coverage;");
    /* NOTE: This is doing the same thing in both if and else */
-   if (bestPsl == NULL)
+   if (bestParentPsl == NULL)
        {
        pg->label = NOTPSEUDO;
-       outputLink(psl, pg, reason, bestPsl);
+       outputLink(psl, pg, reason, bestParentPsl);
        }
     else
        {
        pg->label = NOTPSEUDO;
-       outputLink(psl, pg, reason, bestPsl);
+       outputLink(psl, pg, reason, bestParentPsl);
        }
     verbose(2,"NO. %s %s %d rr %3.1f rl %d ln %d %s iF %d maxE %d bestAli %d isp %d score %d match %d cover %3.1f rp %d\n",
         reason->string, psl->qName,psl->tStart,((float)rep/(float)(psl->tEnd-psl->tStart) ),rep, 
@@ -2442,7 +2442,7 @@ void processBestMulti(char *acc, struct psl *pslList)
 /* Find psl's that are align best anywhere along their length. */
 
 {
-struct psl *bestPsl = NULL, *psl, *bestSEPsl = NULL;
+struct psl *bestParentPsl = NULL, *psl, *bestSEPsl = NULL;
 int qSize = 0;
 int *scoreTrack = NULL;
 int maxExons = 0;
@@ -2537,7 +2537,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
         
         if (score  > bestScore && pslMerge->blockCount > 1)
             {
-            bestPsl = psl;
+            bestParentPsl = psl;
             bestStart = psl->tStart;
             bestEnd = psl->tEnd;
             bestChrom = cloneString(psl->tName);
@@ -2569,7 +2569,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
     }
 if (bestScore== 0)
     { /* take best single exon hit, if no multi exon */
-    bestPsl = bestSEPsl;
+    bestParentPsl = bestSEPsl;
     bestStart = bestSEStart;
     bestEnd = bestSEEnd;
     bestChrom = bestSEChrom;
@@ -2578,7 +2578,7 @@ if (bestScore== 0)
     }
 if (bestChrom != NULL)
     verbose(2,"---DONE finding best--- %s:%d-%d\n",bestChrom, bestStart+1, bestEnd);
-/* bestPsl contains "best" parent alignment for each retro */
+/* bestParentPsl contains "best" parent alignment for each retro */
 /* output parent genes, retrogenes, and calculate feature vector */
 /* this is the main loop */
 for (psl = pslList; psl != NULL; psl = psl->next)
@@ -2606,7 +2606,7 @@ for (psl = pslList; psl != NULL; psl = psl->next)
         {
         /* calculate various features of pseudogene and 
            output feature records */
-        pseudoFeaturesCalc(psl, bestPsl, maxExons, bestAliCount, 
+        pseudoFeaturesCalc(psl, bestParentPsl, maxExons, bestAliCount, 
             bestChrom, bestStart, bestEnd, bestStrand );
         }
     }
