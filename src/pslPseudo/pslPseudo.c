@@ -968,12 +968,13 @@ if (nHash != NULL)
             verbose(4, "NET gap reduced by %d to %d\n",rptSize, gapSize[maxlevel-1]);
             assert(gapSize[maxlevel-1]);
             }
-    /* no orthologous DNA, treat as break */
+    /* case 1: no orthologous DNA, treat as break in orthology */
     if (maxlevel == 0)
         percentBreak = 99;
-    /* orthologous DNA, no break */
+    /* case 2: orthologous DNA, no break, most likely an ancient retro  */
     else if (netSize[maxlevel] > 100000)
         percentBreak = 0;
+    /* case 3: partial break, retro smaller than break in orthology */
     else if (maxlevel==1)
         percentBreak = (float)overlapSize[maxlevel]*100/(float)netSize[maxlevel];
     /* sequence gaps should not be treated as breaks in orthology */
@@ -982,6 +983,8 @@ if (nHash != NULL)
 //        verbose(4, "NET gap %d < net %d zero break\n",gapSize[maxlevel-1], netSize[maxlevel]);
 //        percentBreak = 0;
 //        }
+    /* case 4: for gaps in net less then 100k, set %break as retrosize / break in orthology, 
+     *   if retro is 30% larger than the gap in orthology, hard code to 120% */
     else if (gapSize[maxlevel-1] < 100000)
         {
         percentBreak = (float)retroSize*100/(float)gapSize[maxlevel-1];
@@ -989,6 +992,8 @@ if (nHash != NULL)
                 retroSize, gapSize[maxlevel-1], percentBreak, maxlevel, netSize[maxlevel]);
         if (percentBreak >= 130) percentBreak = 120;
         }
+    /* case 5: for larger breaks in orthology (> 100k), don't use the usual ratio becuase it will be a very small number,
+     * instead use percentage = size of overlap with parent divided by size of retro */
     else if (gapSize[maxlevel-1] >= 100000)
         {
         percentBreak = (float)overlapSize[maxlevel]*100/(float)retroSize;
