@@ -7,7 +7,8 @@ echo '-------- script analyseExpress.sh -------------------'
 ####################
 #make exon list
 # cd $OUTDIR
-
+# Checks that output of filterMrna.sh and filterEst.sh has been produced 
+# otherwise prints error. 
 if [ ! -s $OUTDIR/all_mrnaFiltered.psl.gz ] 
 then
    echo "$OUTDIR/all_mrnaFiltered.psl.gz not found or empty, check for errors when running filterMrna.sh"
@@ -19,69 +20,117 @@ then
    echo "estFiltered.psl.gz not found or empty, check for errors when running script filterEst.sh"
    exit 3
 fi
+# Create exp directory
 mkdir -p $OUTDIR/$EXPDIR
 echo -n "Working directory: "
 echo $OUTDIR/$EXPDIR
+# Get genePred file for transcripts with more than one exon for GENE1 
+# (typically knownGene)
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE1 where exonCount > 1" > $OUTDIR/$EXPDIR/$GENE1.multiExon.genePred
+# Get genePred file for transcripts with more than one exon for GENE2 
+# (typically refGene)
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE2 where exonCount > 1" > $OUTDIR/$EXPDIR/$GENE2.multiExon.genePred
+# Get genePred file for transcripts with more than one exon for GENE2 
+# (typically ensGene)
 hgsql $DB -N -B -e "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from $GENE3 where exonCount > 1" > $OUTDIR/$EXPDIR/$GENE3.multiExon.genePred
 echo "genePredFilter $OUTDIR/$EXPDIR/$GENE1.multiExon.genePred $OUTDIR/$EXPDIR/$GENE1.multiCDSExon.genePred -cdsExons=2"
+# Filter genePred files and require at least 2 CDS exons
 ${BINDIR}/genePredFilter $OUTDIR/$EXPDIR/$GENE1.multiExon.genePred $OUTDIR/$EXPDIR/$GENE1.multiCDSExon.genePred -cdsExons=2
 echo "genePredFilter $OUTDIR/$EXPDIR/$GENE2.multiExon.genePred $OUTDIR/$EXPDIR/$GENE2.multiCDSExon.genePred -cdsExons=2"
 ${BINDIR}/genePredFilter $OUTDIR/$EXPDIR/$GENE2.multiExon.genePred $OUTDIR/$EXPDIR/$GENE2.multiCDSExon.genePred -cdsExons=2
 echo "genePredFilter $OUTDIR/$EXPDIR/$GENE3.multiExon.genePred $OUTDIR/$EXPDIR/$GENE3.multiCDSExon.genePred -cdsExons=2"
 ${BINDIR}/genePredFilter $OUTDIR/$EXPDIR/$GENE3.multiExon.genePred $OUTDIR/$EXPDIR/$GENE3.multiCDSExon.genePred -cdsExons=2
+# Get counts of lines in these output files
 wc -l $OUTDIR/$EXPDIR/$GENE1.multiCDSExon.genePred $OUTDIR/$EXPDIR/$GENE2.multiCDSExon.genePred $OUTDIR/$EXPDIR/$GENE1.multiCDSExon.genePred
 echo "cat $OUTDIR/$EXPDIR/$GENE1.multiCDSExon.genePred $OUTDIR/$EXPDIR/$GENE2.multiCDSExon.genePred $OUTDIR/$EXPDIR/$GENE3.multiCDSExon.genePred to $OUTDIR/$EXPDIR/all.multiCds.gp"
+# Cat together the files of genePreds with >1 exon and >=2 CDS exons. 
 cat $OUTDIR/$EXPDIR/$GENE1.multiCDSExon.genePred $OUTDIR/$EXPDIR/$GENE2.multiCDSExon.genePred $OUTDIR/$EXPDIR/$GENE3.multiCDSExon.genePred > $OUTDIR/$EXPDIR/all.multiCds.gp
 
+# Load these files of genePred with >1 exon and >=2 CDS exons for GENE1 and 
+# GENE2 into database tables.
 ldHgGene $DB rb${GENE1}Multi $OUTDIR/$EXPDIR/${GENE1}.multiCDSExon.genePred -predTab;
 ldHgGene $DB rb${GENE2}Multi $OUTDIR/$EXPDIR/${GENE2}.multiCDSExon.genePred -predTab;
+
+# Extract CDS regions from genePred tables for GENE1 and GENE2
 featureBits $DB ${GENE1}:cds -bed=$OUTDIR/$EXPDIR/$GENE1.cds.bed;
 featureBits $DB ${GENE2}:cds -bed=$OUTDIR/$EXPDIR/$GENE2.cds.bed;
+# Intersect the CDS regions with the multiCds tables using featureBits
 featureBits $DB rb${GENE1}Multi $OUTDIR/$EXPDIR/$GENE1.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE1.multiCds.bed ;
 featureBits $DB rb${GENE2}Multi $OUTDIR/$EXPDIR/$GENE2.cds.bed -bed=$OUTDIR/$EXPDIR/$GENE2.multiCds.bed ;
 
 echo "overlap with ests - use cluster jobs to speed this step"
+# Make an estSplit directory
 mkdir -p $OUTDIR/estSplit
 # Default max target count is 300 as open a file handle for each target.
 # The human GRCh38 (hg38) assembly has a number of alt alleles and there 
 # are 455 targets so use option to increase the number allowed. 
 pslSplitOnTarget -maxTargetCount=500 $OUTDIR/estFiltered.psl.gz estSplit
+# Remove previous jobList
 rm -f $OUTDIR/estSplit/jobList
+# Create template for estStat.sh jobs
 echo "#LOOP"> $OUTDIR/estSplit/template
 echo "$SCRIPT/estStat.sh \$(root1) {check out line pseudoEst.\$(root1).bed}">>$OUTDIR/estSplit/template
 echo "#ENDLOOP">> $OUTDIR/estSplit/template
 #awk '{print $1}' $OUTDIR/S1.len |grep -v chrM | gensub2 stdin single $OUTDIR/estSplit/template $OUTDIR/estSplit/jobList
+# Get a list of the chrom names from the PSLs in the estSplit directory, 
+# remove chrM and substitute the names in the template to create a jobList
 ls $OUTDIR/estSplit/*psl | sed -e "s,$OUTDIR/estSplit/,," | sed -e 's/.psl//' | grep -v chrM | gensub2 stdin single $OUTDIR/estSplit/template $OUTDIR/estSplit/jobList
+# Run the jobs in jobList on the cluster
 ssh -T $CLUSTER "cd $OUTDIR/estSplit ; /parasol/bin/para make jobList"
 
+# Cat together the output files from estStat.sh into a single file
+# and count the lines in this file 
 cat $OUTDIR/estSplit/pseudoEst*.bed > $OUTDIR/$EXPDIR/pseudoEstAll.bed
 wc -l $OUTDIR/$EXPDIR/pseudoEstAll.bed
 
+# mrnaToGene converts PSL alignments with CDS annotation from genbank to 
+# gene annotations in genePred format
+# all_mrnaFiltered.psl is converted to genePred using CDS from the $DB
+# and merging gaps in CDS no larger than 10 nts and keep sequences with 
+# invalid CDS. 
 echo "mrnaToGene $OUTDIR/all_mrnaFiltered.psl.gz -cdsMergeSize=10 all_mrna.gp -cdsDb=$DB -keepInvalid "
 mrnaToGene $OUTDIR/all_mrnaFiltered.psl.gz -cdsMergeSize=10 $OUTDIR/$EXPDIR/all_mrna.gp -cdsDb=$DB -keepInvalid > $OUTDIR/$EXPDIR/all_mrna.log 2> $OUTDIR/$EXPDIR/all_mrna.err
+# then do the same but merge gaps in the UTR no larger than 10 nts
 mrnaToGene $OUTDIR/all_mrnaFiltered.psl.gz -cdsMergeSize=10 -utrMergeSize=10 $OUTDIR/$EXPDIR/all_mrna_utr.gp -cdsDb=$DB -keepInvalid > $OUTDIR/$EXPDIR/all_mrna_utr.log 2> $OUTDIR/$EXPDIR/all_mrna_utr.err
 
+# From these genePreds, select those that are multi exonic so exons >1 
 awk '$8>1{print }' $OUTDIR/$EXPDIR/all_mrna.gp > $OUTDIR/$EXPDIR/all_mrna_multiExon.gp
 awk '$8>1{print }' $OUTDIR/$EXPDIR/all_mrna_utr.gp > $OUTDIR/$EXPDIR/all_mrna_multiExonUTR.gp
 
 #expression according to knownGene
+# Get the entries from hgncXref which is gene symbol, refSeq id, 
+# UniProt id, HGNC id, Entrez and description.
 hgsql $PDB -N -B -e "select * from hgncXref " > $OUTDIR/$EXPDIR/hgncXref.tab
+# if $GENE1 is knownGene:
 if [[ $GENE1 == "knownGene" ]] 
 then
+# join knownGene and kgTxInfo tables and get output where category is coding
 hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'coding'" > $OUTDIR/$EXPDIR/kgCoding.gp
+# join knownGene and kgTxInfo tables and get output where category is noncoding
 hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'noncoding'" > $OUTDIR/$EXPDIR/kgNoncoding.gp
+# join knownGene and kgTxInfo tables and get output where category is nearcoding
 hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'nearcoding'" > $OUTDIR/$EXPDIR/kgNearcoding.gp
+# join knownGene and kgTxInfo tables and get output where category is antisense
 hgsql $DB -N -B -e "select kg.* from knownGene kg, kgTxInfo i where kg.name = i.name and category = 'antisense'" > $OUTDIR/$EXPDIR/kgAntisense.gp
+# Get overlap where each subset of known genes is the select file and 
+# ucscRetroInfo.tab is the inFile
 for i in Coding Noncoding Nearcoding Antisense ; do overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/kg${i}.gp $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/retroKg${i}.bed; done
+# unzip knownGene file and sort
 zcat $OUTDIR/knownGene.tab.gz |sort > $OUTDIR/knownGene.sort.gp
+# select knownGene ids that represent genes in UniProt with evidence type <=1
 hgsql $DB -N -B -e "select distinct kgID from kgSpAlias, uniProt.proteinEvidence where spId = acc and proteinEvidenceType <=1" |sort> $OUTDIR/$EXPDIR/kgProtEvidence.id
+# select knownGene ids that represent genes in UniProt with evidence type <=2
 hgsql $DB -N -B -e "select distinct kgID from kgSpAlias, uniProt.proteinEvidence where spId = acc and proteinEvidenceType <=2" |sort> $OUTDIR/$EXPDIR/kgTransEvidence.id
+# select rows from sorted knownGene file by matching ids from column 1 with 
+# the ids in column 1 of the protein evidence files. 
 $SCRIPT/selectById -tsv 1 $OUTDIR/$EXPDIR/kgProtEvidence.id 1 $OUTDIR/knownGene.sort.gp > $OUTDIR/$EXPDIR/knownGeneProt.gp
 $SCRIPT/selectById -tsv 1 $OUTDIR/$EXPDIR/kgTransEvidence.id 1 $OUTDIR/knownGene.sort.gp > $OUTDIR/$EXPDIR/knownGeneTrans.gp
 
+# use the set of known genes with protein evidence to intersect with 
+# GENE1 (knownGene) CDS file
 overlapSelect $OUTDIR/$EXPDIR/knownGeneProt.gp $OUTDIR/$EXPDIR/${GENE1}.cds.bed $OUTDIR/$EXPDIR/knownGeneProtCds.bed -selectFmt=genePred
+# use the set of known genes with protein and transcript evidence to 
+# intersect with GENE1 (knownGene) CDS file
 overlapSelect $OUTDIR/$EXPDIR/knownGeneTrans.gp $OUTDIR/$EXPDIR/${GENE1}.cds.bed $OUTDIR/$EXPDIR/knownGeneTransCds.bed -selectFmt=genePred
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/knownGeneProtCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/ucscRetroProtein.bed
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/knownGeneTransCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/ucscRetroTranscript.bed
@@ -90,15 +139,30 @@ fi
 echo "Exon Shuffling"
 # exon shuffling
 ##cat $OUTDIR/$TABLE.bed $OUTDIR/retroMrnaInfoZnf.bed > ucscRetroInfoZnf.bed
-
+# select records from ucscRetroInfo.bed based on overlap with those in the file
+# GENE1 annotations thah have >1 exon and >=2 CDS exons
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/pseudo${GENE1}Cds.bed
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed -statsOutput $OUTDIR/$EXPDIR/pseudo${GENE1}Cds.out
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE1}.multiCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/pseudo${GENE1}Cds50.bed -overlapThreshold=0.50
+# select records from ucscRetroInfo.bed based on overlap with those in the file
+# GENE2 annotations thah have >1 exon and >=2 CDS exons
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/pseudo${GENE2}Cds.bed
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed -statsOutput $OUTDIR/$EXPDIR/pseudo${GENE2}Cds.out
+# select records from ucscRetroInfo.bed based on overlap with those in the file
+# GENE2 annotations thah have >1 exon and >=2 CDS exons and 
+# overlapThreshold = 0.5 so each infile record must be overlapped at least
+# 50% by the select record. 
 overlapSelect -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/${GENE2}.multiCds.bed $OUTDIR/$TABLE.bed $OUTDIR/$EXPDIR/pseudo${GENE2}Cds50.bed -overlapThreshold=0.50
+
+# Select those retro records that overlap GENE2 annotations with >1 exon and
+# >=2 CDS exons and overlap $GENE2 annotations
 overlapSelect -inCoordCols=0,1,2,5,3 -selectFmt=genePred $OUTDIR/${GENE2}.tab.gz $OUTDIR/$EXPDIR/pseudo${GENE2}Cds.bed $OUTDIR/$EXPDIR/shuffleEns.bed
+# select the retro records that overlap GENE2 annotations with >1 exon and
+# >=2 CDS exons and overlap the GENE2 genePreds with >1 exon and >=2 CDS exons
 overlapSelect -inCoordCols=0,1,2,5,3 -selectFmt=genePred $OUTDIR/$EXPDIR/${GENE2}.multiCDSExon.genePred $OUTDIR/$EXPDIR/pseudo${GENE2}Cds.bed $OUTDIR/$EXPDIR/shuffleEnsMulti.bed
+
+# select retros overlapping ESTs that do not overlap GENE1 annotations with
+# >1 exon and >=2 exon
 overlapSelect -selectCoordCols=0,1,2,5,3 -inCoordCols=0,1,2,5,3 $OUTDIR/$EXPDIR/pseudo${GENE1}Cds.bed $OUTDIR/$EXPDIR/pseudoEstAll.bed $OUTDIR/$EXPDIR/pseudoEstAllNotShuffle.bed -nonOverlapping
 
 if [[ $GENE1 == "knownGene" ]] 

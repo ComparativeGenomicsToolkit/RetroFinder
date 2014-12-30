@@ -1,5 +1,11 @@
 #!/bin/bash 
-#
+## Summary: Filters out low scoring hits based on the retrogene score and the 
+# lastz alignment score (axtScore) and creates one pseudogeneMrnaLink file. 
+# Cats pseudo[0-9]*.psl files and ortho files into single files. Splits the 
+# pseudogeneMrnaLink file into smaller BED files, one per chromsome, and runs 
+# bedOverlap on these files on the cluster to remove overlapping BEDs, the 
+# highest scoring one being kept. 
+
 # runs small cluster job to remove overlaps by picking highest scoring retro in each locus
 #
 set -bevEu -o pipefail
@@ -34,7 +40,8 @@ popd
 #  exit 3
 #fi
 
-# filter out low scoring hits as defined by retroscore and alignment score to parent gene
+# Filter out low scoring hits as defined by retroscore and alignment score 
+# to parent gene
 rm -f $OUTDIR/pseudoGeneLinkSortFilter.bed.gz
 echo catting Sorting and Filtering pseudoGeneLinkSortFilter.bed
 # pushd $RESULT ; 
@@ -52,29 +59,43 @@ echo catting Sorting and Filtering pseudoGeneLinkSortFilter.bed
 # and the output is in pseudoGeneLinkSortFilter.bed. 
 cat $RESULT/pseudoGeneLink[0-9]*.bed | tawk '$5 > 300 && ($14 > 10000 || $14 == -1) {OFS="\t";print $0}'| $SCRIPT/removeTandemDups | sort -k1,1 -k2,3n -k4,4 -T /scratch > $OUTDIR/pseudoGeneLinkSortFilter.bed; #/bin/rm $RESULT/pseudoGeneLink[0-9]*.bed
 # popd
+# Get count of lines in pseudoGeneLinkSortFilter.bed
 wc -l $OUTDIR/pseudoGeneLinkSortFilter.bed
 # pushd $OUT
+# cat together pseudo[0-9]*.psl (WHERE DID THESE COME FROM?) into pseudo.psl
 cat $OUT/pseudo[0-9]*.psl > $OUTDIR/pseudo.psl #;/bin/rm $OUT/pseudo[0-9]*.psl &
+# Cat together ortho*.txt files and remove ".txt" from files, output 
+# in ortho.txt
 cat $OUT/ortho*.txt | sed -e 's/.txt//'> $OUTDIR/ortho.txt
 # popd
 echo Removing Overlaps
+# gzip pseudoGeneLinkSortFilter.bed file
 gzip $OUTDIR/pseudoGeneLinkSortFilter.bed
 rm -rf $RESULTSPLIT
+# Split the pseudoGeneLinkSortFilter.bed.gz BED file into one BED file per 
+# chromosome in the $RESULTSPLIT directory (which is not defined). 
 bedSplitOnChrom $OUTDIR/pseudoGeneLinkSortFilter.bed.gz $RESULTSPLIT
 #speed up bedOverlap on chr19 (human) by splittting at the centromere
 #tawk '$2 < 28500000{print $0}' chr19.bed > chr19p.bed &
 #tawk '$2 >= 28500000{print $0}' chr19.bed > chr19q.bed 
 #$SCRIPT/doSplit $OUTDIR
+# Make $OVERLAPDIR: /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/retro/$DB/version$VERSION/run.o
 mkdir -p $OVERLAPDIR
 
+# Get list of bed files in the $RESULTSSPLIT directory and remove any for 
+# random chroms and put list of resulting files in $OVERLAPDIR/results.lst
 ls $RESULTSPLIT/*.bed | grep -v random > $OVERLAPDIR/results.lst
+# Make a template to run bedOverlap as cluster jobs
 echo "#LOOP" > $OVERLAPDIR/template
 echo "${BINDIR}/bedOverlap -noBin \$(path1) {check out exists ../\$(root1)_NoOverlap.bed}" >> $OVERLAPDIR/template
 echo "#ENDLOOP" >> $OVERLAPDIR/template
+# Substitute the file list into the template to create a list of jobs for 
+# the cluster run.
 gensub2 $OVERLAPDIR/results.lst single $OVERLAPDIR/template $OVERLAPDIR/jobList
 
 #echo clean up old files
 #rm ../chr*_NoOverlap.bed
+# Run jobs on the cluster using parasol.
 echo "start cluster job"
 echo "end of ucscRetroStep4.sh , check parasol status then run ucscRetroStep5.sh"
 ssh -T $CLUSTER "cd $OVERLAPDIR ; /parasol/bin/para make jobList "

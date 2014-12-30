@@ -8,10 +8,7 @@ $SCRIPT/makeRetroExtraAttr.sh $DEF $OUTDIR/$EXPDIR
 for i in `echo $SPECIES` ; do echo "make html $i"; done
 
 cp $DEF $OUTDIR/$EXPDIR
-#cd $OUTDIR/$EXPDIR
 #web pages for shuffling events
-#SHUFFLEDIR=shuffle
-# SHUFFLEROOT=$WEBROOT/$SHUFFLEDIR
 echo "mkdir -p $SHUFFLEROOT"
 mkdir -p $SHUFFLEROOT
 cp $SCRIPT/header.html $SHUFFLEROOT/index.html
