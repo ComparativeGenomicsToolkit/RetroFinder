@@ -23,11 +23,9 @@ mkdir -p $OUTDIR/result/axt
 mkdir -p $OUTDIR/log
 mkdir -p $OUTDIR/out
 
-# Get nib file list for genome sequence. NOTE: this was used as input to 
-# pslPseudo. Remove this in future as will use 2bit file as genome sequence
-# input to pslPseudo.  
-find $NIB -name \*.nib > $OUTDIR/S1.lst
-# echo $TWOBIT > $OUTDIR/S1.lst
+# Now using genome 2bit file as input to pslPseudo so no longer need to 
+# create a list of nibs as before. 
+
 # Copy file of chromosome sizes here - isn't there already a file of chrom
 # sizes created before the script is run? 
 cp $GENOME/$DB/chrom.sizes $OUTDIR
