@@ -37,7 +37,7 @@ faToTwoBit -stripVersion $MRNABASE/mrna.fa $OUTDIR/mrnaNoversion.2bit
 # -notAlignPenalty=N score non-aligning bases with 1/N (default 8)
 # -minDiff=N minimum difference in score to filter out 2nd best hit (default 5)
 # -bedOut=bed output file of mismatches.
-pslCDnaGenomeMatch $OUTDIR/all_mrna_double.sort.psl $OUTDIR/S1.len $OUTDIR/mrnaNoversion.2bit $NIB $OUTDIR/all_mrna_double.filter.psl -score=$OUTDIR/all_mrna_double.score -bedOut=$OUTDIR/all_mrna_double.bed  -verbose=3 -minDiff=4 -notAlignPenalty=3 > $OUTDIR/all.log 
+pslCDnaGenomeMatch $OUTDIR/all_mrna_double.sort.psl $OUTDIR/S1.len $OUTDIR/mrnaNoversion.2bit $TWOBIT $OUTDIR/all_mrna_double.filter.psl -score=$OUTDIR/all_mrna_double.score -bedOut=$OUTDIR/all_mrna_double.bed  -verbose=3 -minDiff=4 -notAlignPenalty=3 > $OUTDIR/all.log 
 # Cat together the single hit Blat alignments and filtered PSL (for multiple hit
 # mRNAs) for mRNA Blat alignments and gzip file
 cat $OUTDIR/all_mrna_kept.psl $OUTDIR/all_mrna_double.filter.psl > $OUTDIR/all_mrnaFiltered.psl
