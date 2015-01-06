@@ -146,7 +146,7 @@ sort -k4,4 $OUTDIR/$TABLE.bed > $OUTDIR/$TABLE.sort.bed
 # output format -o 2.1, 2.2, 2.3 which is FILENUMBER.FIELD i.e the first 3 
 # fields of file number 2 which is the sorted ortho.txt and pipe the output 
 # of the join into awk and output a tab-separated file inot ortho.filter.txt.  
-sort -k4,4 $OUTDIR/ortho.txt | join -1 4 -2 1 -o 2.1 2.2 2.3 $OUTDIR/$TABLE.sort.bed -|awk '{$1=$1;OFS="\t";print $0}' > $OUTDIR/ortho.filter.txt
+sort -k1,1 $OUTDIR/ortho.txt | join -1 4 -2 1 -o 2.1 2.2 2.3 $OUTDIR/$TABLE.sort.bed -|awk '{$1=$1;OFS="\t";print $0}' > $OUTDIR/ortho.filter.txt
 
 # Get a count of lines in the retronMrnaInfo files before and after filtering
 wc -l $OUTDIR/retroMrnaInfo.raw.bed $OUTDIR/retroMrnaInfoLessZnf.bed $OUTDIR/retroMrnaInfoZnf.bed $OUTDIR/$TABLE.bed
