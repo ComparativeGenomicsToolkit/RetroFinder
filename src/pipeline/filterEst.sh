@@ -64,7 +64,7 @@ mkdir -p $OUTDIR/run.est
 ls $OUTDIR/est/*psl > $OUTDIR/run.est/list
 # Create a template for batch run of pslCDnaGenomeMatch 
 echo "#LOOP" > $OUTDIR/run.est/template
-echo "pslCDnaGenomeMatch \$(path1) S1.len $OUTDIR/est.2bit $NIB $OUTDIR/estOutput/\$(file1).filter.psl -score=$OUTDIR/estLog/\$(file1).mrnaMatch.tab -bedOut=$OUTDIR/estLog/\$(file1).mrnaMis.bed -minDiff=4 -notAlignPenalty=3" >> $OUTDIR/run.est/template
+echo "pslCDnaGenomeMatch \$(path1) S1.len $OUTDIR/est.2bit $TWOBIT $OUTDIR/estOutput/\$(file1).filter.psl -score=$OUTDIR/estLog/\$(file1).mrnaMatch.tab -bedOut=$OUTDIR/estLog/\$(file1).mrnaMis.bed -minDiff=4 -notAlignPenalty=3" >> $OUTDIR/run.est/template
 echo "#ENDLOOP" >> $OUTDIR/run.est/template
 # Substitute list of PSLs into template and then make the batch on the cluster 
 # and run the jobs there. Output PSL files are in $OUTDIR/estOutput
