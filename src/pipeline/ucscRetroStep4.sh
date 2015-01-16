@@ -57,7 +57,7 @@ echo catting Sorting and Filtering pseudoGeneLinkSortFilter.bed
 # The script consists of one line: tawk '$1==$16{g=($17+$18)/2;d=$3-g;dd=sqrt(d*d)}$1!=$16 || ($1==$16 && dd > 200000){print $0}'
 # The output is piped to sort and sorted on chrom, (start, end), retrogene id 
 # and the output is in pseudoGeneLinkSortFilter.bed. 
-cat $RESULT/pseudoGeneLink[0-9]*.bed | tawk '$5 > 300 && ($14 > 10000 || $14 == -1) {OFS="\t";print $0}'| $SCRIPT/removeTandemDups | sort -k1,1 -k2,3n -k4,4 -T /scratch > $OUTDIR/pseudoGeneLinkSortFilter.bed; #/bin/rm $RESULT/pseudoGeneLink[0-9]*.bed
+cat $RESULT/pseudoGeneLink[0-9]*.bed | tawk '$5 > 300 && ($14 > 10000 || $14 == -1) {OFS="\t";print $0}'| $SCRIPT/removeTandemDups | sort -k1,1 -k2,3n -k4,4 -T /dev/shm/retroSort > $OUTDIR/pseudoGeneLinkSortFilter.bed; #/bin/rm $RESULT/pseudoGeneLink[0-9]*.bed
 # popd
 # Get count of lines in pseudoGeneLinkSortFilter.bed
 wc -l $OUTDIR/pseudoGeneLinkSortFilter.bed
