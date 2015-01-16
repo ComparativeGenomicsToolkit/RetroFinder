@@ -30,7 +30,7 @@ fi
 # Make pslFilter directory.
 mkdir -p $TMPMRNA/pslFilter
 for i in `awk '{print $1}' $TMPMRNA/S1.len` ; do echo $i ; cat $TMPMRNA/lastz/$i/*.psl | awk '{print $0, $1*3-$2}' | \
- sort -k 10,10 -k 22nr -T /scratch | awk '{OFS=" "; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21}' | \
+ sort -k 10,10 -k 22nr -T /dev/shm/retroSort | awk '{OFS=" "; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21}' | \
  ${BINDIR}/pslFilterDups stdin $TMPMRNA/pslFilter/$i.psl  ; done 
 
 #chain blocks
