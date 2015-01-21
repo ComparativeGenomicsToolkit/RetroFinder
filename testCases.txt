@@ -1,5 +1,0 @@
-List of RetroFinder test cases:
-
-1) chr3:88,471,124-88,480,198 region shows break in rat alignment net with insertion
-mm10 AK146795.1-191 Retroposed Genes V4 chr3:88,474,526-88,476,168
-http://hgwdev.cse.ucsc.edu/cgi-bin/hgTracks?db=mm10&position=chr3%3A88471124-88480198&hgsid=389039215_Tl0WZLDxWNudeYj3cYXWG44h0ZAR
