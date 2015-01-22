@@ -1,5 +1,14 @@
 List of RetroFinder test cases:
 
-1) chr3:88,471,124-88,480,198 region shows break in rat alignment net with insertion
-mm10 AK146795.1-191 Retroposed Genes V4 chr3:88,474,526-88,476,168
+1) chr3:88,471,124-88,480,198 mouse mm10, retro-Hmgb3 
+AK146795.1-191 Retroposed Genes V4
+Region shows break in rat alignment net with insertion
 http://hgwdev.cse.ucsc.edu/cgi-bin/hgTracks?db=mm10&position=chr3%3A88471124-88480198&hgsid=389039215_Tl0WZLDxWNudeYj3cYXWG44h0ZAR
+
+2) chr12:44923180-44924366 mouse mm10, retro-Nanog
+AB126939.1-3, Retroposed Genes V5
+This is a retrogene (processed pseudogene) with an alignment gap due to a
+LINE repeat. Yale's PseudoPipe predicts it to be a duplicated pseudogene -
+PGOMOU00000269970 (Release based on Ensembl 78). RetroFinder does not mistake
+such gaps as being introns if they are due to repeat insertions. However,
+PseudoPipe does not do that and probably mistakes this gap for an intron. 
