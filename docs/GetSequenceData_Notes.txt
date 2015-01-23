@@ -21,5 +21,41 @@ Test:
 -gbRoot=/cluster/data/genbank refSeq mrna \
 /hive/users/hartera/GencodeWG/retroFinder/trunk/src/pipeline/bin/mm10/20150122/sequenceData/refGene.fa
 
-# this works and returns 33610 RefSeq sequences for mouse. 
+# this works and returns 33610 RefSeq sequences for mouse, try doing the
+# same for GenBank mRNAs. 
 
+- do we want to check if the sequence data files exist and therefore determine
+  if we should download new ones or just assume we want to get new files if
+  we are running the script. 
+- should have a case if either mrna or refSeq is None then don't fetch that.
+For now when the GetSeqsFromGenbank() is called it determines the sequence
+source from the table name but assumes that is either all_mrna or refGene. 
+
+- try getting the PSL alignments for mRNAs from the table
+selectStr = "select
+matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts
+from" + self.mrna + "limit 1;"
+subprocess.check_call(["hgsql", "-Ne", selectStr, self.database],
+stdout=outFile)
+# didn't seem to work so used a file handle instead and the program ran but
+# there was no output file. also needed to have all the directories created. 
+# so tried a different way found on internet.
+e.g. with open("output.txt", "w+") as output:
+    subprocess.call(["python", "./script.py"], stdout=output);
+# it does also work with the file handle passed to stdout - just didn't see
+# it. It does fail though if the output directory is not created first before
+# the program is run.  
+
+- maybe just just have --mrna and --refSeq options and table is assumed or can
+  be provided. 
+
+2015-01-23
+- Leave mRNA and RefSeq tables as input. if --notGenbank is set to false then
+assume these are mRNA and refSeq.
+What happens though if one input is mrna and the other is Ensembl? 
+Need a --notRefSeq option. 
+- for gbGetSeqs, need to determine what the source is so need to pass the
+  source to getSeqsFromGenbank so if getting mRNAs and notGenbank if FALSE
+then source is genbank. If getting RefSeqs and notRefseq is FALSE then source
+is refseq, need to be set before calling getSeqsFromGenbank() and source is
+passed to the function.    
