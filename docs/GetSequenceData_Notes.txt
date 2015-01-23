@@ -1,3 +1,6 @@
+RETROFINDER PIPELINE REFACTORING:
+Notes on the GetSequenceData python script to get input sequences and
+alignments for pslPseudo input. 
 2015-01-22
 Written script so far to read in variable names, create output files and 
 has functions to get the database prefix e.g. hg from hg38. 
