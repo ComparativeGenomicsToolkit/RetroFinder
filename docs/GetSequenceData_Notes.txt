@@ -1,0 +1,22 @@
+2015-01-22
+Written script so far to read in variable names, create output files and 
+has functions to get the database prefix e.g. hg from hg38. 
+__getSeqsFromGenbank() runs gbGetSeqs. Needs output file as input.
+In ucscRetroStep1.sh - the sequences are piped through an awk to change 
+bases to upper case. Is this necessary? It also substitutes Ns for some 
+non-ATCG bases. These could be IUPAC codes and if they are not then want
+it to fail at a later step and give error. lastz is now run with option 
+--iupac=ambiguous so these codes will be acceptable.
+
+- add import subprocess
+- get function working that calls gbGetSeqs, how to you add inputs such as -db=gbdb where gbdb is a variable. Perhaps need to make a string. 
+gbdb = "-db=" + self.__getDatabasePrefix()
+gbR = "-gbRoot=" + gbRoot
+
+Test:
+/cluster/data/genbank/bin/x86_64/gbGetSeqs -inclVersion -native -db=mm \
+-gbRoot=/cluster/data/genbank refSeq mrna \
+/hive/users/hartera/GencodeWG/retroFinder/trunk/src/pipeline/bin/mm10/20150122/sequenceData/refGene.fa
+
+# this works and returns 33610 RefSeq sequences for mouse. 
+
