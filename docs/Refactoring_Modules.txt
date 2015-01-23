@@ -16,7 +16,7 @@ RepeatMasker, nets (3 sets, NET1, NET2, NET3, two near, one far). Gene
 annotations (3 sets, GENE1, GENE2, GENE3). Only require one set of genes.
 Based on script: ucscRetroStep3.sh
 5) RunPslPseudo - prepare for pslPseudo cluster runs and run on the cluster. 
-Based on script: ucscRetroStep3.sh
+Based on script: ucscRetroStep3.sh and doBuildpk.sh
 6) ProcessPslPseudoOutput - filter the output from pslPseudo. Removed 
 overlapping annotations. Filters out retrogenes that are zinc finger,
 immunoglobulin, NBFP and olfactory receptor genes if there is a PFAM table. 
