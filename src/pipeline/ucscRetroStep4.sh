@@ -62,7 +62,7 @@ cat $RESULT/pseudoGeneLink[0-9]*.bed | tawk '$5 > 300 && ($14 > 10000 || $14 == 
 # Get count of lines in pseudoGeneLinkSortFilter.bed
 wc -l $OUTDIR/pseudoGeneLinkSortFilter.bed
 # pushd $OUT
-# cat together pseudo[0-9]*.psl (WHERE DID THESE COME FROM?) into pseudo.psl
+# cat together pseudo[0-9]*.psl into pseudo.psl
 cat $OUT/pseudo[0-9]*.psl > $OUTDIR/pseudo.psl #;/bin/rm $OUT/pseudo[0-9]*.psl &
 # Cat together ortho*.txt files and remove ".txt" from files, output 
 # in ortho.txt
