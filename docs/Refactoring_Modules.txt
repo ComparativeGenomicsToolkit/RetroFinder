@@ -1,0 +1,19 @@
+2015-01-23
+
+1) GetSequenceData - gets sequences for input to RetroFinder. mRNAs and RefSeqs and alignments in PSL format. Has options to input ensembl sequences or to use 
+other sequence data. Sequences and/or alignments can also be supplied in a
+file. Based on script: ucscRetroStep1.sh
+2) ProcessSequences - remove polyA tails. create files of sequence lengths with
+and without polyA tails. Based on script: ucscRetroStep1.sh
+NOTE: Should this be part of GetSequenceData
+3) ChainLastz - remove duplicate PSLs.  chain lastz alignments, filter chains, 
+convert to PSL. polyA tails reattached and concatenate all the PSLs. 
+pslFilter filters alignments and then qNames are made unique by adding
+suffixes e.g. -1,-2,-3
+
+
+x) LoadDatabase - original sequence input files, mrna.fa and refseq.fa are
+symlinked to /gbdb/<db>/lastzRetro<version>
+NOTE: where should sequence files reside. At moment they are in:
+/hive/data/genomes/<db>/bed/mrnaBlastz.<version> directory.
+sequences are loaded into ucscRetroSeq and ucscRetroExtFile tables. 
