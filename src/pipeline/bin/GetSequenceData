@@ -1,0 +1,114 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import re
+
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from optparse import OptionParser
+
+getGenbankSeqProg = "/cluster/data/genbank/bin/x86_64/gbGetSeqs"
+gbRoot = "/cluster/data/genbank"
+
+class CmdOpts(object):
+    usage="""%prog [options] database date mrna refSeq outDir
+       date - in format, YYYYMMDD
+       mrna - mRNAs table or file name or equivalent dataset
+       refSeq - refSeq table or file name or equivalent dataset
+       outDir - output directory """
+
+    def __init__(self):
+        parser = OptionParser(usage=CmdOpts.usage)
+        # Add options
+        parser.add_option("-n", "--notGenbank", help="sequence data is not from GenBank", action="store_true", default=False, dest="notGenbank")
+        parser.add_option("-m", "--notRefseq", help="sequence data is not from RefSeq", action="store_true", default=False, dest="notRefseq")
+        parser.add_option("-e", "--ensembl", help="fetch sequence data from Ensembl", action="store_true", default=False, dest="ensembl")
+        (opts, args) = parser.parse_args()
+        if opts.notGenbank:
+            print "notGenbank is set"
+        else:
+            print "notGenbank is NOT set"
+        if opts.ensembl:
+            print "ensembl is set"
+        else:
+            print "ensembl is NOT set"
+        if len(args) != 5:
+            parser.error("Wrong number of arguments")
+        (self.db, self.date, self.mrna, self.refSeq, self.outDir) = args
+        # set command line options
+        self.notGenbank = opts.notGenbank
+        self.notRefseq = opts.notRefseq
+        self.ensembl = opts.ensembl
+
+class GetSequenceData(object):
+    def __init__(self, opts):
+        # set variables for options
+        self.notGenbank = opts.notGenbank
+        self.notRefseq = opts.notRefseq
+        self.ensembl = opts.ensembl
+        self.database = opts.db
+        # date in format, YYYY-MM-DD
+        self.date = opts.date
+        self.mrna = opts.mrna
+        self.refSeq = opts.refSeq
+        self.outDir = opts.outDir
+        
+        # Create sequences directory
+        self.seqsDir = self.__makeSeqsDir()
+        # open file handles for writing sequences
+        self.mrnaSeqFile = self.__createFilePath(self.mrna, "fa")
+        #  self.mrnaFh = open(self.mrnaSeqFile, "w")
+        self.refSeqFile = self.__createFilePath(self.refSeq, "fa")
+        self.pslFile = self.__createFilePath(self.mrna, "psl")
+        self.pslFh = open(self.pslFile, "w")
+        print "psl file name is", self.pslFile
+        # Get the Genbank mRNA sequences
+        #if not self.notGenbank: 
+            # self.getSeqsFromGenbank("genbank", "mrna", self.mrnaSeqFile)
+        if not self.notRefseq:
+            self.getSeqsFromGenbank("refseq", "mrna", self.refSeqFile) 
+        self.getPslAlignments(self.mrna, self.pslFh)
+        self.cdsFile = self.__createFilePath("cds", "tab")
+        self.cdsFh = open(self.cdsFile, "w")
+        self.getCdsRegions(self.refSeq, self.cdsFh)
+
+    def __makeSeqsDir(self):
+        dir = self.outDir + "/" + self.database + "/" + self.date + "/sequenceData/"
+        subprocess.check_call(["mkdir", "-p", dir])
+        return dir
+        
+    def __createFilePath(self, seqType, suffix):
+        return self.seqsDir  + seqType + "." + suffix
+
+    def __getDatabasePrefix(self):
+        """Gets the letters of the prefix of the database"""
+        prefix = ""
+        print "database: ", self.database
+        p = re.match(r'^([A-Za-z]+)\d+', self.database)
+        if p:
+            prefix = p.group(1)
+        print "Prefix is: ", prefix
+        return prefix
+
+    def getSeqsFromGenbank(self, source, seqType, outFile):
+        print "Source ", source
+        gbdb = "-db=" + self.__getDatabasePrefix()
+        gbR = "-gbRoot=" + gbRoot
+        subprocess.check_call([getGenbankSeqProg, "-inclVersion", "-native", gbdb, gbR, source, seqType, outFile])
+
+    def getPslAlignments(self, seqTable, outFh):
+        """Gets the PSL alignments from a database table"""
+        pslSelect = "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from " + self.mrna + " limit 1;"
+        subprocess.check_call(["hgsql", "-Ne", pslSelect, self.database], stdout=outFh)
+
+    def getCdsRegions(self, seqTable, cdsFh): 
+        """Sequence table is one for mrna or refseq. Queries the database for
+           CDS regions."""
+        selectCds = "select acc, version, name, type from " + seqTable + " a, gbCdnaInfo g, cds c where qName = acc and cds = c.id;"
+        subprocess.check_call(["hgsql", "-NBe", selectCds, self.database], stdout=cdsFh)
+
+opts = CmdOpts()
+getSeqsData = GetSequenceData(opts)
+#getSeqsData.getSeqsFromGenbank("refSeq", "mrna", getSeqsData.refSeqFile)
