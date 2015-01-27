@@ -58,4 +58,31 @@ Need a --notRefSeq option.
   source to getSeqsFromGenbank so if getting mRNAs and notGenbank if FALSE
 then source is genbank. If getting RefSeqs and notRefseq is FALSE then source
 is refseq, need to be set before calling getSeqsFromGenbank() and source is
-passed to the function.    
+passed to the function instead of the table names.  
+- add a function to create output directory for sequences and associated data
+- when run the program, the input tables should be PSL so all_mrna and
+  refSeqAli.
+
+Questions:
+Checking that files are created? 
+Do sequences need to be in upper case?
+Concatenate results from mySQL queries? 
+Should functions be called at bottom of in __init__() 
+
+2015-01-26
+Talked to Mark on 1/24 and he suggested I write a library file of common
+functions and then have a set of commands getGenbank, getRefseq and
+getEnsembl that are called by GetSequenceData.
+
+NOTE: maybe need a general library file that creates the output directory and 
+gets the date. 
+NOTE: ask Mark if have to import library file and then still put the name of
+it prefixed to calling any of its functions. 
+
+- Figure out new argument parsing package and implement.
+- Program that calls getGenbankData doesn't know where seqData is so need to
+ set variables for these up front.
+- the sequenceData directory should ultimately comtain a PSL file, a sequence
+  file and a CDS file, these are all concatenated results from the individual
+input files. 
+- do you need a CmdOpts class with the current argument parser package.    
