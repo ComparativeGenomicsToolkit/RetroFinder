@@ -42,7 +42,15 @@ Load tables: ucscRetroInfo, ucscRetroCds, ucscRetroOrtho, ucscRetroAli,
 ucscRetroExpressed, ucscRetroCount
 
 # NOTE: The SCORETHRESH has never been applied in these scripts!
+# It is hard-coded into ucscRetroStep5.sh as 510 which is the threshold
+# for mouse, human is 550 so close enough.
 # So this should be applied. Maybe input threshold into a driver script.
 
 sequences are loaded into ucscRetroSeq and ucscRetroExtFile tables.
 Based on script: ucscRetroStep2.sh 
+
+2015-01-28:
+NOTE: in future, should filter input mRNAs to remove those that are
+blacklisted, same for ESTs that are used for expression analysis. 
+NOTE: Should filter CDS table so only includes those mRNA ids that are in the
+ucscRetroAli and Info tables. 
