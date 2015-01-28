@@ -4,9 +4,9 @@ from __future__ import with_statement
 
 import sys, os, subprocess
 import re
-
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
+from SeqAndAlignData import SeqAndAlignData
 from optparse import OptionParser
 
 getGenbankSeqProg = "/cluster/data/genbank/bin/x86_64/gbGetSeqs"
@@ -41,7 +41,7 @@ class CmdOpts(object):
         self.notGenbank = opts.notGenbank
         self.notRefseq = opts.notRefseq
         self.ensembl = opts.ensembl
-
+        
 class GetSequenceData(object):
     def __init__(self, opts):
         # set variables for options
@@ -55,24 +55,25 @@ class GetSequenceData(object):
         self.refSeq = opts.refSeq
         self.outDir = opts.outDir
         
+        seqData = SeqAndAlignData(self.database, self.outDir)
         # Create sequences directory
-        self.seqsDir = self.__makeSeqsDir()
+       #  self.seqsDir = self.__makeSeqsDir()
         # open file handles for writing sequences
-        self.mrnaSeqFile = self.__createFilePath(self.mrna, "fa")
+        #self.mrnaSeqFile = self.__createFilePath(self.mrna, "fa")
         #  self.mrnaFh = open(self.mrnaSeqFile, "w")
-        self.refSeqFile = self.__createFilePath(self.refSeq, "fa")
-        self.pslFile = self.__createFilePath(self.mrna, "psl")
-        self.pslFh = open(self.pslFile, "w")
-        print "psl file name is", self.pslFile
+       # self.refSeqFile = self.__createFilePath(self.refSeq, "fa")
+        #self.pslFile = self.__createFilePath(self.mrna, "psl")
+        #self.pslFh = open(self.pslFile, "w")
+       # print "psl file name is", self.pslFile
         # Get the Genbank mRNA sequences
         #if not self.notGenbank: 
             # self.getSeqsFromGenbank("genbank", "mrna", self.mrnaSeqFile)
-        if not self.notRefseq:
-            self.getSeqsFromGenbank("refseq", "mrna", self.refSeqFile) 
-        self.getPslAlignments(self.mrna, self.pslFh)
-        self.cdsFile = self.__createFilePath("cds", "tab")
-        self.cdsFh = open(self.cdsFile, "w")
-        self.getCdsRegions(self.refSeq, self.cdsFh)
+        #if not self.notRefseq:
+         #   self.getSeqsFromGenbank("refseq", "mrna", self.refSeqFile) 
+       # self.getPslAlignments(self.mrna, self.pslFh)
+        #self.cdsFile = self.__createFilePath("cds", "tab")
+        #self.cdsFh = open(self.cdsFile, "w")
+        #self.getCdsRegions(self.refSeq, self.cdsFh)
 
     def __makeSeqsDir(self):
         dir = self.outDir + "/" + self.database + "/" + self.date + "/sequenceData/"
