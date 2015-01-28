@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import re
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from SeqAndAlignData import SeqAndAlignData
+from optparse import OptionParser
+
+seqTable = "all_mrna"
+seqType = "mrna"
+seqSource = "genbank"
+tempFile = "temp.txt"
+
+class CmdOpts(object):
+    def __init__(self):
+        parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
+        parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
+        parser.add_argument('outDir', metavar='outDir', type=str, help='root of output directory')  
+        args = parser.parse_args()
+        self.db = args.db
+        self.outDir = args.outDir
+
+class getGenbankData(object):
+    def __init__(self, opts):
+        self.database = opts.db
+        # This should be the sequence data directory
+        self.outDir = opts.outDir
+        print "Out dir is ", self.outDir
+        seqData = SeqAndAlignData(self.database, seqType, seqTable, self.outDir)
+        # This is called here as not all get programs for sequence data will
+        # use this function to get sequence data. Ensembl has a different 
+        # method. 
+        seqData.getGenbankSeqs(seqSource, seqType, seqData.seqFile)
+        fileList = [seqData.seqFile, seqData.alignFile]
+        catFiles(tempFile, fileList)
+
+opts = CmdOpts()
+getGenbank = getGenbankData(opts)
