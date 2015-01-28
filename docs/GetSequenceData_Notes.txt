@@ -82,7 +82,21 @@ it prefixed to calling any of its functions.
 - Figure out new argument parsing package and implement.
 - Program that calls getGenbankData doesn't know where seqData is so need to
  set variables for these up front.
-- the sequenceData directory should ultimately comtain a PSL file, a sequence
+- the sequenceData directory should ultimately contain a PSL file, a sequence
   file and a CDS file, these are all concatenated results from the individual
 input files. 
-- do you need a CmdOpts class with the current argument parser package.    
+- do you need a CmdOpts class with the current argument parser package.  
+
+2015-01-27
+Mark said that variable numbers of arguments to functions e.g. *args are best
+avoided and it is better to use a list. Use a list as input to the catFiles()
+function and test this out. 
+- how do I get list to work with subprocess?
+["cat"] + ["a", "b"]
+['cat', 'a', 'b']
+- when I get the organism name from output of hsql and pass to subprocess then
+  it has newline character in it. how did that happen? how to get rid of it? 
+  used strip(). Now the getEnsemblTxSeqsWithVersions.pl is not working, it
+says that it MSG: Can not find internal name for species 'Mouse' but it worked
+fine before. Tried also changing Mouse to lower case and stil doesn't work. 
+Perhaps the BioPerl and Ensembl API libraries need updating. 
