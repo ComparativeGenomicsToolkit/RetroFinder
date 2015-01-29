@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import re
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from SeqAndAlignData import SeqAndAlignData
+from optparse import OptionParser
+
+seqTable = "ensGene"
+
+parser = argparse.ArgumentParser(description='Get CDS regions for Ensembl transcripts')
+parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
+parser.add_argument('gpTable', metavar='genePred table', type=str, help='genePred format table')  
+parser.add_argument('txList', metavar='transcript id list', type=str, help='list of transcript ids with versions')  
+parser.add_argument('outFile', metavar='outFile', type=str, help='full path of output file')  
+args = parser.parse_args()
+
+class genePredCdsRegions(object):
+    def __init__(self, args):
+        self.database = args.db
+        # output file for CDS regions 
+        self.outFile = args.outFile
+        print "Out dir is ", self.outDir
+        seqData = SeqAndAlignData(self.database, seqType, seqTable, self.outDir)
+        # This is called here as not all get programs for sequence data will
+        # use this function to get sequence data. Ensembl has a different 
+        # method. 
+        seqData.getGenbankSeqs(seqSource, seqType, seqData.seqFile)
+        fileList = [seqData.seqFile, seqData.alignFile]
+        catFiles(tempFile, fileList)
+
+gpCds = genePredCdsRegions(args)
