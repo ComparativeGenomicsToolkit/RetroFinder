@@ -14,8 +14,6 @@ $species = $ARGV[0];
 $chromFile = $ARGV[1];
 $outFile = $ARGV[2];
 
-print "All is $all \n";
-
 if ($#ARGV < 2) 
 {
    print "Usage: getEnsembTxSeqsWithVersions.pl <species> <chroms list> <output file> \n";
@@ -45,7 +43,7 @@ $registry->load_registry_from_db(
     -host => 'useastdb.ensembl.org', # alternatively 'useastdb.ensembl.org'
     -user => 'anonymous'
 );
-# get a slice adaptor for the human core database
+# get a slice adaptor for the core database for the species defined
 my $slice_adaptor = $registry->get_adaptor( $species, 'Core', 'Slice' );
 # get adaptor for transcripts
 my $tr_adaptor = $registry->get_adaptor( $species, 'Core', 'Transcript');
