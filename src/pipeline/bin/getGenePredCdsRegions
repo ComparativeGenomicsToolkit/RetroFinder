@@ -7,31 +7,91 @@ import re
 import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
+sys.path.append(myBinDir + "/../lib/pycbio/lib")
 from commonOps import *
 from SeqAndAlignData import SeqAndAlignData
+from ConvertCoords import ConvertCoords
 from optparse import OptionParser
+from pycbio.hgdata.GenePred import Range,GenePred,GenePredReader,GenePredTbl
+from pycbio.tsv.TabFile import TabFile,TabFileReader
 
-seqTable = "ensGene"
+# Gets the CDS regions for the transcript ids in the input list using the
+# table specified in the command line. 
 
-parser = argparse.ArgumentParser(description='Get CDS regions for Ensembl transcripts')
+parser = argparse.ArgumentParser(description='Get CDS regions in transcript coordinates for genePred annotations')
 parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
-parser.add_argument('gpTable', metavar='genePred table', type=str, help='genePred format table')  
-parser.add_argument('txList', metavar='transcript id list', type=str, help='list of transcript ids with versions')  
+parser.add_argument('gpTable', metavar='gpTable', type=str, help='genePred format table')  
+parser.add_argument('txList', metavar='transcript_ids', type=str, help='file of transcript ids with versions')  
 parser.add_argument('outFile', metavar='outFile', type=str, help='full path of output file')  
 args = parser.parse_args()
 
 class genePredCdsRegions(object):
     def __init__(self, args):
         self.database = args.db
+        # Read in the transcript ids with version number
+        self.txList = TabFile(args.txList) 
+        self.gpTable = args.gpTable
+        # Gets genePreds from database table and writes to file
+        self.gpFile = self.getGenePredFile(self.gpTable)
+        # Read the genePreds from file into a dictionary
+        self.gpTable = GenePredTbl(self.gpFile, buildUniqIdx=True)
         # output file for CDS regions 
         self.outFile = args.outFile
-        print "Out dir is ", self.outDir
-        seqData = SeqAndAlignData(self.database, seqType, seqTable, self.outDir)
-        # This is called here as not all get programs for sequence data will
-        # use this function to get sequence data. Ensembl has a different 
-        # method. 
-        seqData.getGenbankSeqs(seqSource, seqType, seqData.seqFile)
-        fileList = [seqData.seqFile, seqData.alignFile]
-        catFiles(tempFile, fileList)
 
+    def getTxCoordsForRange(self, gp, range):
+        """Returns a Range object with start and end coords relative 
+           to the transcript"""
+        stCoords = ConvertCoords(gp, range.start, "genomic")
+        endCoords = ConvertCoords(gp, range.end-1, "genomic")
+        # make the cdsStart 0-based and cdsEnd 1-based, swap for - strand
+        if (gp.strand == "-"):
+            return Range(endCoords.newPos, stCoords.newPos + 1)
+        return Range(stCoords.newPos, endCoords.newPos + 1)   
+
+    def getCdsRegion(self, gp):
+        """Returns the CDS coordinates relative to a transcript. If there
+           is no CDS it returns None"""
+        # Coordinates to be converted and returned are 0-based
+        cdsGenomic = gp.getCds()
+        if (cdsGenomic != None):
+            return self.getTxCoordsForRange(gp, cdsGenomic)
+        return cdsGenomic 
+    
+    def getCdsRegionsForList(self):
+        """For each id, get the CDS region and write to a file"""
+        # Each item in this TabFile object is a list
+        for t in self.txList:
+            # Remove version number
+            idNoVersion = removeIdVersion(t[0])
+            # Get version number
+            version = getIdVersion(t[0])
+            # Find genePred in table
+            gp = self.gpTable.names[idNoVersion]
+            # Get the transcript coords for CDS start and end 
+            cds = self.getCdsRegion(gp)
+            self.__writeCdsToFile(gp.name, version, cds, self.outFile)            
+
+    def getGenePredFile(self, gpTable):
+        """Gets the genePred from the table specified"""
+        selectStr = "select name, chrom, strand,txStart,txEnd,cdsStart,cdsEnd,exonCount, \
+            exonStarts,exonEnds from " + gpTable + ";"
+        gpFile = gpTable + ".gp"
+        
+        with open(gpFile, "w") as gpFh:
+            subprocess.check_call(["hgsql", "-Ne", selectStr, self.database],stdout=gpFh)
+        return gpFile
+     
+    def __writeCdsToFile(self, id, version, cdsRegion, outFile):
+        """Write the CDS region to out file"""
+        cdsStr = id + "\t" + version + "\t"
+        with open(outFile, "a") as fh:
+            if cdsRegion == None:
+                cdsStr = cdsStr + "n/a" + "\t" + "mRNA\n"
+            else: 
+                cdsStr = cdsStr + str(cdsRegion.start) + ".." + str(cdsRegion.end) + \
+                    "\t" + "mRNA\n"
+            fh.write(cdsStr)
+            
 gpCds = genePredCdsRegions(args)
+gpCds.getCdsRegionsForList()
+
