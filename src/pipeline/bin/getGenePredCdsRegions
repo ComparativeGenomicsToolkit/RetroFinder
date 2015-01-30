@@ -81,7 +81,7 @@ class genePredCdsRegions(object):
             subprocess.check_call(["hgsql", "-Ne", selectStr, self.database],stdout=gpFh)
         return gpFile
      
-    def __writeCdsToFile(self, id, version, cdsRegion, outFile):
+    def writeCdsToFile(self, id, version, cdsRegion, outFile):
         """Write the CDS region to out file"""
         cdsStr = id + "\t" + version + "\t"
         with open(outFile, "a") as fh:
@@ -94,4 +94,4 @@ class genePredCdsRegions(object):
             
 gpCds = genePredCdsRegions(args)
 gpCds.getCdsRegionsForList()
-
+gpCds.writeCdsToFile(gp.name, version, cds, self.outFile)            
