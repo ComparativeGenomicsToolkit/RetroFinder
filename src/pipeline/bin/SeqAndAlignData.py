@@ -1,6 +1,7 @@
 import os, sys, re, subprocess
 import time
 from commonOps import *
+from Files import SeqFiles
 
 # Fetches Genbank and RefSeq sequences
 genbankSeqProg = "/cluster/data/genbank/bin/x86_64/gbGetSeqs"
@@ -13,29 +14,12 @@ gpToPsl = "genePredToPsl"
 seqType = "mrna"
 
 class SeqAndAlignData(object):
-    def __init__(self, database, seqType, alignTable, outDir, gp=False):
-        # Database name for genome assembly
-        self.database = database
-        # Sequence type e.g. mrna, refseq, ensembl
-        self.seqType = seqType
-        # Creates an output directory for sequence and alignment data
-        self.seqsDir = makeDir(outDir, self.database, "sequenceData")
-        print "seqs dir is", self.seqsDir
-        # File for sequence data
-        self.seqFile = createFilePath(self.seqsDir, seqType, "fa")
-        print "seq file is", self.seqFile
-        # File for chromosome names and sizes
-        # CONSIDER PUTTING THIS IN A GENERAL DIRECTORY AND THAT MAIN 
-        # PIPELINE DRIVER SHOULD GET IT
-        self.chromFile = createFilePath(self.seqsDir, "chrom", "sizes")
+    def __init__(self, seqFiles):
+        self.seqFiles = seqFiles
         # Get chromosome sizes and write to chromFile
-        getChromSizes(self.database, self.chromFile)
-        # Alignment format is PSL (.psl)
-        self.alignFile = createFilePath(self.seqsDir, seqType, "psl")
+        getChromSizes(self.database, self.seqFiles.chromFile)
         # Get the PSL alignment data for this dataset
-        self.__getPslAlignments(alignTable)
-        # Ensembl sequences file
-        self.ensSeqFile = createFilePath(self.seqsDir, "ensembl", "fa")
+        self.getPslAlignments(alignTable)
         # This can be set to None, only required for some datasets
         self.genePredFile = createFilePath(self.seqsDir, seqType, "gp")
         print "seqFile: %s alignFile: %s genePredFile: %s \n" % (self.seqFile, self.alignFile, self.genePredFile)
