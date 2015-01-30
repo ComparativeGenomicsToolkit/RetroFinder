@@ -1,5 +1,5 @@
 # Set of common functions used throughout the RetroFinder pipeline
-import subprocess
+import subprocess,re
 import time
 
 def catFiles(outFile, fileList):
@@ -23,11 +23,9 @@ def getOrganismName(database):
     org = org.strip()
     return org.lower()
 
-def makeDir(outDir, database, dir):
-    dir = outDir + "/" + database + "/" + getDate() + "/" + dir
+def makeDir(dir):
     subprocess.check_call(["mkdir", "-p", dir])
-    return dir
-
+    
 def createFilePath(dir, name, suffix):
     """Creates the file name and path for output files."""
     return dir + "/" + name + "." + suffix
@@ -37,4 +35,19 @@ def getChromSizes(database, chromFile):
     chromStr = "select chrom, size from chromInfo;" 
     with open(chromFile, "w") as fh:
         subprocess.check_call(["hgsql", "-Ne", chromStr, database], stdout=fh)
- 
+
+def removeIdVersion(acc):
+    """Removes the .1,.2 etc. suffix from an id"""
+    id = ""
+    i = re.match(r'^([A-Z0-9]+)\.\d+', acc)
+    if i:
+        id = i.group(1)
+    return id
+
+def getIdVersion(acc):
+    """Returns the version number of an id"""
+    version = ""
+    i = re.match(r'^[A-Z0-9]+\.(\d+)', acc)
+    if i: 
+        version = i.group(1)
+    return version
