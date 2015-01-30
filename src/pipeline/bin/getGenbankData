@@ -16,28 +16,23 @@ seqType = "mrna"
 seqSource = "genbank"
 tempFile = "temp.txt"
 
-class CmdOpts(object):
-    def __init__(self):
-        parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
-        parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
-        parser.add_argument('outDir', metavar='outDir', type=str, help='root of output directory')  
-        args = parser.parse_args()
-        self.db = args.db
-        self.outDir = args.outDir
+parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
+parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
+parser.add_argument('rootDir', metavar='rootDir', type=str, help='root of output directory')  
+args = parser.parse_args()
 
 class getGenbankData(object):
-    def __init__(self, opts):
-        self.database = opts.db
-        # This should be the sequence data directory
-        self.outDir = opts.outDir
-        print "Out dir is ", self.outDir
-        seqData = SeqAndAlignData(self.database, seqType, seqTable, self.outDir)
+    def __init__(self, args):
+        self.database = args.db
+        # This should be the root directory
+        self.rootDir = args.rootDir
+        print "Out dir is ", self.rootDir
+        genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
+        # Pass in the genbankFiles object to SeqAndAlignData
+        seqData = SeqAndAlignData(genbankFiles)
         # This is called here as not all get programs for sequence data will
         # use this function to get sequence data. Ensembl has a different 
         # method. 
-        seqData.getGenbankSeqs(seqSource, seqType, seqData.seqFile)
-        fileList = [seqData.seqFile, seqData.alignFile]
-        catFiles(tempFile, fileList)
+        seqData.getGenbankSeqs(seqSource, seqType, genbankFiles.seqFile)
 
-opts = CmdOpts()
-getGenbank = getGenbankData(opts)
+getGenbank = getGenbankData(args)
