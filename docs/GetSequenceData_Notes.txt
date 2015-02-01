@@ -99,4 +99,159 @@ function and test this out.
   used strip(). Now the getEnsemblTxSeqsWithVersions.pl is not working, it
 says that it MSG: Can not find internal name for species 'Mouse' but it worked
 fine before. Tried also changing Mouse to lower case and stil doesn't work. 
-Perhaps the BioPerl and Ensembl API libraries need updating. 
+Perhaps the BioPerl and Ensembl API libraries need updating. Turns out that
+the APIs are specific to a release so only the correct release of API can
+access data for a particular release dataset (2015-01-31).
+
+2015-01-28
+Ensembl CDS regions:
+Need to write a new Perl script using the Ensembl API:
+getEnsemblTxSeqsCds.pl for those sequences with a CDS region. 
+Realised that Ensembl may not have the CDS relative to the transcript just to
+the genome and because the haplotypes are represented differently than at UCSC
+this would involve lifting over coordinates in some cases as well as
+translating to transcript coordinates. Instead use the genePred and convert
+from the cdsStart and cdsEnd genomic coordinates to transcript coordinates. 
+In genePred: 
+fields 4 and 5 are txStart and txEnd, fields 6 and 7 are the CDS start and
+end, both in genomic coordinates. 
+Tricky - need to check that have most current version of Ensembl or use
+GENCODE (wgEncodeGencodeCompVxx). 
+If use Ensembl, then don't have version numbers. Have to assume they are the
+same. 
+or back to using the Ensembl CDS regions from their database. More likely to
+be using this for a genome with fewer mRNAs and RefSeqs so would be using the
+ensGene table.  All the transcripts are in ensGene now and ensemblSource shows
+biotypes such as pseudogene, protein-coding, processed_pseudogene and various
+ncRNAs. 
+So query ensGene. write a standalone python program to get the CDS regions
+from a genePred table. getGenePredCdsRegions. Also need list of transcripts
+with versions. 
+Don't need CmdOpts() class now as that was doing what argparse now does. 
+
+2015-01-29:
+For getting the Ensembl CDS regions for transcripts from a particular genome 
+assembly, need to make sure that the Ensembl release for the sequences is the
+same as that for the genome browser track and therefore ensGene table.
+symlink Mark's pycbio library:
+cd /hive/users/hartera/GencodeWG/retroFinder/trunk/src/pipeline/lib
+ln -s /hive/groups/gencode/local/pycbio pycbio
+import the pycbio/lib/pycbio/hgdata/GenePred classes.
+Added function removeIdVersion() to commonOps.py - tested it and it works. 
+
+Read in the transcript ids list as a TabFile object - from Mark's pycbio
+library.
+Get all genePreds from table probably faster than querying one by one and then
+write to a file. 
+This returns a string:
+gp = subprocess.check_output(["hgsql", "-Ne", "select * from ensGene where
+name = 'ENSPTRT00000000068'", "panTro4"])
+
+NOTE: ASK - Would it be better to do it this way or make an object that
+inherits GenePred but reads directly from the mySQL into the genePred object
+rather than via a file. 
+For now, read genePreds into file and then read into GenePreTbl object, use
+buildUniqIdx() -> self.names[row.name] = row
+so to access a row use gpTbl.names[id]
+
+# Already have a library module that converts genomic coordinates to
+# transcript coords.
+cp
+/hive/users/hartera/GencodeWG/ccds/trunk/modules/ccdsPipeline/src/lib/ConvertCoords.py
+/hive/users/hartera/GencodeWG/retroFinder/trunk/src/pipeline/lib
+Added a function to commonOps.py to getIdVersion() - returns the version
+number. 
+Added code to get the CDS, convert it to transcript coordinates then print out
+the id, version number, CDS region and "mRNA" as the last field. 
+This script works and formats the output correctly. Since it is appended to a
+file then either the file should be created with a "w" each time or there
+should be a rm -f to make sure it is not there before starting. 
+
+Files.py - this is created as need to be able to track files and know where
+they are as different parts of the pipeline may need access to the same files. 
+Creaet a SeqFiles class to hold all the sequence file names and those for
+associated data. An optional variable, genePred is set to False. If True then
+the genePredFile variable is set to a file name or otherwise to None. 
+Put the function to create the root directory outside the class. Use
+GetSequenceData for testing and for the moment, at this level create the
+SeqFiles objects for mRNA, RefSeq and Ensembl if required. Maybe just have to
+create the files object twice - one in higher program so know the file names
+and once in the getGenbankData program. 
+NOTE: ASK MARK IS THAT OK? 
+Modify the SeqAndAlignData object to take a SeqFiles object as input and get
+all the file names from there. 
+Need to make the sequence directory before use it. Change makedir() in
+commonOps so just makes any directory passed to it. 
+Testing: 
+ ./GetSequenceData mm10 `pwd`
+FIX: THIS IS BROKEN
+
+2015-01-30:
+To get the Ensembl track version:
+hgsql -e 'select * from trackVersion;' hgFixed 
+This gets the latest version number for an assembly:
+
+hgsql -e 'select max(version) from trackVersion where db = "panTro4";' hgFixed
+For the script, getGenePredCdsRegions, do a version check. Instead, add this
+higher up as can check when Ensembl is selected e.g. in GetSequenceData. 
+
+- for GetSequnceData, add an option --ensVersion to provide an Ensembl version
+  number, this also indicates that want to get Ensembl sequences. Seems like
+don't need this:
+action='store_const' but can use action='store' - this tells it to store the
+next argument and ensure it is of the correct type. 
+parser.add_argument('--ensVer', dest='ensVersion', type=int, help='if using
+Ensembl, provide the version to check this is the one used in the database')
+- assume that if this is set then want to use Ensembl data.  
+arguments are in args.<argname> and options are in options.<optionname>
+
+# Get error when run GetSequenceData after it calls getGenbankData so ran this
+# alone. 
+# need to import SeqFiles. SeqAndAlignData needs database variable to pass
+# this in to initialise object. 
+Error: IOError: [Errno 2] No such file or directory:
+'/hive/users/hartera/GencodeWG/retroFinder/trunk/src/pipeline/bin/mm10.2015-01-30/sequenceData/chrom.sizes'
+Need to pass alignTable i.e. PSL BLAT table name to SeqsAndAlignData object. 
+For now, define in getGenbankData program. 
+# fix bugs. 
+Now update getRefseqData and getEnsemblData in a similar way. 
+Only need to get chrom.sizes once and put in a higher directory so add this to
+a higher level program. Put in GetSequenceData for now. Move from
+SeqAndAlignData.py
+In any function where writing to a file, make the output directory first. 
+
+For the file names - could create objects and then write contents to a file
+and have function to read these into the same object from a file each time
+want to use them. 
+Not creating chrom.sizes - FIX
+
+- if Ensembl version specified. Check that this is the current one in the UCSC
+  database otherwise throw an error and exit.
+- update getRefseqData so like getGenbankData and test after adding call to
+  getRefseqData to GetSequence Data
+- update getEnsemblData so the same as the others, can not test as script to
+  get Ensembl data not working right now
+- Look into using ConfigFileParser object in Python 
+- send e-mail to ask Ensembl how to use API to get the current Ensembl release
+  number, DONE
+When get a variable from subprocess.check_output get Ensembl release is
+['hgsql', '-Ne', "select max(version) from trackVersion where db = 'mm10';",
+'hgFixed']
+
+2015-01-31:
+there was an error with this as had an extra "=" in there due to a typo so
+removed. 
+Use line[0:-1] to remove newline char at the end as when got the organism name
+from database and read into a variable. So use this for the organism name too
+instead of strip().
+
+Mark has a GenePredDbReader class in the hgdata/GenePred.py library.
+It takes a conn variable which is an object from the HgDb.py class. This uses
+the .hg.conf file to connect to the database.
+so instead of reading the genePred into a file, can read into a GenePred
+object. then print to a file after selecting the ones needed as it is read
+into a hash table (see sys/dbOps.py) of column name to row index. 
+ 
+Use this in the getGenePredCdsRegions program. 
+Added a getGenePredsFromDb() function. using hgdata/HgDb.py connect()
+function, create conn to pass in to initialise GenePredDbReader. TEST! 
