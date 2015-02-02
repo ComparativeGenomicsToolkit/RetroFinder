@@ -17,7 +17,7 @@ gbRoot = "/cluster/data/genbank"
 parser = argparse.ArgumentParser(description='Program to get sequence and associated data for RetroFinder')
 parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
 parser.add_argument('outDir', metavar='outDir', type=str, help='root of output director')
-parser.add_argument('--ensVer', dest='ensVersion', action='store_const', const=ensVer, default=None, help='if using Ensembl, provide the version to check this is the one used in the database')
+parser.add_argument('--ensVer', dest='ensVersion', action='store', type=int, help='if Ensembl data required, provide the version to check this is the one used in the database')
 args = parser.parse_args()
        
 class GetSequenceData(object):
@@ -30,12 +30,54 @@ class GetSequenceData(object):
         # NOTE: MOVE ROOT DIR TO HIGHER UP PROGRAM
         self.rootDir = createRootDirName(self.outDir, self.database, self.date)
         print "Root name is", self.rootDir
+        # Get a list of general files
+        self.generalFiles = GeneralFiles(self.rootDir)
         # Create SeqFiles objects for GenBank and RefSeq:
-        genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
+        self.genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
         # Can not pass a files object as this is a program so for now 
-        # make that object again in getGenbankData
+        # make that object again ingetGenbankData
         print "Calling getGenbankData"
-        makeDir(genbankFiles.seqsDir)
-        subprocess.check_call(["./getGenbankData", self.database, self.rootDir])
+        print "Ensversion is", args.ensVersion
+        if args.ensVersion != None:
+            print "Option for ensembl Version is", args.ensVersion
+            self.ensVer = self.getCurrentDbEnsemblVersion()
+            self.checkEnsemblVersion(args.ensVersion) 
+            # if the ensVer option is set, get Ensembl data 
+            # TEST THIS WHEN HAVE THE API WORKING TO FETCH SEQS     
+#        subprocess.check_call(["./getEnsemblData", self.database, self.generalFiles.chromFile, self.rootDir])
+        else:
+            print "Ensembl verison option is not set."
+        # Get Genbank mRNA sequences and associated data
+#        subprocess.check_call(["./getGenbankData", self.database, self.rootDir])
+        # Get RefSeq mRNA transcript sequences and associated data
+        subprocess.check_call(["./getRefseqData", self.database, self.rootDir])
+
+    def getChromSizes(self):
+        """Get chromosome sizes"""
+        chromStr = "select chrom, size from chromInfo;"
+        with open(self.generalFiles.chromFile, "w") as fh:
+            subprocess.check_call(["hgsql", "-Ne", chromStr, self.database], stdout=fh)
+
+    def getCurrentDbEnsemblVersion(self):
+        """Gets the current Ensembl version loaded into the database"""
+        queryStr = "select max(version) from trackVersion where db = " + "'" \
+            + self.database + "';"
+        print queryStr
+        ensRel = subprocess.check_output(['hgsql', '-Ne', queryStr, 'hgFixed'])
+        print "Ensembl release is %s here." % (ensRel[0:-1])
+        # Ensembl release value is a string so cast to an integer
+        return int(ensRel[0:-1])
+    
+    def checkEnsemblVersion(self, ensVerOption):
+        """Checks the current UCSC database Ensembl version against the 
+           current one at Ensembl from which sequences were retrieved."""
+        # NOTE: later write program to check the version being used at
+        # Ensembl or could check UCSC first then connect to correct archive. 
+        # For now fail if versions are not the same: 
+        if self.ensVer != ensVerOption:
+            raise AssertionError, "Ensembl version in database does not match that provided by user"
+        print "Ensembl versions match"
 
 getSeqsData = GetSequenceData(args)
+getSeqsData.getChromSizes()
+print "Organism name is %s here" % (getOrganismName(getSeqsData.database))
