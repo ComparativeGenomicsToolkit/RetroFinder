@@ -20,7 +20,7 @@ def getOrganismName(database):
     """Give the name of the database return the common name."""
     selectStr = "select organism from dbDb where name =" + "'" + database + "';" 
     org = subprocess.check_output(["hgsql", "-Ne", selectStr, "hgcentraltest"])
-    org = org.strip()
+    org = org[0:-1]
     return org.lower()
 
 def makeDir(dir):
