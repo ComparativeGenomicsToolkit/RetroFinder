@@ -8,10 +8,10 @@ import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
+from Files import SeqFiles
 from SeqAndAlignData import SeqAndAlignData
-from optparse import OptionParser
 
-seqTable = "all_mrna"
+alignTable = "all_mrna"
 seqType = "mrna"
 seqSource = "genbank"
 tempFile = "temp.txt"
@@ -23,13 +23,15 @@ args = parser.parse_args()
 
 class getGenbankData(object):
     def __init__(self, args):
+        # Genome assembly database
         self.database = args.db
-        # This should be the root directory
+        # Root working directory
         self.rootDir = args.rootDir
         print "Out dir is ", self.rootDir
         genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
         # Pass in the genbankFiles object to SeqAndAlignData
-        seqData = SeqAndAlignData(genbankFiles)
+        seqData = SeqAndAlignData(self.database, alignTable, genbankFiles)
+        print "getGenbankData: sequence file is", genbankFiles.seqFile
         # This is called here as not all get programs for sequence data will
         # use this function to get sequence data. Ensembl has a different 
         # method. 
