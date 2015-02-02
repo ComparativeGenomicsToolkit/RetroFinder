@@ -8,29 +8,29 @@ import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
+from Files.py import SeqFiles.py
 from SeqAndAlignData import SeqAndAlignData
 from optparse import OptionParser
 
-seqTable = "ensGene"
+gpTable = "ensGene"
 seqType = "ensembl"
-tempFile = "temp.txt"
 
-class CmdOpts(object):
-    def __init__(self):
-        parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
-        parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
-        parser.add_argument('outDir', metavar='outDir', type=str, help='root of output directory')  
-        args = parser.parse_args()
-        self.db = args.db
-        self.outDir = args.outDir
+parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
+parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
+parser.add_argument('chromSizes', metavar='chromSizes', type=str, help='tab-separated file of chromosome names and sizes')
+parser.add_argument('rootDir', metavar='rootDir', type=str, help='root of output directory')
+args = parser.parse_args()
 
-class getRefseqData(object):
-    def __init__(self, opts):
-        self.database = opts.db
-        # This should be the sequence data directory
-        self.outDir = opts.outDir
-        print "Out dir is ", self.outDir
-        seqData = SeqAndAlignData(self.database, seqType, seqTable, self.outDir)
+class getEnsemblData(object):
+    def __init__(self, args):
+        # Genome assembly database
+        self.database = args.db
+        # Rooting working directory
+        self.outDir = args.rootDir
+        print "Out dir is ", self.rootDir
+        ensemblFiles = SeqFiles(self.rootDir, self.datbase, "ensembl", True)
+        # NOTE: need to make sure that gpTable is used in the SeqAndAlignData
+        seqData = SeqAndAlignData(self.database, gpTable, ensemblFiles)
         # This is called here as not all get programs for sequence data will
         # use this function to get sequence data. Ensembl has a different 
         # method. 
@@ -38,5 +38,4 @@ class getRefseqData(object):
         fileList = [seqData.seqFile, seqData.alignFile]
         catFiles(tempFile, fileList)
 
-opts = CmdOpts()
-getRefSeq = getRefseqData(opts)
+getEns = getEnsemblData(opts)
