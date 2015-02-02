@@ -14,16 +14,18 @@ gpToPsl = "genePredToPsl"
 seqType = "mrna"
 
 class SeqAndAlignData(object):
-    def __init__(self, seqFiles):
+    def __init__(self, database, alignTable, seqFiles):
+        self.database = database
         self.seqFiles = seqFiles
-        # Get chromosome sizes and write to chromFile
-        getChromSizes(self.database, self.seqFiles.chromFile)
+        if seqFiles.genePred:
+             # Get the genePred format annotations
         # Get the PSL alignment data for this dataset
-        self.getPslAlignments(alignTable)
-        # This can be set to None, only required for some datasets
-        self.genePredFile = createFilePath(self.seqsDir, seqType, "gp")
-        print "seqFile: %s alignFile: %s genePredFile: %s \n" % (self.seqFile, self.alignFile, self.genePredFile)
-        self.getEnsemblSeqs(self.ensSeqFile)
+        self.__getPslAlignments(alignTable)
+        
+        print "seqFile: %s alignFile: %s genePredFile: %s \n" % (self.seqFiles.seqFile, self.seqFiles.alignFile, self.seqFiles.genePredFile)
+        # have an if statement to get Ensembl sequences, do this from 
+        # getEnsemblData
+       #  self.getEnsemblSeqs(self.ensSeqFile)
 
     def __getDatabasePrefix(self):
         """Gets the letters of the prefix of the database"""
@@ -39,27 +41,33 @@ class SeqAndAlignData(object):
         print "out file for Genbank seqs", outFile
         gbdb = "-db=" + self.__getDatabasePrefix()
         gbR = "-gbRoot=" + gbRoot
+        # Create the output directory for this program 
+        makeDir(self.seqFiles.seqsDir)
         subprocess.check_call([genbankSeqProg, "-inclVersion", "-native", gbdb, gbR, source, seqType, outFile])
 
     def getEnsemblSeqs(self, outFile):
         """Gets the Ensembl sequences"""
+        makeDir(self.seqFiles.seqsDir)  
         org = getOrganismName(self.database)
         subprocess.check_call([ensemblSeqProg, "--all", org, "all", outFile])
           
-    def __getPslAlignments(self, seqTable):
-        """Gets PSL alignments from the database"""   
-        pslSelect = "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from " + seqTable + ";"
-        with open(self.alignFile, "w") as fh:
+    def __getPslAlignments(self, alignTable):
+        """Gets PSL alignments from the database""" 
+        makeDir(self.seqFiles.seqsDir)  
+        pslSelect = "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from " + alignTable + ";"
+        with open(self.seqFiles.alignFile, "w") as fh:
             subprocess.check_call(["hgsql", "-Ne", pslSelect, self.database], stdout=fh)
 
-    def __getChromSizes(self):
-        """Get chromosome sizes"""
-        chromStr = "select chrom, size from chromInfo;" 
-        with open(self.chromFile, "w") as fh:
-            subprocess.check_call(["hgsql", "-Ne", chromStr, self.database], stdout=fh)
- 
+    def __getGenePredAnnots(self, gpTable):
+        """Gets genePred annotations from the database"""
+        genePredSelect = "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds"
+        with open(self.seqFiles.genePredFile, "w") as fh:
+            subprocess.check_call(["hgsql", "-Ne", genePredSelect, self.database], stdout=fh)
+     
     def convertGenePredToPsl(self, gpFile, pslFile):
         """Converts annotation data from genePred to PSL format."""
+        # NOTE: need to know location of chromFile
+        makeDir(self.seqFiles.seqsDir)  
         subprocess.check_call(gpToPsl, self.chromFile, gpFile, pslFile)
 
      
