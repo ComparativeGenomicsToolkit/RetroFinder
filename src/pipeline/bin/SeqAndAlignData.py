@@ -14,14 +14,13 @@ gpToPsl = "genePredToPsl"
 seqType = "mrna"
 
 class SeqAndAlignData(object):
-    def __init__(self, database, alignTable, seqFiles):
+    def __init__(self, database, alignTable, generalFiles, seqFiles):
         self.database = database
         self.seqFiles = seqFiles
-        if seqFiles.genePred:
-             # Get the genePred format annotations
         # Get the PSL alignment data for this dataset
         self.__getPslAlignments(alignTable)
-        
+        if seqFiles.genePred:
+            self.getPslFromGenePreds(alignTable, self.seqFiles.genePredFile, generalFiles.chromFile)
         print "seqFile: %s alignFile: %s genePredFile: %s \n" % (self.seqFiles.seqFile, self.seqFiles.alignFile, self.seqFiles.genePredFile)
         # have an if statement to get Ensembl sequences, do this from 
         # getEnsemblData
@@ -64,10 +63,12 @@ class SeqAndAlignData(object):
         with open(self.seqFiles.genePredFile, "w") as fh:
             subprocess.check_call(["hgsql", "-Ne", genePredSelect, self.database], stdout=fh)
      
-    def convertGenePredToPsl(self, gpFile, pslFile):
+    def __convertGenePredToPsl(self, gpFile, chromFile):
         """Converts annotation data from genePred to PSL format."""
         # NOTE: need to know location of chromFile
         makeDir(self.seqFiles.seqsDir)  
-        subprocess.check_call(gpToPsl, self.chromFile, gpFile, pslFile)
-
-     
+        subprocess.check_call(gpToPsl, chromFile, gpFile, self.seqFiles.pslFile)
+   
+    def getPslFromGenePreds(self, gpTable, gpFile, chromFile):
+        self.__getGenePredAnnots(gpTable)
+        self.__convertGenePredToPsl(gpTable, goFile, chromFile)
