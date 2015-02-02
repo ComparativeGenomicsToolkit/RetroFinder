@@ -12,8 +12,9 @@ from commonOps import *
 from SeqAndAlignData import SeqAndAlignData
 from ConvertCoords import ConvertCoords
 from optparse import OptionParser
-from pycbio.hgdata.GenePred import Range,GenePred,GenePredReader,GenePredTbl
+from pycbio.hgdata.GenePred import Range,GenePred,GenePredDbReader
 from pycbio.tsv.TabFile import TabFile,TabFileReader
+from pycbio.hgdata.HgDb import *
 
 # Gets the CDS regions for the transcript ids in the input list using the
 # table specified in the command line. 
@@ -71,15 +72,14 @@ class genePredCdsRegions(object):
             cds = self.getCdsRegion(gp)
             self.__writeCdsToFile(gp.name, version, cds, self.outFile)            
 
-    def getGenePredFile(self, gpTable):
-        """Gets the genePred from the table specified"""
-        selectStr = "select name, chrom, strand,txStart,txEnd,cdsStart,cdsEnd,exonCount, \
-            exonStarts,exonEnds from " + gpTable + ";"
-        gpFile = gpTable + ".gp"
-        
-        with open(gpFile, "w") as gpFh:
-            subprocess.check_call(["hgsql", "-Ne", selectStr, self.database],stdout=gpFh)
-        return gpFile
+    def getGenePredsFromDb(self, gpTable):
+        """Gets the genePred from the table specified returns a hash table
+           of column names to row index"""
+        selectStr = "select name, chrom, strand,txStart,txEnd,cdsStart,\
+            cdsEnd,exonCount, exonStarts,exonEnds from " + gpTable + ";"
+        print "Query is", selectStr
+        conn = connect (self.database)
+        return GenePredDbReader(conn, selectStr)
      
     def writeCdsToFile(self, id, version, cdsRegion, outFile):
         """Write the CDS region to out file"""
