@@ -34,8 +34,8 @@ class getEnsemblData(object):
         # This is called here as not all get programs for sequence data will
         # use this function to get sequence data. Ensembl has a different 
         # method. 
-        seqData.getGenbankSeqs(seqSource, seqType, seqData.seqFile)
-        fileList = [seqData.seqFile, seqData.alignFile]
-        catFiles(tempFile, fileList)
+        seqData.getEnsemblSeqs(seqData.seqFile)
+        # fileList = [seqData.seqFile, seqData.alignFile]
+        # catFiles(tempFile, fileList)
 
-getEns = getEnsemblData(opts)
+getEns = getEnsemblData(args)
