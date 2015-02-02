@@ -9,6 +9,11 @@ def createRootDirName(outDir, database, date):
 def createWorkingDirName(rootDir, dirPath):
     return rootDir + "/" + dirPath
 
+class GeneralFiles(object):
+    def __init__(self, rootDir):
+        # Chromosome sizes file
+        self.chromFile = createFilePath(rootDir, "chrom", "sizes")
+
 class SeqFiles(object):
     def __init__(self, rootDir, database, seqType, genePred=False):
         # Database name for genome assembly
@@ -19,10 +24,11 @@ class SeqFiles(object):
         # Names fo files for sequence-related data
         self.seqFile = createFilePath(self.seqsDir, seqType, "fa")
         print "seq file is", self.seqFile
-        self.chromFile = createFilePath(self.seqsDir, "chrom", "sizes")
         # This can be set to None, only required for some datasets
         # It is converted to PSL later
-        if (genePred):
+        # Flag to indicate whether this is a genePred annotation
+        self.genePred = genePred
+        if (self.genePred):
             self.genePredFile = createFilePath(self.seqsDir, seqType, "gp")
         else:
             self.genePredFile = None
