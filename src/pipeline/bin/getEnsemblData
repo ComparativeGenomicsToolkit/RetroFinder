@@ -10,7 +10,6 @@ sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from Files.py import SeqFiles.py
 from SeqAndAlignData import SeqAndAlignData
-from optparse import OptionParser
 
 gpTable = "ensGene"
 seqType = "ensembl"
