@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+sys.path.append(myBinDir + "/../lib/pycbio/lib")
+from pycbio.hgdata.GenePred import GenePred,GenePredTbl
+from commonOps import *
+
+# Program to get the cDNA sequence from a genePred
+rnaPredProg="getRnaPred"
+
+parser = argparse.ArgumentParser(description='Get Ensembl sequences as a FASTA file with id versions')
+parser.add_argument('ucscDb', metavar='UCSCDatabase', type=str, help='UCSC genome assembly database')
+parser.add_argument('ensDb', metavar='EnsemblDatabase', type=str, help='Ensembl genome assembly database')
+parser.add_argument('ensFile', metavar='ensemblFile', type=str, help='UCSC Ensembl genePred file')
+parser.add_argument('outDir', metavar='seqsDir', type=str, help='Directory for sequences and related info')
+args = parser.parse_args()
+
+class getEnsDataWithVersions(object):
+    def __init__(self, args):
+        # UCSC genome assembly database
+        self.ucscDb = args.ucscDb
+        # Ensembl database
+        self.ensDb = args.ensDb
+        # File of genePred sequences already downloaded
+        self.ensFile = args.ensFile
+        # Sequence data directory
+        self.seqsDir = args.outDir
+        # Read the Ensembl genePred file and store in a dictionary
+        self.ensTbl = GenePredTbl(self.ensFile, buildUniqIdx=True)
+        # Ensembl ids, tab-separated, id and version number
+        self.idsFile = self.seqsDir + "/ens.ids.txt"
+        # Get the ids and write to file then read into a dictionary
+        self.idsTbl = self.__storeIds()
+ 
+    def __getIdsWithVersions(self):
+        """Writes a tab-separated file of Ensembl ids and version numbers."""
+        host="--host=useastdb.ensembl.org"
+        user="--user=anonymous"
+        selectStr="select stable_id, version from transcript;"
+        with open(self.idsFile, "w") as fh:
+            subprocess.check_call(["mysql", host, user, "-Ne", selectStr, self.ensDb], stdout=fh)
+    
+    def __storeIds(self):
+        """Get ids and version numbers from the Ensembl database and write 
+           to a file. Read in file and store in hash keyed by id."""
+        idCol = 0
+        self.__getIdsWithVersions()
+        return TabFileTbl(self.idsFile, idCol) 
+           
+    def __addIdVersions(self):
+        """Rewrite the genePreds with id versions"""
+        for id in self.ensTbl.names:
+            # Find the id in the ids table
+            version = self.idsTbl.data[id][1]
+            # add version to the id
+            newId = self.ensTbl.names[id].name + "." + version  
+            self.ensTbl.names[id].name = newId
+                
+    def writeGpWithIdVersions(self):
+        """Get the ids with versions and write the new genePreds to a file"""
+        self.__addIdVersions()
+        file = self.ensFile + ".new"
+        fh = open(file, "w") 
+        for id in self.ensTbl.names:             
+            self.ensTbl.names[id].write(fh)
+        fh.close()
+        # Rename file to original genePred file name
+        renameFile(file, self.ensFile)
+
+getEns = getEnsDataWithVersions(args)
+getEns.writeGpWithIdVersions()
