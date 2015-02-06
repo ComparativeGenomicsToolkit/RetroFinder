@@ -31,11 +31,12 @@ class genePredCdsRegions(object):
         self.database = args.db
         # Read in the transcript ids with version number
         self.txList = TabFile(args.txList) 
-        self.gpTable = args.gpTable
+        self.gpDbTable = args.gpTable
         # Gets genePreds from database table and writes to file
-        self.gpFile = self.getGenePredFile(self.gpTable)
+        #self.gpFile = self.getGenePredFile(self.gpTable)
         # Read the genePreds from file into a dictionary
-        self.gpTable = GenePredTbl(self.gpFile, buildUniqIdx=True)
+        self.gpDbReader = self.getGenePredsFromDb(self.gpDbTable)
+        #self.gpHash = GenePredTbl(self.gpFile, buildUniqIdx=True)
         # output file for CDS regions 
         self.outFile = args.outFile
 
@@ -66,8 +67,10 @@ class genePredCdsRegions(object):
             idNoVersion = removeIdVersion(t[0])
             # Get version number
             version = getIdVersion(t[0])
-            # Find genePred in table
-            gp = self.gpTable.names[idNoVersion]
+            # Find genePred in table, can you search on the id, name field
+            gp = self.gpDbReader.colIdxMap[name[0]][0]
+            print "Id is:", idNoVersion
+            print gp
             # Get the transcript coords for CDS start and end 
             cds = self.getCdsRegion(gp)
             self.__writeCdsToFile(gp.name, version, cds, self.outFile)            
