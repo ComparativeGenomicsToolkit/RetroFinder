@@ -17,43 +17,45 @@ gbRoot = "/cluster/data/genbank"
 parser = argparse.ArgumentParser(description='Program to get sequence and associated data for RetroFinder')
 parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
 parser.add_argument('outDir', metavar='outDir', type=str, help='root of output director')
-parser.add_argument('--ensVer', dest='ensVersion', action='store', type=int, help='if Ensembl data required, provide the version to check this is the one used in the database')
+#parser.add_argument('--ensVer', dest='ensVersion', action='store', type=int, help='if Ensembl data required, provide the version to check this is the one used in the database')
+parser.add_argument('--ensDb', dest='ensDatabase', action='store', type=str, help='if Ensembl data required, provide the version to check this is the one used in the database')
 args = parser.parse_args()
        
 class GetSequenceData(object):
     def __init__(self, args):
         # set variables for options
+        # UCSC genome assembly database
         self.database = args.db
+        # Ensembl genome assembly database
+        if args.ensDatabase != None:
+            self.ensDb = args.ensDatabase
         # date in format, YYYY-MM-DD
         self.date = getDate()
         self.outDir = args.outDir
         # NOTE: MOVE ROOT DIR TO HIGHER UP PROGRAM
         self.rootDir = createRootDirName(self.outDir, self.database, self.date)
-        print "Root name is", self.rootDir
         # Get a list of general files
         self.generalFiles = GeneralFiles(self.rootDir)
+        # Get chromosome sizes
+        self.getChromSizes()
         # Create SeqFiles objects for GenBank and RefSeq:
         self.genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
         # Can not pass a files object as this is a program so for now 
         # make that object again ingetGenbankData
-        print "Calling getGenbankData"
-        print "Ensversion is", args.ensVersion
-        if args.ensVersion != None:
-            print "Option for ensembl Version is", args.ensVersion
-            self.ensVer = self.getCurrentDbEnsemblVersion()
-            self.checkEnsemblVersion(args.ensVersion) 
-            # if the ensVer option is set, get Ensembl data 
-            # TEST THIS WHEN HAVE THE API WORKING TO FETCH SEQS     
-#        subprocess.check_call(["./getEnsemblData", self.database, self.generalFiles.chromFile, self.rootDir])
+        if args.ensDb != None:
+            # Get Ensembl sequences and data
+            subprocess.check_call(["./getEnsemblData", self.database, self.ensDb, self.generalFiles.chromFile, self.rootDir])
         else:
             print "Ensembl verison option is not set."
         # Get Genbank mRNA sequences and associated data
-#        subprocess.check_call(["./getGenbankData", self.database, self.rootDir])
+        subprocess.check_call(["./getGenbankData", self.database, self.rootDir])
         # Get RefSeq mRNA transcript sequences and associated data
         subprocess.check_call(["./getRefseqData", self.database, self.rootDir])
-
+ 
     def getChromSizes(self):
         """Get chromosome sizes"""
+        print "Getting chrom sizes"
+        makeDir(self.rootDir)
         chromStr = "select chrom, size from chromInfo;"
         with open(self.generalFiles.chromFile, "w") as fh:
             subprocess.check_call(["hgsql", "-Ne", chromStr, self.database], stdout=fh)
@@ -79,5 +81,4 @@ class GetSequenceData(object):
         print "Ensembl versions match"
 
 getSeqsData = GetSequenceData(args)
-getSeqsData.getChromSizes()
 print "Organism name is %s here" % (getOrganismName(getSeqsData.database))
