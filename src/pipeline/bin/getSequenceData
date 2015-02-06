@@ -27,8 +27,8 @@ class GetSequenceData(object):
         # UCSC genome assembly database
         self.database = args.db
         # Ensembl genome assembly database
-        if args.ensDatabase != None:
-            self.ensDb = args.ensDatabase
+        self.ensDb = args.ensDatabase
+        
         # date in format, YYYY-MM-DD
         self.date = getDate()
         self.outDir = args.outDir
@@ -42,7 +42,7 @@ class GetSequenceData(object):
         self.genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
         # Can not pass a files object as this is a program so for now 
         # make that object again ingetGenbankData
-        if args.ensDb != None:
+        if self.ensDb != None:
             # Get Ensembl sequences and data
             subprocess.check_call(["./getEnsemblData", self.database, self.ensDb, self.generalFiles.chromFile, self.rootDir])
         else:
