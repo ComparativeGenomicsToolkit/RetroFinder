@@ -8,14 +8,15 @@ import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
-from Files.py import SeqFiles.py
+from Files import SeqFiles
 from SeqAndAlignData import SeqAndAlignData
 
 gpTable = "ensGene"
 seqType = "ensembl"
 
 parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
-parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
+parser.add_argument('db', metavar='database', type=str, help='UCSC genome assembly database')
+parser.add_argument('ensDb', metavar='ensemblDatabase', type=str, help='Ensembl genome assembly database')
 parser.add_argument('chromSizes', metavar='chromSizes', type=str, help='tab-separated file of chromosome names and sizes')
 parser.add_argument('rootDir', metavar='rootDir', type=str, help='root of output directory')
 args = parser.parse_args()
@@ -24,16 +25,20 @@ class getEnsemblData(object):
     def __init__(self, args):
         # Genome assembly database
         self.database = args.db
+        # Ensembl database name
+        self.ensDb = args.ensDb
+        # File of chromosome names and sizes
+        self.chromFile = args.chromSizes
         # Rooting working directory
-        self.outDir = args.rootDir
+        self.rootDir = args.rootDir
         print "Out dir is ", self.rootDir
-        ensemblFiles = SeqFiles(self.rootDir, self.datbase, "ensembl", True)
+        self.ensemblFiles = SeqFiles(self.rootDir, self.database, "ensembl", True)
         # NOTE: need to make sure that gpTable is used in the SeqAndAlignData
-        seqData = SeqAndAlignData(self.database, gpTable, ensemblFiles)
+        seqData = SeqAndAlignData(self.database, gpTable, self.ensemblFiles, self.chromFile, True, self.ensDb)
         # This is called here as not all get programs for sequence data will
         # use this function to get sequence data. Ensembl has a different 
         # method. 
-        seqData.getEnsemblSeqs(seqData.seqFile)
+        seqData.getSeqsFromGenePred(self.ensemblFiles.genePredFile, self.ensemblFiles.seqFile)
         # fileList = [seqData.seqFile, seqData.alignFile]
         # catFiles(tempFile, fileList)
 
