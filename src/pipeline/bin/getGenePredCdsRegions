@@ -21,8 +21,9 @@ from pycbio.hgdata.HgDb import *
 
 parser = argparse.ArgumentParser(description='Get CDS regions in transcript coordinates for genePred annotations')
 parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
-parser.add_argument('gpTable', metavar='gpTable', type=str, help='genePred format table')  
-parser.add_argument('txList', metavar='transcript_ids', type=str, help='file of transcript ids with versions')  
+parser.add_argument('gpFile', metavar='gpFile', type=str, help='genePred format file, can be a table (use --table option)')  
+# parser.add_argument('txList', metavar='transcript_ids', type=str, help='file of transcript ids with versions')  
+parser.add_argument('--table', dest='gpTable', type=bool, help='flag to indicate that genePred is in table')
 parser.add_argument('outFile', metavar='outFile', type=str, help='full path of output file')  
 args = parser.parse_args()
 
@@ -30,13 +31,18 @@ class genePredCdsRegions(object):
     def __init__(self, args):
         self.database = args.db
         # Read in the transcript ids with version number
-        self.txList = TabFile(args.txList) 
-        self.gpDbTable = args.gpTable
-        # Gets genePreds from database table and writes to file
-        #self.gpFile = self.getGenePredFile(self.gpTable)
-        # Read the genePreds from file into a dictionary
-        self.gpDbReader = self.getGenePredsFromDb(self.gpDbTable)
-        #self.gpHash = GenePredTbl(self.gpFile, buildUniqIdx=True)
+        # self.txList = TabFile(args.txList)
+        # genePred format file, can be a table, use --table option 
+        self.gpFile = args.gpFile
+        if table:
+            self.gpDbTable = args.gpFile
+            # Gets genePreds from database table and writes to file
+            #self.gpFile = self.getGenePredFile(self.gpTable)
+            # CHECK AS THIS HASH MAY BE ACCESSED DIFFERENTLY TO THE ONE BELOW
+            self.gpDbHash = self.getGenePredsFromDb(self.gpDbTable).colIdxMap
+        else:
+            # Read the genePreds from file into a dictionary
+            self.gpFileHash = GenePredTbl(self.gpFile, buildUniqIdx=True)
         # output file for CDS regions 
         self.outFile = args.outFile
 
