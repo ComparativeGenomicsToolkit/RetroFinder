@@ -84,3 +84,16 @@ class SeqAndAlignData(object):
     def getPslFromGenePreds(self, gpTable, gpFile, chromFile):
         self.__getGenePredAnnots(gpTable, gpFile)
         self.__convertGenePredToPsl(gpFile, chromFile)
+  
+    def getCdsRegion(self, alignTable, cdsFile, isGenePred):
+        """Gets the CDS regions either for GenBank mRNAs, RefSeqs or
+           a genePred annotation table/file."""
+        cdsSelStr = "select acc, version, name, type from " + alignTable + \
+            "as a, gbCdnaInfo as g, cds as c where qName = acc and cds = c.id"
+        if not isGenePred:
+            with open(cdsFile, "w") as fh:
+                subprocess.check_call(["hgsql", "-Ne", cdsSelStr, self.database], stdout, fh)
+       else:
+           # Get a file of the transcript ids
+           subprocess.check_call(["tawk", "'{print $1}'}", self.seqFiles.genePredFile)
+           subprocess.check_call(["./getGenePredCdsRegions", self.database, self.seqFiles.genePredFile)  
