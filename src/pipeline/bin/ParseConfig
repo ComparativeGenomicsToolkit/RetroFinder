@@ -1,36 +1,29 @@
 #!/usr/bin/env python
 import ConfigParser
+from commonOps import *
 
 configFile="configFile.cfg"
 class ParseConfig:
-    def __init__(self, outDir, db, date):
+    def __init__(self, database):
         self.config = ConfigParser.ConfigParser()
         self.config.read(configFile)
-        self.db = db
-        self.date = date
+        self.db = database
+        self.date = getDate()
         self.rootRunDir = self.createRootRunDirName()
-#        self.root = config.get('General', 'rootDir')
- #       print root
+        print "Root run directory is", self.rootRunDir
 
     def writeConfig(self, cfgFile):
         """Writing our configuration file to configFile.cfg"""
         with open(cfgFile, 'a') as cfh:
             self.config.write(cfh)
 
-    #def getVar(self,cfgFile):
-       # """Use ConfigParser() to use the interpolations"""
-     #   cfg = ConfigParser.ConfigParser()
-      #  cfg.read(cfgFile)
-       # root = cfg.get('General', 'rootDir', 0)
-       # print "Root:", root
-
     def createRootRunDirName(self):
         rootWorkDir = self.config.get('General', 'rootWorkDir', 0) 
-        return  rootWorkDir + "/" + self.db + "." + self.date
+        return  rootWorkDir + "/" + self.db + "/" + self.date
    
     def createWorkingDirName(self, rootDir, dirPath):
         return rootDir + "/" + dirPath
 
-test = ParseConfig("/hive/users/hartera/GencodeWG/retroFinder/trunk/src/pipeline/bin", "panTro4", "2015-02-10")
-# test.getVar(configFile)
-test.createWorkingDirName(self.rootRunDir, "sequenceData")
+test = ParseConfig("panTro4")
+workSeqDir = test.createWorkingDirName(test.rootRunDir, "sequenceData")
+print workSeqDir
