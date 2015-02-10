@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+import ConfigParser
+
+configFile="configFile.cfg"
+class ParseConfig:
+    def __init__(self, outDir, db, date):
+        self.config = ConfigParser.ConfigParser()
+        self.config.read(configFile)
+        self.db = db
+        self.date = date
+        self.rootRunDir = self.createRootRunDirName()
+#        self.root = config.get('General', 'rootDir')
+ #       print root
+
+    def writeConfig(self, cfgFile):
+        """Writing our configuration file to configFile.cfg"""
+        with open(cfgFile, 'a') as cfh:
+            self.config.write(cfh)
+
+    #def getVar(self,cfgFile):
+       # """Use ConfigParser() to use the interpolations"""
+     #   cfg = ConfigParser.ConfigParser()
+      #  cfg.read(cfgFile)
+       # root = cfg.get('General', 'rootDir', 0)
+       # print "Root:", root
+
+    def createRootRunDirName(self):
+        rootWorkDir = self.config.get('General', 'rootWorkDir', 0) 
+        return  rootWorkDir + "/" + self.db + "." + self.date
+   
+    def createWorkingDirName(self, rootDir, dirPath):
+        return rootDir + "/" + dirPath
+
+test = ParseConfig("/hive/users/hartera/GencodeWG/retroFinder/trunk/src/pipeline/bin", "panTro4", "2015-02-10")
+# test.getVar(configFile)
+test.createWorkingDirName(self.rootRunDir, "sequenceData")
