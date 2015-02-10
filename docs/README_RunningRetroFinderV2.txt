@@ -1,13 +1,13 @@
-# STEPS FOR RUNNING THE RETROFINDER PIPELINE V2
+# STEPS FOR RUNNING THE RETROFINDER PIPELINE V2 - 2015-02-10, Rachel Harte
 # NOTE: do not use -skipBlatMerge which assumes this step was done manually
 # and generally it isn't.
-# used -skipBlatMerge which assumes this was done manually and it wasn't
+# Variables below are defined in the DEF file.
 # Go to your working directory
 cd /hive/groups/gencode/pseudogenes/retroFinder
 # Make direcotry with database and date in format YYYYMMDD e.g. hg38.20150112
 # DB and DATE are defined in the DEF file
-mkdir DB.DATE
-cd DB.DATE
+mkdir $DB.$DATE
+cd $DB.$DATE
 # Copy the DEF file here, there are sample DEF files used for RetroFinder run
 # with different assemblies in the RetroFinder SVN source tree. 
 # Also create a README.txt file like this one to document the steps done and 
@@ -20,58 +20,48 @@ chmod +x DEF
 # DB=<assembly name>
 # Version is incremented each run for each assembly, 
 # VERSION=9
-# TWOBIT=$GENOME/$DB/$DB.2bit (Rather than using it from /scratch/data/$DB
-# ROOTDIR="~/public_html/retro/hg38Jun14"
+# ROOTDIR="~/public_html/retro/hg38Jun14" # use database, month and year
 # PDB=proteins140122 # Latest PDB in this proteins database.
 # SPECIES="hg38 mm10"
-# Comment out all the ARRAY variables as there is no gnfAtlas data on hg38.
-# Check that latest assembly nets are being used - there are ok, netMm10,
-# netCanFam3, netRheMac3. Already changed altGraphX to different table:
-# ALTSPLICE=sibTxGraph - comment this out as not in hg38. 
-# In DEF file, add the name of the new cluster, ku
-# CLUSTER=ku
-# Add and commit this DEF.hg38 file to SVN. Copy the DEF file over
-# Also requires the USEALTSEQS variable for step1 script so add this line:
+# This flags that sequences other than GenBank or RefSeq are not being used
 # USEALTSEQS=0 
-# Update SCRIPT AND BINDIR as now using a branch of the SVN source tree for
-# RetroFinder:
+# Should be set to the branch of the source tree
 # BINDIR=/hive/users/hartera/GencodeWG/retroFinder/branches/version2/bin
 # SCRIPT=/hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline
-#
-mkdir -p /hive/data/genomes/hg38/bed/retro
-cp DEF /hive/data/genomes/hg38/bed/retro/DEF 
-# once DEF file is ready to go, then start RetroFinder run. Check first that
-# ucscRetroStep1.sh has correct paths for programs defined. 
-# Create directory for TMPMRNA
-mkdir -p /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/mrnaBlastz
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/mrnaBlastz
+# Make $RETRODIR:
+mkdir -p /hive/data/genomes/$DB/bed/retro
+cp DEF /hive/data/genomes/$DB/bed/retro/DEF 
+# Once DEF file is ready to go, then prepare directories and data
+# required for the RetroFinder run. 
+# Create the $TMPMRNA directory:
+mkdir -p /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/mrnaBlastz
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/mrnaBlastz
 cp ../DEF .
-# get chrom.sizes without random chroms or chrM, there are many alt loci also
-# in hg38 that were not in hg19 so 285 chroms total. 
-cat /hive/data/genomes/hg38/chrom.sizes | grep -v random \
+# Get the chrom.sizes without random chroms or chrM, there are many 
+# alt loci also in the current human assembly hg (GRCh38) that were not in hg19 # so include those chroms (285 chroms total). 
+# Get chromosome sizes and remove randoms, chrUn and chrM. Can also query the
+# database to get these:
+# hgsql -Ne 'select chrom, size from chromInfo where chrom not like "%random%"
+# or chrom not like "chrUn%" or chrom != "chrM";' $DB
+cat /hive/data/genomes/$DB/chrom.sizes | grep -v random \
    | grep -v chrUn | grep -v chrM > S1.len
-# Also copy to MRNABASE:
-rm -r mkdir -p /hive/data/genomes/hg38/bed/mrnaBlastz.9
-mkdir -p /hive/data/genomes/hg38/bed/mrnaBlastz.9
-cp S1.len /hive/data/genomes/hg38/bed/mrnaBlastz.9
+# Also copy the chromosome sizes file to MRNABASE:
+mkdir -p /hive/data/genomes/$DB/bed/mrnaBlastz.$VERSION
+mkdir -p /hive/data/genomes/$DB/bed/mrnaBlastz.$VERSION
+cp S1.len /hive/data/genomes/$DB/bed/mrnaBlastz.$VERSION
 
-# Amie Radenbaugh (Haussler lab) would like the axt files to identify the 
-# positions of differences between pseudogenes and reference. Need to retain
-# the axt files that are removed after running lastz. 
-# Instead, comment this out in
-# /hive/users/hartera/GencodeWG/retroFinder/trunk/src/pipeline/lastz.sh and
-# move them to another directory. 
-# # Added extra input file: AXTOUT=$6
-# # at end instead of rm -f $AXT, add mv $AXT $AXTOUT
-# # then as input to lastz.sh in ucscRetroStep2.sh, add $TMPMRNA/lastz/axt as
-# 6th input.
+# A grad student once asked for the axt files to identify the 
+# positions of differences between pseudogenes and reference. Therefore now 
+# retain the axt files that used to be removed after running lastz. 
+# This line was commented out in
+# /trunk/hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/lastz.sh and move them to another directory. 
+# The axt files are put in $TMPMRNA/lastz/axt 
 # # Before the template to run lastz.sh, add this line:
-# mkdir -p $TMPMRNA/lastz/axt
-# Then run the first step. Added --ambiguous=iupac as flag for lastz in
-# lastz.sh as there are a number of sequences with non-ACTGN characters.
+# Added --ambiguous=iupac as a flag to the lastz program in lastz.sh 
+# as there are a number of sequences with non-ACTGN characters.
 # Run step 1:
 screen
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/mrnaBlastz
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.DATE/mrnaBlastz
 time \
 /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/ucscRetroStep1.sh DEF >& step1hg38.log &
 # Check cluster jobs:
