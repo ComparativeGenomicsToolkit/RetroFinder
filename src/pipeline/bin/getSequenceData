@@ -16,7 +16,7 @@ gbRoot = "/cluster/data/genbank"
 
 parser = argparse.ArgumentParser(description='Program to get sequence and associated data for RetroFinder')
 parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
-parser.add_argument('outDir', metavar='outDir', type=str, help='root of output director')
+parser.add_argument('outDir', metavar='outDir', type=str, help='root of output directory')
 #parser.add_argument('--ensVer', dest='ensVersion', action='store', type=int, help='if Ensembl data required, provide the version to check this is the one used in the database')
 parser.add_argument('--ensDb', dest='ensDatabase', action='store', type=str, help='if Ensembl data required, provide the version to check this is the one used in the database')
 args = parser.parse_args()
@@ -46,7 +46,7 @@ class GetSequenceData(object):
             # Get Ensembl sequences and data
             subprocess.check_call(["./getEnsemblData", self.database, self.ensDb, self.generalFiles.chromFile, self.rootDir])
         else:
-            print "Ensembl verison option is not set."
+            print "Ensembl version option is not set."
         # Get Genbank mRNA sequences and associated data
         subprocess.check_call(["./getGenbankData", self.database, self.rootDir])
         # Get RefSeq mRNA transcript sequences and associated data
@@ -59,6 +59,18 @@ class GetSequenceData(object):
         chromStr = "select chrom, size from chromInfo;"
         with open(self.generalFiles.chromFile, "w") as fh:
             subprocess.check_call(["hgsql", "-Ne", chromStr, self.database], stdout=fh)
+
+    def catSeqAndAlignDataFiles(self):
+        """Cats together the FASTA, CDS and PSL files created"""
+        allMrnaSeqFile = self.genbankFiles.seqsDir + "/mrna.fa"
+        allPslFile = self.genbankFiles.seqsDir + "/mrna.psl"
+        allCdsFile = self.genbankFiles.seqsDir + "/cds.tab"
+        faList = makeFileList(self.genbankFiles.seqsDir, "fa")
+        catFiles(allMrnaSeqFile, faList)
+        pslList = makeFileList(self.genbankFiles.seqsDir, "psl")
+        catFiles(allPslFile, pslList)
+        cdsList = makeFileList(self.genbankFiles.seqsDir, "cds")
+        catFiles(allPslFile, pslList)
 
     def getCurrentDbEnsemblVersion(self):
         """Gets the current Ensembl version loaded into the database"""
@@ -81,4 +93,5 @@ class GetSequenceData(object):
         print "Ensembl versions match"
 
 getSeqsData = GetSequenceData(args)
+getSeqsData.catSeqAndAlignDataFiles()
 print "Organism name is %s here" % (getOrganismName(getSeqsData.database))
