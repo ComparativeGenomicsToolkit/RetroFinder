@@ -20,13 +20,17 @@ class SeqAndAlignData(object):
         self.seqFiles = seqFiles
         self.ensembl = ensembl
         self.ensDb = ensDb
+        self.alignTable = alignTable
+        self.chromFile = chromFile
         # Get the PSL alignment data for this dataset and for genePred format
         # data, also get the genePred file
-        if not self.seqFiles.genePred:
-            self.__getPslAlignments(alignTable)
+        if not self.seqFiles.isGenePred:
+            self.__getPslAlignments(self.alignTable)
         else:
-            self.getPslFromGenePreds(alignTable, self.seqFiles.genePredFile, chromFile)
-
+            self.__getPslFromGenePreds(self.alignTable, self.seqFiles.genePredFile, self.chromFile)
+        # Get the CDS regsions and write to a tab-separated file
+        self.getCdsRegions(self.alignTable, self.seqFiles.cdsFile, self.seqFiles.isGenePred)
+    
     def __getDatabasePrefix(self):
         """Gets the letters of the prefix of the database"""
         prefix = ""
@@ -81,19 +85,19 @@ class SeqAndAlignData(object):
         makeDir(self.seqFiles.seqsDir) 
         subprocess.check_call([gpToPsl, chromFile, gpFile, self.seqFiles.alignFile])
    
-    def getPslFromGenePreds(self, gpTable, gpFile, chromFile):
+    def __getPslFromGenePreds(self, gpTable, gpFile, chromFile):
         self.__getGenePredAnnots(gpTable, gpFile)
         self.__convertGenePredToPsl(gpFile, chromFile)
   
-    def getCdsRegion(self, alignTable, cdsFile, isGenePred):
+    def getCdsRegions(self, alignTable, cdsFile, isGenePred):
         """Gets the CDS regions either for GenBank mRNAs, RefSeqs or
            a genePred annotation table/file."""
+        makeDir(self.seqFiles.seqsDir) 
         cdsSelStr = "select acc, version, name, type from " + alignTable + \
-            "as a, gbCdnaInfo as g, cds as c where qName = acc and cds = c.id"
+            " as a, gbCdnaInfo as g, cds as c where qName = acc and cds = c.id"
         if not isGenePred:
             with open(cdsFile, "w") as fh:
-                subprocess.check_call(["hgsql", "-Ne", cdsSelStr, self.database], stdout, fh)
-       else:
-           # Get a file of the transcript ids
-           subprocess.check_call(["tawk", "'{print $1}'}", self.seqFiles.genePredFile)
-           subprocess.check_call(["./getGenePredCdsRegions", self.database, self.seqFiles.genePredFile)  
+                subprocess.check_call(["hgsql", "-Ne", cdsSelStr, self.database], stdout=fh)
+        else:
+            # Get the CDS regions from the genePred annotation data
+            subprocess.check_call(["./getGenePredCdsRegions", self.database, self.seqFiles.genePredFile, cdsFile])  
