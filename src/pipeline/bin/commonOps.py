@@ -1,17 +1,21 @@
 # Set of common functions used throughout the RetroFinder pipeline
-import subprocess,re
+import os,subprocess,re
 import time
+
+def makeFileList(path, fileExt):
+    """Returns a list of files ending in file extension"""
+    return [fn for fn in os.listdir(path) if any([fn.endswith(fileExt)])]
 
 def catFiles(outFile, fileList):
     """Cat files in list into outFile"""
     fileStr = ""
-    for f in fileList:
-       if fileList.index(f) == len(fileList) -1:
-           fileStr = fileStr + f
-       else: 
-           fileStr = fileStr + f + '","'
+    catCmd = ["cat"] + fileList
     with open(outFile, "w") as outFh:
-        subprocess.check_call(["cat", fileStr], stdout=outFh)
+        subprocess.check_call(catCmd, stdout=outFh)
+    outFh.close()
+
+def removeFile(file):
+    subprocess.check_call(["rm", "-f", file])
 
 def renameFile(oldFile, newFile):
     subprocess.check_call(["mv", oldFile, newFile])
