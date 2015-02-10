@@ -12,7 +12,7 @@ from commonOps import *
 from SeqAndAlignData import SeqAndAlignData
 from ConvertCoords import ConvertCoords
 from optparse import OptionParser
-from pycbio.hgdata.GenePred import Range,GenePred,GenePredDbReader
+from pycbio.hgdata.GenePred import Range,GenePred,GenePredTbl,GenePredDbReader
 from pycbio.tsv.TabFile import TabFile,TabFileReader
 from pycbio.hgdata.HgDb import *
 
@@ -23,25 +23,23 @@ parser = argparse.ArgumentParser(description='Get CDS regions in transcript coor
 parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
 parser.add_argument('gpFile', metavar='gpFile', type=str, help='genePred format file, can be a table (use --table option)')  
 # parser.add_argument('txList', metavar='transcript_ids', type=str, help='file of transcript ids with versions')  
-parser.add_argument('--table', dest='gpTable', type=bool, help='flag to indicate that genePred is in table')
+parser.add_argument('--table', dest="gpTable", action="store_true", help='flag to indicate that genePred is in table')
 parser.add_argument('outFile', metavar='outFile', type=str, help='full path of output file')  
 args = parser.parse_args()
 
 class genePredCdsRegions(object):
     def __init__(self, args):
         self.database = args.db
-        # Read in the transcript ids with version number
-        # self.txList = TabFile(args.txList)
+        self.isTable = args.gpTable
         # genePred format file, can be a table, use --table option 
         self.gpFile = args.gpFile
-        if table:
+        if self.isTable:
             self.gpDbTable = args.gpFile
-            # Gets genePreds from database table and writes to file
-            #self.gpFile = self.getGenePredFile(self.gpTable)
-            # CHECK AS THIS HASH MAY BE ACCESSED DIFFERENTLY TO THE ONE BELOW
-            self.gpDbHash = self.getGenePredsFromDb(self.gpDbTable).colIdxMap
+            # Gets genePreds from database table and stores 
+            # in gpDbReader object
+            self.gpDbReader = self.getGenePredsFromDb(self.gpDbTable)
         else:
-            # Read the genePreds from file into a dictionary
+            # Reads the genePreds from file into a dictionary
             self.gpFileHash = GenePredTbl(self.gpFile, buildUniqIdx=True)
         # output file for CDS regions 
         self.outFile = args.outFile
@@ -56,7 +54,7 @@ class genePredCdsRegions(object):
             return Range(endCoords.newPos, stCoords.newPos + 1)
         return Range(stCoords.newPos, endCoords.newPos + 1)   
 
-    def getCdsRegion(self, gp):
+    def getCdsTxCoords(self, gp):
         """Returns the CDS coordinates relative to a transcript. If there
            is no CDS it returns None"""
         # Coordinates to be converted and returned are 0-based
@@ -65,42 +63,52 @@ class genePredCdsRegions(object):
             return self.getTxCoordsForRange(gp, cdsGenomic)
         return cdsGenomic 
     
-    def getCdsRegionsForList(self):
-        """For each id, get the CDS region and write to a file"""
-        # Each item in this TabFile object is a list
-        for t in self.txList:
-            # Remove version number
-            idNoVersion = removeIdVersion(t[0])
-            # Get version number
-            version = getIdVersion(t[0])
-            # Find genePred in table, can you search on the id, name field
-            gp = self.gpDbReader.colIdxMap[name[0]][0]
-            print "Id is:", idNoVersion
-            print gp
-            # Get the transcript coords for CDS start and end 
-            cds = self.getCdsRegion(gp)
-            self.__writeCdsToFile(gp.name, version, cds, self.outFile)            
-
     def getGenePredsFromDb(self, gpTable):
         """Gets the genePred from the table specified returns a hash table
            of column names to row index"""
         selectStr = "select name, chrom, strand,txStart,txEnd,cdsStart,\
             cdsEnd,exonCount, exonStarts,exonEnds from " + gpTable + ";"
-        print "Query is", selectStr
         conn = connect (self.database)
         return GenePredDbReader(conn, selectStr)
-     
-    def writeCdsToFile(self, id, version, cdsRegion, outFile):
+    
+    def getCdsRegionsForGenePreds(self, gpContainer, fh):
+        """For each id, get the CDS region and write to a file"""
+        # the stored genePreds are in either a GenePredTbl object
+        # or a GenePredDbReader object. Both are iterable and return a 
+        # genePred. 
+        for gp in gpContainer:
+            # Remove version number
+            idNoVersion = removeIdVersion(gp.name)
+            # Get version number
+            version = getIdVersion(gp.name)
+            # Get the transcript coords for CDS start and end 
+            cds = self.getCdsTxCoords(gp)
+            self.__writeCdsToFile(gp.name, version, cds, fh)  
+    
+    def getCdsRegions(self):
+        """Passes the correct genePred storage object and gets the CDS 
+           region coords for each genePred and writes them to a file"""
+        # As appending to a file, remove any existing file of that name
+        removeFile(self.outFile)
+        fh = open(self.outFile, "a")
+        if self.isTable:
+            self.getCdsRegionsForGenePreds(self.gpDbReader, fh)
+        else:
+            self.getCdsRegionsForGenePreds(self.gpFileHash, fh)
+        fh.close()
+        
+    def __writeCdsToFile(self, id, version, cdsRegion, fh):
         """Write the CDS region to out file"""
         cdsStr = id + "\t" + version + "\t"
-        with open(outFile, "a") as fh:
+        with open(self.outFile, "a") as fh:
             if cdsRegion == None:
                 cdsStr = cdsStr + "n/a" + "\t" + "mRNA\n"
             else: 
-                cdsStr = cdsStr + str(cdsRegion.start) + ".." + str(cdsRegion.end) + \
-                    "\t" + "mRNA\n"
+                cdsStr = cdsStr + str(cdsRegion.start) + ".." + \
+                    str(cdsRegion.end) + "\t" + "mRNA\n"
             fh.write(cdsStr)
             
 gpCds = genePredCdsRegions(args)
-gpCds.getCdsRegionsForList()
-gpCds.writeCdsToFile(gp.name, version, cds, self.outFile)            
+gpCds.getCdsRegions()
+
+
