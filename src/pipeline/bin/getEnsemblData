@@ -3,7 +3,6 @@
 from __future__ import with_statement
 
 import sys, os, subprocess
-import re
 import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")

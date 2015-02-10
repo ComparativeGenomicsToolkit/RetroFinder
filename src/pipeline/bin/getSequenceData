@@ -17,7 +17,6 @@ gbRoot = "/cluster/data/genbank"
 parser = argparse.ArgumentParser(description='Program to get sequence and associated data for RetroFinder')
 parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
 parser.add_argument('outDir', metavar='outDir', type=str, help='root of output directory')
-#parser.add_argument('--ensVer', dest='ensVersion', action='store', type=int, help='if Ensembl data required, provide the version to check this is the one used in the database')
 parser.add_argument('--ensDb', dest='ensDatabase', action='store', type=str, help='if Ensembl data required, provide the version to check this is the one used in the database')
 args = parser.parse_args()
        

@@ -2,8 +2,7 @@
 
 from __future__ import with_statement
 
-import sys, os, subprocess
-import re
+import sys, os
 import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
@@ -14,7 +13,6 @@ from SeqAndAlignData import SeqAndAlignData
 alignTable = "all_mrna"
 seqType = "mrna"
 seqSource = "genbank"
-tempFile = "temp.txt"
 
 parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
 parser.add_argument('db', metavar='database', type=str, help='genome assembly database')

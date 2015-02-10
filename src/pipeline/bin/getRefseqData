@@ -2,8 +2,7 @@
 
 from __future__ import with_statement
 
-import sys, os, subprocess
-import re
+import sys, os
 import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
@@ -32,9 +31,6 @@ class getRefseqData(object):
         # This is called here as not all get programs for sequence data will
         # use this function to get sequence data. Ensembl has a different 
         # method.
-        print  
         seqData.getGenbankSeqs(seqSource, seqType, refseqFiles.seqFile)
-        # fileList = [seqData.seqFile, seqData.alignFile]
-       #  catFiles(tempFile, fileList)
 
 getRefSeq = getRefseqData(args)
