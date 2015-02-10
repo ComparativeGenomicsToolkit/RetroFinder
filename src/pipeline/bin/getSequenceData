@@ -62,9 +62,9 @@ class GetSequenceData(object):
 
     def catSeqAndAlignDataFiles(self):
         """Cats together the FASTA, CDS and PSL files created"""
-        allMrnaSeqFile = self.genbankFiles.seqsDir + "/mrna.fa"
-        allPslFile = self.genbankFiles.seqsDir + "/mrna.psl"
-        allCdsFile = self.genbankFiles.seqsDir + "/cds.tab"
+        allMrnaSeqFile = self.genbankFiles.seqsDir + "/all_mrna.fa"
+        allPslFile = self.genbankFiles.seqsDir + "/all_mrna.psl"
+        allCdsFile = self.genbankFiles.seqsDir + "/all_cds.tab"
         faList = makeFileList(self.genbankFiles.seqsDir, "fa")
         catFiles(allMrnaSeqFile, faList)
         pslList = makeFileList(self.genbankFiles.seqsDir, "psl")
