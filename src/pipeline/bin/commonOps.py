@@ -4,7 +4,13 @@ import time
 
 def makeFileList(path, fileExt):
     """Returns a list of files ending in file extension"""
-    return [fn for fn in os.listdir(path) if any([fn.endswith(fileExt)])]
+    # return [fn for fn in os.listdir(path) if any([fn.endswith(fileExt)])]
+    list = []
+    for fn in os.listdir(path): 
+        if fn.endswith(fileExt): 
+            fn = path + "/" + fn
+            list.append(fn)
+    return list
 
 def catFiles(outFile, fileList):
     """Cat files in list into outFile"""
