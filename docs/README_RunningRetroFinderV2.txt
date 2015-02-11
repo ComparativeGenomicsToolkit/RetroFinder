@@ -56,105 +56,97 @@ cp S1.len /hive/data/genomes/$DB/bed/mrnaBlastz.$VERSION
 # This line was commented out in
 # /trunk/hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/lastz.sh and move them to another directory. 
 # The axt files are put in $TMPMRNA/lastz/axt 
-# # Before the template to run lastz.sh, add this line:
-# Added --ambiguous=iupac as a flag to the lastz program in lastz.sh 
+# Using --ambiguous=iupac as a flag to the lastz program in lastz.sh 
 # as there are a number of sequences with non-ACTGN characters.
 # Run step 1:
 screen
-cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.DATE/mrnaBlastz
+# cd to $RUNDIR/mrnaBlastz
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/mrnaBlastz
 time \
 /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/ucscRetroStep1.sh DEF >& step1hg38.log &
-# Check cluster jobs:
+# Check step1 cluster jobs:
 ssh ku
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/mrnaBlastz/hg38/run.0
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/mrnaBlastz/hg38/run.0
 /parasol/bin/para check
-# Cluster jobs were crashing. The problem was there there were a Q in one of
-# the RefSeq sequences and this is not an IUPAC code. There were also extra
-# characters in the sequence that look like a binary file, I have seen this
-# error before with gbGetSeqs. I reproduced this twice more in the same
-# sequence when fetching the RefSeqs. Corrected this sequence in refseq.fa and
-# continued running ucscRetroStep1.sh from the point where 
-# # Concatenate the mRNA and RefSeq sequence files.
-# cat $MRNABASE/mrna.fa $MRNABASE/refseq.fa > $MRNABASE/raw.fa
-time /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/step1.sh DEF >>& step1hg38.log &
-105.623u 7.780s 6:15:49.04 0.5% 0+0k 0+936io 0pf+0w
-Tue Jan 13 09:02:30 PST 2015
-# Check cluster jobs:
-ssh ku
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/mrnaBlastz/hg38/run.0
-para check
-# Jobs all ran ok. Run step2. 
+# If jobs all ran ok, then run step2. 
 ssh hgwdev
 screen 
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/mrnaBlastz
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/mrnaBlastz
 time /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/ucscRetroStep2.sh DEF \
     >& step2hg38.log &
-# 122156.444u 49512.146s 46:45:52.26 101.9%       0+0k 3912+201408928io 4pf+0w
-Thu Jan 15 09:39:36 PST 2015
-# step2 has finished ok so start step3.
-# in doBuildpk.sh, use $TMPDIR as root for temp directory, this is an 
-# environment variable defined as /data/tmp on hgwdev but /scratch/tmp on the
-# ku cluster so TMP=$TMPDIR/retro.$$.$USER
-ssh hgwdev
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/mrnaBlastz
+# Start step3
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/mrnaBlastz
 time /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/ucscRetroStep3.sh DEF \
     >& step3hg38.log &
+# Check step3 cluster jobs
 ssh ku
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/retro/version9/hg38/run.0
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/retro/version$VERSION/$DB/run.0
 /parasol/bin/para check
-# Now run Step 4:
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/mrnaBlastz
+
+# If jobs ran ok, then run Step 4:
+# cd to 
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/mrnaBlastz
 time
 /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/ucscRetroStep4.sh
  DEF >& step4hg38.log &
 
-# Check cluster run finished ok. 
+# Check step4 cluster jobs
 ssh ku
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/retro/version9/hg38/run.o
+# cd to $OUTDIR/run.o
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/retro/version$VERSION/$DB/run.o
 /parasol/bin/para check
-# All 243 jobs ran ok. 
-# Run step 5
+
+# If cluster jobs ran ok, then run step 5
 ssh hgwdev
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/mrnaBlastz
-time /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/ucscRetroStep5.sh DEF \
-    >& step5hg38.log &
-1147.857u 10.285s 19:08.38 100.8%       0+0k 6488+33128io 7pf+0w
 # This program needs to be built from the kent source tree:
 cd ~/kent/src/hg/pslCDnaGenomeMatch; make
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/retro/version9/hg38
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/mrnaBlastz
+time /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/ucscRetroStep5.sh DEF \
+    >& step5hg38.log &
+
+# Get expression information. cd to $OUTDIR
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/retro/version$VERSION/$DB
 time
 /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/filterMrna.sh \
 DEF >& filterMrna.log &
-Fri Jan 16 09:34:42 PST 2015
-# This ran fine.
-# in filterEst.sh, also add this path for pslCDnaGenomeMatch
 time
 /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/filterEst.sh \
 DEF >& filterEst.log &
-# 6265.105u 206.318s 2:30:27.65 71.6%     0+0k 0+18864192io 0pf+0w
-# This ran ok. Checked final output and cluster run. 
+
+# Check the filterEst.sh cluster run
 ssh ku
 cd
-/hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/retro/version9/hg38/run.est
-para check
-# jobs ran ok.
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/retro/version9/hg38
-# Then need to run analyseExpress.sh to update expression levels of retros
+/hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/retro/version$VERSION/$DB/run.est
+/parasol/bin/para check
+# If the filterEst.sh cluster jobs ran ok, run analyseExpress.sh to update the
+# expression levels of retros
+ssh hgwdev
+# cd to $OUTDIR
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/retro/version$VERSION/$DB
+
 time 
 /hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/analyseExpress.sh
 \ DEF >& analyseExpress.log &
-Tue Jan 20 15:51:20 PST 2015
-# Seems that the analyseExpress.sh script has stalled so check the cluster
-# jobs.
+# Check the analseExpress.sh cluster jobs
 ssh ku
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/retro/version9/hg38/estSplit
-# These all ran ok. Just seems to have stalled so just run the rest of the 
-# script and kill this instance of it running.
-ssh hgwdev 
-cd /hive/groups/gencode/pseudogenes/retroFinder/hg38.20150112/retro/version9/hg38
-/hive/users/hartera/GencodeWG/retroFinder/branches/version2/src/pipeline/analyseExp.sh DEF >>& analyseExpress.log &
-# Crashed on all joins, says the files are not sorted even though they 
-# have been. That happened earlier too. Fix by adding sort -k1,1. 
-# Previously, in analyseExpress.sh, added option to pslSplitOnTarget to 
-# increase the maximum allowed targets to 500. There are 455 for hg38.
-# Add trackDb.retro entry to ~/kent/src/hg/makeDb/trackDb/human/hg38/trackDb.ra.  
+# cd to $OUTDIR/estSplit
+cd /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE/retro/version$VERSION/$DB/estSplit
+/parasol/bin/para check
+# If all cluster jobs ran ok, then can add the track to the UCSC Genome
+# Browser
+# Add $OUTDIR/trackDb.retro entry to 
+# ~/kent/src/hg/makeDb/trackDb/<organism>/$DB/trackDb.ra.
+#
+# Tables built are:
+# ucscRetroAli
+# ucscRetroCds
+# ucscRetroCount
+# ucscRetroExpressed
+# ucscRetroExtFile
+# ucscRetroInfo
+# ucscRetroOrtho
+# ucscRetroSeq
+# Version number is appended to these table names. 
+# The sequence files are in:
+# /gbdb/$DB/blastzRetro$VERSION
+# symlinks point to $MRNABASE/mrna.fa and $MRNABASE/refseq.fa   
