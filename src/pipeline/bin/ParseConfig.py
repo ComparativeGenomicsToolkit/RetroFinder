@@ -1,13 +1,12 @@
 import ConfigParser
 from commonOps import *
 
-configFile="configFile.cfg"
 class ParseConfig:
     def __init__(self, database, configFile):
         # Read in config file
         self.config = ConfigParser.ConfigParser()
         self.config.read(configFile)
-        self.db = database
+        self.db = self.getGenVar('database')
         self.date = getDate()  
         self.version = getGenVar('version')
         # root of the directory for this RetroFinder pipeline run
