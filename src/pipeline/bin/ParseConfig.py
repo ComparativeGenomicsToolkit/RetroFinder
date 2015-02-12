@@ -47,6 +47,10 @@ class ParseConfig:
         """Returns variable value from SequenceData section of config file"""
         return self.getVar('SequenceData', var)
 
+    def getChromFile(self, dirPath)
+        """Returns full path for chromosome sizes file"""
+        return createPath(self.rootRunDir, self.getSeqVar('chromFile'))
+    
     def getSeqDir(self):
         """Returns the full path of the sequences directory"""
         seqDir = createWorkingDirName(self.rootRunDir, \
@@ -75,8 +79,5 @@ class ParseConfig:
     def getCdsFile(self, seqType):
         """Returns full path and file name for CDS regions file"""
         # seqType can be mrna, refSeq, ensembl, all or anther type    
-        return createPath(self.getSeqDir(), self.getFileName(seqType, "cds.tab"))
+        return createPath(self.getSeqDir(), self.getFileName(seqType,"cds.tab"))
 
-    def getChromFile(self, dirPath)
-        return createFilePath(self.rootRunDir, \
-           self.getSeqVar('chromFile'))
