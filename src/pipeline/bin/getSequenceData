@@ -56,17 +56,13 @@ class getSequenceData(object):
         print "Getting chrom sizes"
         makeDir(self.rootDir)
         chromStr = "select chrom, size from chromInfo;"
-        sql = self.cfgParse.getProgVar('hgsqlCmd')
-        print type(sql)
-      
-        print "sql", sql
-        query = self.cfgParse.getProgVar('hgsqlCmd') + [chromStr, self.database]
         with open(self.cfgParse.chromFile, "w") as fh:
-            subprocess.check_call(query, stdout=fh)
-    
+            queryDb(chromStr, self.database, fh)
+        fh.close()
+ 
     def catSeqAndAlignDataFiles(self):
         """Cats together the FASTA, CDS and PSL files created"""
-        allPrefix = self.cfgParse.getVar('SequenceData', 'allSeqs')
+        allPrefix = self.cfgParse.getSeqVar('allSeqs')
         faList = makeFileList(self.seqDir, "fa")
         catFiles(self.cfgParse.getSeqFile(allPrefix), faList)
         pslList = makeFileList(self.seqDir, "psl")
@@ -94,13 +90,10 @@ class getSequenceData(object):
         """Gets the current Ensembl version loaded into the database"""
         queryStr = "select max(version) from trackVersion where db = " + "'" \
             + self.database + "';"
-        sqlCmd = self.cfg.getProgVar('hgsqlCmd')
-        query = sqlCmd + [queryStr, 'hgFixed']
-        print queryStr
-        ensRel = subprocess.check_output(query)
+        ensRel = getDbQueryResult(sqlCmd, 'hgFixed')
         print "Ensembl release is %s here." % (ensRel[0:-1])
         # Ensembl release value is a string so cast to an integer
-        return int(ensRel[0:-1])
+        return int(ensRel)
     
     def checkEnsemblVersion(self, ensVerOption):
         """Checks the current UCSC database Ensembl version against the 
