@@ -9,6 +9,7 @@ myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from Files import *
 from commonOps import *
+from ParseConfig import ParseConfig
 from SeqAndAlignData import SeqAndAlignData
 
 getGenbankSeqProg = "/cluster/data/genbank/bin/x86_64/gbGetSeqs"
@@ -16,60 +17,69 @@ gbRoot = "/cluster/data/genbank"
 
 parser = argparse.ArgumentParser(description='Program to get sequence and associated data for RetroFinder')
 parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
-parser.add_argument('outDir', metavar='outDir', type=str, help='root of output directory')
-parser.add_argument('--ensDb', dest='ensDatabase', action='store', type=str, help='if Ensembl data required, provide the version to check this is the one used in the database')
+parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+parser.add_argument('--ensDb', dest='ensDatabase', action='store', type=str, help='if Ensembl data required, provide the Ensembl database name')
 args = parser.parse_args()
        
-class GetSequenceData(object):
+class getSequenceData(object):
     def __init__(self, args):
         # set variables for options
         # UCSC genome assembly database
         self.database = args.db
         # Ensembl genome assembly database
         self.ensDb = args.ensDatabase
-        
-        # date in format, YYYY-MM-DD
-        self.date = getDate()
-        self.outDir = args.outDir
-        # NOTE: MOVE ROOT DIR TO HIGHER UP PROGRAM
-        self.rootDir = createRootDirName(self.outDir, self.database, self.date)
+        # Read and parse config file
+        self.cfgParse = ParseConfig(self.database, args.configFile)
+        # Get the root run directory
+        self.rootDir = self.cfgParse.rootRunDir
+        # Get the sequences working directory from config file 
+        self.seqDir = self.cfgParse.getVar('SequenceData', 'seqDir')
         # Get a list of general files
-        self.generalFiles = GeneralFiles(self.rootDir)
+        # self.generalFiles = GeneralFiles(self.rootDir)
         # Get chromosome sizes
-        self.getChromSizes()
+        self.chromFile = self.getChromSizes()
         # Create SeqFiles objects for GenBank and RefSeq:
-        self.genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
+    #    self.genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
         # Can not pass a files object as this is a program so for now 
-        # make that object again ingetGenbankData
+        # make that object again in getGenbankData
         if self.ensDb != None:
             # Get Ensembl sequences and data
-            subprocess.check_call(["./getEnsemblData", self.database, self.ensDb, self.generalFiles.chromFile, self.rootDir])
+            self.getEnsSeqData('ensemblData')
         else:
             print "Ensembl version option is not set."
         # Get Genbank mRNA sequences and associated data
-        subprocess.check_call(["./getGenbankData", self.database, self.rootDir])
+        # self.getMrnaSeqData('genbankData')
         # Get RefSeq mRNA transcript sequences and associated data
-        subprocess.check_call(["./getRefseqData", self.database, self.rootDir])
+        self.getMrnaSeqData('refseqData')
  
     def getChromSizes(self):
         """Get chromosome sizes"""
         print "Getting chrom sizes"
         makeDir(self.rootDir)
         chromStr = "select chrom, size from chromInfo;"
-        with open(self.generalFiles.chromFile, "w") as fh:
+        with open(self.cfgParse.chromFile, "w") as fh:
             subprocess.check_call(["hgsql", "-Ne", chromStr, self.database], stdout=fh)
 
     def catSeqAndAlignDataFiles(self):
         """Cats together the FASTA, CDS and PSL files created"""
-        allMrnaSeqFile = self.genbankFiles.seqsDir + "/all_mrna.fa"
-        allPslFile = self.genbankFiles.seqsDir + "/all_mrna.psl"
-        allCdsFile = self.genbankFiles.seqsDir + "/all_cds.tab"
-        faList = makeFileList(self.genbankFiles.seqsDir, "fa")
-        catFiles(allMrnaSeqFile, faList)
-        pslList = makeFileList(self.genbankFiles.seqsDir, "psl")
-        catFiles(allPslFile, pslList)
-        cdsList = makeFileList(self.genbankFiles.seqsDir, "cds")
-        catFiles(allPslFile, pslList)
+        allPrefix = self.cfgParse.getVar('SequenceData', 'allSeqs')
+        faList = makeFileList(self.seqDir, "fa")
+        catFiles(self.cfgParse.getSeqFile(allPrefix), faList)
+        pslList = makeFileList(self.seqDir, "psl")
+        catFiles(self.cfgParse.getPslFile(allPrefix), pslList)
+        cdsList = makeFileList(self.seqDir, "cds")
+        catFiles(self.cfgParse.getCdsFile(allPrefix), cdsList)
+
+    def getMrnaSeqData(self, seqProg):
+        """Gets Genbank or RefSeq mRNA sequences and related data""" 
+        getSeqProg = self.cfgParse.getVar('Programs', seqProg)
+        subprocess.check_call([getSeqProg, self.database, self.rootDir])
+        
+    def getEnsSeqData(self, seqProg)
+        """Gets Ensembl mRNA sequences and related data"""
+        getEnsSeqProg = self.cfgParse.getVar('Programs', seqProg)
+        subprocess.check_call([getEnsSeqProg, self.database, self.ensDb, \
+            self.chromFile, self.rootDir)]
 
     def getCurrentDbEnsemblVersion(self):
         """Gets the current Ensembl version loaded into the database"""
@@ -91,6 +101,6 @@ class GetSequenceData(object):
             raise AssertionError, "Ensembl version in database does not match that provided by user"
         print "Ensembl versions match"
 
-getSeqsData = GetSequenceData(args)
+getSeqsData = getSequenceData(args)
 getSeqsData.catSeqAndAlignDataFiles()
 print "Organism name is %s here" % (getOrganismName(getSeqsData.database))
