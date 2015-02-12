@@ -2,6 +2,20 @@
 import os,subprocess,re
 import time
 
+def queryDb(query, db, fh=None):
+    """Make a query to a local database and optionally save output to a file"""
+    hgsqlCmd = ['hgsql', '-Ne', query, db]
+    if fh != None:
+        subprocess.check_call(hgsqlCmd, stdout=fh)
+    else:
+        subprocess.check_call(hgsqlCmd)
+
+def getDbQueryResult(query, db):
+    """Make a query to a local database and return the output"""
+    hgsqlCmd = ['hgsql', '-Ne', query, db]
+    # Returns result of query and removes newline at the end
+    return (subprocess.check_output(hgsqlCmd)[0:-1])
+
 def makeFileList(path, fileExt):
     """Returns a list of files ending in file extension"""
     # return [fn for fn in os.listdir(path) if any([fn.endswith(fileExt)])]
@@ -32,8 +46,7 @@ def getDate():
 def getOrganismName(database):
     """Give the name of the database return the common name."""
     selectStr = "select organism from dbDb where name =" + "'" + database + "';" 
-    org = subprocess.check_output(["hgsql", "-Ne", selectStr, "hgcentraltest"])
-    org = org[0:-1]
+    org = getDbQueryResult(selectStr, database):
     return org.lower()
 
 def makeDir(dir):
