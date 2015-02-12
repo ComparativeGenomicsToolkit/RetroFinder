@@ -4,7 +4,7 @@ from commonOps import *
 from Files import SeqFiles,GeneralFiles
 
 class SeqAndAlignData(object):
-    def __init__(self, database, seqType, alignTable, cfgParse, chromFile=None, isGenePred=False, ensembl=False, ensDb=None):
+    def __init__(self, seqType, alignTable, cfgParse, chromFile=None, isGenePred=False, ensembl=False, ensDb=None):
         self.database = database
         self.seqType = seqType
         self.alignTable = alignTable
@@ -31,7 +31,7 @@ class SeqAndAlignData(object):
         print "Prefix is: ", prefix
         return prefix
 
-    def getGenbankSeqs(self, source, outFile):
+    def getGenbankSeqs(self, source, seqType):
         """Gets GenBank or RefSeq mRNA sequences"""
         # Source is genbank or refseq
         print "Source ", source
@@ -41,7 +41,9 @@ class SeqAndAlignData(object):
 
         # Create the output directory for this program 
         makeDir(self.cfg.getSeqDir())
+        outFile = self.cfg.getSeqFile(seqType)
         gbSeqProg = self.cfg.getVar('Programs', 'genbankSeqProg')
+        # Get GenBank mRNA or RefSeq sequences
         subprocess.check_call([gbSeqProg, "-inclVersion", "-native", gbdb, gbR, source, "mrna", outFile])
 
     def getEnsemblSeqs(self, outFile):
@@ -64,7 +66,7 @@ class SeqAndAlignData(object):
         # Create the output directory for this data 
         makeDir(self.cfg.getSeqDir())  
         pslSelect = "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from " + alignTable + ";"
-        with open(self.seqFiles.alignFile, "w") as fh:
+        with open(self.cfg.getPslFile(), "w") as fh:
             subprocess.check_call(["hgsql", "-Ne", pslSelect, self.database], stdout=fh)
 
     def __getGenePredAnnots(self, gpTable):
