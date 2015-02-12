@@ -62,20 +62,20 @@ class ParseConfig:
     def getSeqFile(self, seqType):
         """Returns full path and file name of FASTA file for sequences"""
         # seqType can be mrna, refSeq, ensembl, all or anther type    
-        return createPath(self.getSeqDir(), self.getFileName(seqType, "fa"))
+        return self.createPath(self.getSeqDir(), self.getFileName(seqType, "fa"))
  
     def getPslFile(self, seqType):
         """Returns full path and file name of PSL file for sequences"""
         # seqType can be mrna, refSeq, ensembl, all or anther type    
-        return createPath(self.getSeqDir(), self.getFileName(seqType, "psl"))
+        return self.createPath(self.getSeqDir(), self.getFileName(seqType, "psl"))
     
     def getGenePredFile(self, seqType):
         """Returns full path and file name of genePred file for sequences"""
         # seqType can be ensembl or other genePred annotation
-        return createPath(self.getSeqDir(), self.getFileName(seqType, "gp"))
+        return self.createPath(self.getSeqDir(), self.getFileName(seqType, "gp"))
 
     def getCdsFile(self, seqType):
         """Returns full path and file name for CDS regions file"""
         # seqType can be mrna, refSeq, ensembl, all or anther type    
-        return createPath(self.getSeqDir(), self.getFileName(seqType,"cds.tab"))
+        return self.createPath(self.getSeqDir(), self.getFileName(seqType,"cds.tab"))
 
