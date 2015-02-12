@@ -8,18 +8,20 @@ class ParseConfig:
         self.config = ConfigParser.ConfigParser()
         self.config.read(configFile)
         self.db = database
-        self.date = getDate()
+        self.date = getDate()  
+        self.version = getGenVar('version')
         # root of the directory for this RetroFinder pipeline run
         self.rootRunDir = self.createRootRunDirName()
         # file for chromosome sizes
         self.chromFile = self.createPath(self.rootRunDir, \
             self.getGenVar('chromFile'))  
-
+       
     def createRootRunDirName(self):
         """Creates path for directory for RetroFinder run"""
-        rootWorkDir = self.getGenVar('rootWorkDir') 
-        return  rootWorkDir + "/" + self.db + "/" + self.date
-   
+        rootWorkDir = self.getGenVar('rootWorkDir')
+        workDir = self.db + "/" + self.version + "/" self.date
+        return createPath(rootWorkDir, workDir)
+    
     def createWorkingDirName(self, dirPath):
         """Creates path and name of directory in root dir"""
         return self.createPath(self.rootRunDir, dirPath)
