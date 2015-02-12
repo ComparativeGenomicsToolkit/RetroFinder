@@ -7,32 +7,25 @@ import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
+from ParseConfig import ParseConfig
 from Files import SeqFiles
 from SeqAndAlignData import SeqAndAlignData
 
-alignTable = "all_mrna"
-seqType = "mrna"
-seqSource = "genbank"
-
 parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
-parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
-parser.add_argument('rootDir', metavar='rootDir', type=str, help='root of output directory')  
+parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')  
 args = parser.parse_args()
 
 class getGenbankData(object):
     def __init__(self, args):
-        # Genome assembly database
-        self.database = args.db
-        # Root working directory
-        self.rootDir = args.rootDir
-        print "Out dir is ", self.rootDir
-        genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
-        # Pass in the genbankFiles object to SeqAndAlignData
-        seqData = SeqAndAlignData(self.database, alignTable, genbankFiles)
-        print "getGenbankData: sequence file is", genbankFiles.seqFile
-        # This is called here as not all get programs for sequence data will
-        # use this function to get sequence data. Ensembl has a different 
-        # method. 
-        seqData.getGenbankSeqs(seqSource, seqType, genbankFiles.seqFile)
+        # Object for parsing config file
+        self.cfgParse = ParseConfig(args.db, args.configFile) 
+        self.seqType = self.cfgParse.getSeqVar('mrna')
+        # Pass in the ParseConfig object to SeqAndAlignData to access
+        # the directory and file names
+        self.seqData = SeqAndAlignData(seqType, \
+            self.cfgParse.getSeqVar('mrnaAlignTable'), self.cfgParse)
 
 getGenbank = getGenbankData(args)
+# This is called here as not all get programs for sequence data will use 
+# this function to get sequence data. Ensembl has a different method. 
+getGenbank.seqData.getGenbankSeqs(self.cfgParse.getSeqVar('gbMrnaSource'), seqType)
