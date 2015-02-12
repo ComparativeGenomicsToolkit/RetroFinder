@@ -69,21 +69,18 @@ class SeqAndAlignData(object):
         """Gets PSL alignments from the database""" 
         # Create the output directory for this data 
         makeDir(self.cfg.getSeqDir())
-        sqlCmd = self.cfg.getProgVar('hgsqlCmd')  
         pslSelect = "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from " + alignTable + ";"
-        getPsl = sqlCmd + [pslSelect, self.database]
         with open(self.cfg.getPslFile(), "w") as fh:
-            subprocess.check_call(getPsl, stdout=fh)
+            queryDb(pslSelect, self.database, fh)
+        fh.close()
 
     def __getGenePredAnnots(self, gpTable):
         """Gets genePred annotations from the database"""
         # Create the output directory for this data 
         makeDir(self.cfg.getSeqDir())
-        sqlCmd = self.cfg.getProgVar('hgsqlCmd')  
         genePredSelect = "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from " + gpTable + ";"
-        getGp = sqlCmd + [genePredSelect, self.database]
         with open(gpFile, "w") as fh:
-            subprocess.check_call(getGp, stdout=fh)
+            queryDb(genePredSelect, self.database, fh)
         if self.ensembl:
              # This program gets the version numbers for ids and re-writes 
              # the genePred with the ids with version numbers.
@@ -108,7 +105,10 @@ class SeqAndAlignData(object):
  
     def getGenePredCdsRegions(self):
         """Gets the CDS region for a genePred annotation table/file"""
-        makeDir(self.cfg.getSeqDir()) 
+        makeDir(self.cfg.getSeqDir())
+        dir = self.cfg.getGenVar('scriptDir')
+        seqProg = self.cfg.getProgVar('gpCdsRegions')
+        getCds = self.cfg.createPath(dir, seqProg) 
         subprocess.check_call(["./getGenePredCdsRegions", self.database, \
             self.gpFile, self.cfg.getCdsFile(self.seqType)])  
         
@@ -117,8 +117,6 @@ class SeqAndAlignData(object):
         makeDir(self.cfg.getSeqDir()) 
         cdsSelStr = "select acc, version, name, type from " + alignTable + \
             " as a, gbCdnaInfo as g, cds as c where qName = acc and cds = c.id"
-        hgsql = self.cfg.getProgVar('hgsqlCmd')
-        query = hgsql + [cdsSelStr, self.database]
         with open(cdsFile, "w") as fh:
-            subprocess.check_call(query, stdout=fh)
+            queryDb(cdsSelStr, self.database.fh)
         fh.close()
