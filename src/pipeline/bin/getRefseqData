@@ -10,20 +10,12 @@ from commonOps import *
 from Files import SeqFiles
 from SeqAndAlignData import SeqAndAlignData
 
-alignTable = "refSeqAli"
-seqType = "mrna"
-seqSource = "refSeq"
-
 parser = argparse.ArgumentParser(description='Get GenBank RefSeq sequence data, PSL alignments and CDS region file')
-parser.add_argument('db', metavar='database', type=str, help='genome assembly database')
-parser.add_argument('rootDir', metavar='rootDir', type=str, help='root of output directory')  
+parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
 args = parser.parse_args()
 
 class getRefseqData(object):
     def __init__(self, args):
-        # Genome assembly database
-        self.database = args.db
-        # Root working directory
         self.rootDir = args.rootDir
         print "Root dir is ", self.rootDir
         refseqFiles = SeqFiles(self.rootDir, self.database, "refSeq")
@@ -33,4 +25,6 @@ class getRefseqData(object):
         # method.
         seqData.getGenbankSeqs(seqSource, seqType, refseqFiles.seqFile)
 
-getRefSeq = getRefseqData(args)
+getRefeq = getRefseqData(args)
+getRefseq.seqData.getGenbankSeqs(self.cfgParse.getSeqVar('gbRefseqSource'), seqType)
+

@@ -2,24 +2,24 @@ import ConfigParser
 from commonOps import *
 
 class ParseConfig:
-    def __init__(self, database, configFile):
+    def __init__(self, configFile):
         # Read in config file
         self.config = ConfigParser.ConfigParser()
         self.config.read(configFile)
         self.db = self.getGenVar('database')
         self.date = getDate()  
-        self.version = getGenVar('version')
+        self.version = self.getGenVar('version')
         # root of the directory for this RetroFinder pipeline run
         self.rootRunDir = self.createRootRunDirName()
         # file for chromosome sizes
         self.chromFile = self.createPath(self.rootRunDir, \
-            self.getGenVar('chromFile'))  
+            self.getSeqVar('chromFile'))  
        
     def createRootRunDirName(self):
         """Creates path for directory for RetroFinder run"""
         rootWorkDir = self.getGenVar('rootWorkDir')
-        workDir = self.db + "/" + self.version + "/" self.date
-        return createPath(rootWorkDir, workDir)
+        workDir = self.db + "/" + self.version + "/" + self.date
+        return self.createPath(rootWorkDir, workDir)
     
     def createWorkingDirName(self, dirPath):
         """Creates path and name of directory in root dir"""
@@ -46,14 +46,13 @@ class ParseConfig:
         """Returns variable value from SequenceData section of config file"""
         return self.getVar('SequenceData', var)
 
-    def getChromFile(self, dirPath)
+    def getChromFile(self, dirPath):
         """Returns full path for chromosome sizes file"""
         return createPath(self.rootRunDir, self.getSeqVar('chromFile'))
     
     def getSeqDir(self):
         """Returns the full path of the sequences directory"""
-        seqDir = createWorkingDirName(self.rootRunDir, \
-            self.getSeqVar('seqDir'))
+        seqDir = self.createWorkingDirName(self.getSeqVar('seqDir'))
         return seqDir
 
     def getFileName(self, seqType, ext):

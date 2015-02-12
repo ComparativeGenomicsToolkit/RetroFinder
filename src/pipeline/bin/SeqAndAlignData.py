@@ -37,13 +37,13 @@ class SeqAndAlignData(object):
         print "Source ", source
         print "out file for Genbank seqs", outFile
         gbdb = "-db=" + self.__getDatabasePrefix()
-        gbR = "-gbRoot=" + self.cfg.getVar('General', 'gbRoot')
+        gbR = "-gbRoot=" + self.cfg.getGenVar('gbRoot')
 
         # Create the output directory for this program 
         makeDir(self.cfg.getSeqDir())
         outFile = self.cfg.getSeqFile(seqType)
-        gbSeqProg = self.cfg.getVar('Programs', 'genbankSeqProg')
-        # Get GenBank mRNA or RefSeq sequences
+        # Program to get GenBank mRNa and RefSeq sequences
+        gbSeqProg = self.cfg.getProgVar('genbankSeqProg')
         subprocess.check_call([gbSeqProg, "-inclVersion", "-native", gbdb, gbR, source, "mrna", outFile])
 
     def getEnsemblSeqs(self, outFile):
@@ -51,40 +51,51 @@ class SeqAndAlignData(object):
         # Create the output directory for this program 
         makeDir(self.cfg.getSeqDir())  
         org = getOrganismName(self.database)
-        ensSeqProg = self.cfg.getVar('Programs', 'ensembl
-        subprocess.check_call([ensemblSeqProg, "--all", org, "all", outFile])
+        dir = self.cfgParse.getGenVar('scriptDir')
+        seqProg = self.cfg.getProgVar('ensemblSeqProg')
+        getEnsSeqProg = self.cfgParse.createPath(dir, seqProg)
+        # Program to get Ensembl sequences with ids with version numbers
+        subprocess.check_call([getEnsSeqProg, "--all", org, "all", outFile])
           
     def getSeqsFromGenePred(self, table, outFile):
         """Gets the sequences from a table or from a file in genePred format"""
         # Create the output directory for this program 
-        makeDir(self.cfg.getSeqDir())  
+        makeDir(self.cfg.getSeqDir()) 
+        rnaProg = self.cfg.getProgVar('getRnaProg') 
         # table can be a table or a file
-        subprocess.check_call([getRnaProg, self.database, table, "all", outFile])
+        subprocess.check_call([rnaProg, self.database, table, "all", outFile])
 
     def __getPslAlignments(self, alignTable):
         """Gets PSL alignments from the database""" 
         # Create the output directory for this data 
-        makeDir(self.cfg.getSeqDir())  
+        makeDir(self.cfg.getSeqDir())
+        sqlCmd = self.cfg.getProgVar('hgsqlCmd')  
         pslSelect = "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from " + alignTable + ";"
+        getPsl = sqlCmd + [pslSelect, self.database]
         with open(self.cfg.getPslFile(), "w") as fh:
-            subprocess.check_call(["hgsql", "-Ne", pslSelect, self.database], stdout=fh)
+            subprocess.check_call(getPsl, stdout=fh)
 
     def __getGenePredAnnots(self, gpTable):
         """Gets genePred annotations from the database"""
         # Create the output directory for this data 
         makeDir(self.cfg.getSeqDir())
+        sqlCmd = self.cfg.getProgVar('hgsqlCmd')  
         genePredSelect = "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from " + gpTable + ";"
+        getGp = sqlCmd + [genePredSelect, self.database]
         with open(gpFile, "w") as fh:
-            subprocess.check_call(["hgsql", "-Ne", genePredSelect, self.database], stdout=fh)
+            subprocess.check_call(getGp, stdout=fh)
         if self.ensembl:
              # This program gets the version numbers for ids and re-writes 
              # the genePred with the ids with version numbers.
-             subprocess.check_call(["./getEnsDataWithVersions", self.database, self.ensDb, self.gpFile, self.cfg.getSeqDir()])
+             getEns = self.cfg.createPath(self.cfg.getGenVar('scriptDir'), \
+                 self.cfg.getProgVar('ensemblSeqProg'))
+             subprocess.check_call([getEns, self.database, self.ensDb, \
+                 self.gpFile, self.cfg.getSeqDir()])
     
     def __convertGenePredToPsl(self):
         """Converts annotation data from genePred to PSL format."""
         makeDir(self.cfg.getSeqDir()) 
-        getPsl = self.cfg.getVar('Programs', 'gpToPsl')
+        getPsl = self.cfg.getProgVar('gpToPsl')
         subprocess.check_call([getPsl, self.cfg.chromFile, self.gpFile, \
             self.cfg.getPslFile(self.seqType)])
    
@@ -106,8 +117,8 @@ class SeqAndAlignData(object):
         makeDir(self.cfg.getSeqDir()) 
         cdsSelStr = "select acc, version, name, type from " + alignTable + \
             " as a, gbCdnaInfo as g, cds as c where qName = acc and cds = c.id"
-        hgsql = self.cfg.getVar('Programs', 'hgsqlCmd')
+        hgsql = self.cfg.getProgVar('hgsqlCmd')
         query = hgsql + [cdsSelStr, self.database]
         with open(cdsFile, "w") as fh:
-            subprocess.check_call([query, stdout=fh)
+            subprocess.check_call(query, stdout=fh)
         fh.close()
