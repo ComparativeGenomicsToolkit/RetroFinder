@@ -11,19 +11,21 @@ class ParseConfig:
         self.version = self.getGenVar('version')
         # root of the directory for this RetroFinder pipeline run
         self.rootRunDir = self.createRootRunDirName()
+        print "root run dir", self.rootRunDir
         # file for chromosome sizes
-        self.chromFile = self.createPath(self.rootRunDir, \
+        self.chromFile = createPath(self.rootRunDir, \
             self.getSeqVar('chromFile'))  
+        print "chrom sizes file:", self.chromFile
        
     def createRootRunDirName(self):
         """Creates path for directory for RetroFinder run"""
         rootWorkDir = self.getGenVar('rootWorkDir')
-        workDir = self.db + "/" + self.version + "/" + self.date
-        return self.createPath(rootWorkDir, workDir)
+        workDir = self.db + "/version" + self.version + "/" + self.date
+        return createPath(rootWorkDir, workDir)
     
     def createWorkingDirName(self, dirPath):
         """Creates path and name of directory in root dir"""
-        return self.createPath(self.rootRunDir, dirPath)
+        return createPath(self.rootRunDir, dirPath)
 
     def createPath(self, dir, fileOrDir):
         """Adds file or directory to path name to create a full file
@@ -46,6 +48,10 @@ class ParseConfig:
         """Returns variable value from SequenceData section of config file"""
         return self.getVar('SequenceData', var)
 
+    def getTempDir(self):
+        """Returns full path of temp directory"""
+        return os.environ['TMPDIR'] + "/" + self.getGenVar('tempDirSuffix')
+
     def getChromFile(self, dirPath):
         """Returns full path for chromosome sizes file"""
         return createPath(self.rootRunDir, self.getSeqVar('chromFile'))
@@ -62,20 +68,35 @@ class ParseConfig:
     def getSeqFile(self, seqType):
         """Returns full path and file name of FASTA file for sequences"""
         # seqType can be mrna, refSeq, ensembl, all or anther type    
-        return self.createPath(self.getSeqDir(), self.getFileName(seqType, "fa"))
+        return self.getFileName(seqType, "fa")
  
-    def getPslFile(self, seqType):
-        """Returns full path and file name of PSL file for sequences"""
-        # seqType can be mrna, refSeq, ensembl, all or anther type    
-        return self.createPath(self.getSeqDir(), self.getFileName(seqType, "psl"))
+    def getSeqFileFullPath(self, seqType):
+        """Returns file name and path to sequence directory"""
+        return createPath(self.getSeqDir(), self.getSeqFile(seqType))
     
+    def getPslFile(self, seqType):
+        """Returns file name of PSL file for sequences"""
+        # seqType can be mrna, refSeq, ensembl, all or anther type    
+        return self.getFileName(seqType, "psl")
+    
+    def getPslFileFullPath(self, seqType):
+        """Returns file name and path to sequence directory"""
+        return createPath(self.getSeqDir(), self.getPslFile(seqType))
+ 
     def getGenePredFile(self, seqType):
-        """Returns full path and file name of genePred file for sequences"""
+        """Returns file name of genePred file for sequences"""
         # seqType can be ensembl or other genePred annotation
-        return self.createPath(self.getSeqDir(), self.getFileName(seqType, "gp"))
+        return self.getFileName(seqType, "gp")
+
+    def getGenePredFileFullPath(self, seqType):
+        """Returns file name and path to sequence directory"""
+        return createPath(self.getSeqDir(), self.getGenePredFile(seqType))
 
     def getCdsFile(self, seqType):
-        """Returns full path and file name for CDS regions file"""
+        """Returns file name for CDS regions file"""
         # seqType can be mrna, refSeq, ensembl, all or anther type    
-        return self.createPath(self.getSeqDir(), self.getFileName(seqType,"cds.tab"))
+        return self.getFileName(seqType,"cds.tab")
 
+    def getCdsFileFullPath(self, seqType):
+        """Returns file name and path to sequence directory"""
+        return createPath(self.getSeqDir(), self.getCdsFile(seqType))
