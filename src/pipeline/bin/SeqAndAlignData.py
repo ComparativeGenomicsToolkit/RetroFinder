@@ -5,22 +5,21 @@ from Files import SeqFiles,GeneralFiles
 
 class SeqAndAlignData(object):
     def __init__(self, seqType, alignTable, cfgParse, chromFile=None, isGenePred=False, ensembl=False, ensDb=None):
-        self.database = database
+        # Config file   
+        self.cfg = cfgParse
+        self.database = self.cfg.db
         self.seqType = seqType
         self.alignTable = alignTable
         self.cfg = cfgParse
         self.ensembl = ensembl
         self.ensDb = ensDb
-        # Get the PSL alignment data for this dataset and for genePred format
-        # data, also get the genePred file
-        if not isGenePred:
-            self.__getPslAlignments(self.alignTable)
-            self.getCdsRegions()
-        else:
-            self.gpFile = self.cfg.getGenePredFile(self.seqType)
-            self.__getPslFromGenePreds(self.alignTable)
-            # Get the CDS regsions and write to a tab-separated file
-            self.getGenePredCdsRegions()
+        self.tempDir = self.cfg.getTempDir()
+        self.gpFile = createPath(self.tempDir, \
+            self.cfg.getGenePredFile(self.seqType))
+        self.cdsFile = createPath(self.tempDir, \
+            self.cfg.getCdsFile(self.seqType))
+        # Get the PSL alignment data for this dataset 
+        self.__getPslAlignmentsAndCds(self.alignTable, isGenePred)
     
     def __getDatabasePrefix(self):
         """Gets the letters of the prefix of the database"""
@@ -31,17 +30,16 @@ class SeqAndAlignData(object):
         print "Prefix is: ", prefix
         return prefix
 
-    def getGenbankSeqs(self, source, seqType):
+    def getGenbankSeqs(self, source, outFile):
         """Gets GenBank or RefSeq mRNA sequences"""
         # Source is genbank or refseq
         print "Source ", source
-        print "out file for Genbank seqs", outFile
         gbdb = "-db=" + self.__getDatabasePrefix()
         gbR = "-gbRoot=" + self.cfg.getGenVar('gbRoot')
 
         # Create the output directory for this program 
-        makeDir(self.cfg.getSeqDir())
-        outFile = self.cfg.getSeqFile(seqType)
+        makeDir(self.cfg.getTempDir())
+        outFile = createPath(self.tempDir, self.cfg.getSeqFile(self.seqType))
         # Program to get GenBank mRNa and RefSeq sequences
         gbSeqProg = self.cfg.getProgVar('genbankSeqProg')
         subprocess.check_call([gbSeqProg, "-inclVersion", "-native", gbdb, gbR, source, "mrna", outFile])
@@ -49,49 +47,50 @@ class SeqAndAlignData(object):
     def getEnsemblSeqs(self, outFile):
         """Gets the Ensembl sequences"""
         # Create the output directory for this program 
-        makeDir(self.cfg.getSeqDir())  
+        makeDir(self.cfg.getTempDir())  
         org = getOrganismName(self.database)
         dir = self.cfgParse.getGenVar('scriptDir')
         seqProg = self.cfg.getProgVar('ensemblSeqProg')
-        getEnsSeqProg = self.cfgParse.createPath(dir, seqProg)
+        getEnsSeqProg = createPath(dir, seqProg)
         # Program to get Ensembl sequences with ids with version numbers
         subprocess.check_call([getEnsSeqProg, "--all", org, "all", outFile])
           
-    def getSeqsFromGenePred(self, table, outFile):
+    def getSeqsFromGenePred(self, file, outFile):
         """Gets the sequences from a table or from a file in genePred format"""
         # Create the output directory for this program 
-        makeDir(self.cfg.getSeqDir()) 
+        makeDir(self.cfg.getTempDir()) 
         rnaProg = self.cfg.getProgVar('getRnaProg') 
         # table can be a table or a file
-        subprocess.check_call([rnaProg, self.database, table, "all", outFile])
+        subprocess.check_call([rnaProg, self.database, file, "all", outFile])
 
-    def __getPslAlignments(self, alignTable):
+    def __getPslAlignmentsFromTable(self, alignTable):
         """Gets PSL alignments from the database""" 
         # Create the output directory for this data 
-        makeDir(self.cfg.getSeqDir())
+        makeDir(self.cfg.getTempDir())
         pslSelect = "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from " + alignTable + ";"
-        with open(self.cfg.getPslFile(), "w") as fh:
+        outFile = createPath(self.tempDir, self.cfg.getPslFile(self.seqType))
+        with open(outFile, "w") as fh:
             queryDb(pslSelect, self.database, fh)
         fh.close()
 
     def __getGenePredAnnots(self, gpTable):
         """Gets genePred annotations from the database"""
         # Create the output directory for this data 
-        makeDir(self.cfg.getSeqDir())
+        makeDir(self.cfg.getTempDir())
         genePredSelect = "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from " + gpTable + ";"
-        with open(gpFile, "w") as fh:
+        with open(self.gpFile, "w") as fh:
             queryDb(genePredSelect, self.database, fh)
         if self.ensembl:
              # This program gets the version numbers for ids and re-writes 
              # the genePred with the ids with version numbers.
              getEns = self.cfg.createPath(self.cfg.getGenVar('scriptDir'), \
-                 self.cfg.getProgVar('ensemblSeqProg'))
+                 self.cfg.getProgVar('ensGpWithIdVersions'))
              subprocess.check_call([getEns, self.database, self.ensDb, \
                  self.gpFile, self.cfg.getSeqDir()])
     
     def __convertGenePredToPsl(self):
         """Converts annotation data from genePred to PSL format."""
-        makeDir(self.cfg.getSeqDir()) 
+        makeDir(self.cfg.getTempDir()) 
         getPsl = self.cfg.getProgVar('gpToPsl')
         subprocess.check_call([getPsl, self.cfg.chromFile, self.gpFile, \
             self.cfg.getPslFile(self.seqType)])
@@ -99,24 +98,38 @@ class SeqAndAlignData(object):
     def __getPslFromGenePreds(self, gpTable):
         """Given a genePred table, creates a file of the data and 
            converts it to PSL format"""
-        gpFile = self.cfg.getGenePredFile(self.seqType)
         self.__getGenePredAnnots(gpTable)
         self.__convertGenePredToPsl()
- 
-    def getGenePredCdsRegions(self):
+
+    def __getGenePredCdsRegions(self):
         """Gets the CDS region for a genePred annotation table/file"""
-        makeDir(self.cfg.getSeqDir())
+        makeDir(self.cfg.getTempDir())
         dir = self.cfg.getGenVar('scriptDir')
         seqProg = self.cfg.getProgVar('gpCdsRegions')
-        getCds = self.cfg.createPath(dir, seqProg) 
-        subprocess.check_call(["./getGenePredCdsRegions", self.database, \
-            self.gpFile, self.cfg.getCdsFile(self.seqType)])  
+        getCds = self.cfg.createPath(dir, seqProg)
+        subprocess.check_call(["getCds", self.database, self.gpFile, self.cdsFile])  
         
-    def getCdsRegions(self):
+    def __getCdsRegions(self):
         """Gets the CDS regions either for GenBank mRNAs and RefSeqs"""
-        makeDir(self.cfg.getSeqDir()) 
-        cdsSelStr = "select acc, version, name, type from " + alignTable + \
-            " as a, gbCdnaInfo as g, cds as c where qName = acc and cds = c.id"
-        with open(cdsFile, "w") as fh:
-            queryDb(cdsSelStr, self.database.fh)
+        makeDir(self.cfg.getTempDir()) 
+        cdsSelStr = "select acc, version, name, type from " + self.alignTable \
+            + " as a, gbCdnaInfo as g, cds as c where qName = acc and \
+            cds = c.id"
+        with open(self.cdsFile, "w") as fh:
+            queryDb(cdsSelStr, self.database, fh)
         fh.close()
+
+    def __getPslAlignmentsAndCds(self, table, isGenePred):
+        """Get PSL alignments and CDS regions. Table is either PSL or genePred
+           format. GenePreds are converted to PSL format."""
+        # Get PSL alignments directly from a table and write to temp dir
+        # CDS regions from a database query, write file to temp dir
+        if not isGenePred:
+            self.__getPslAlignmentsFromTable(table)
+            self.__getCdsRegions()
+        else:
+            # Get genePred file and convert to PSL. Get CDS regions 
+            # from genePred file. Write files to temp directory.
+            self.__getPslFromGenePreds(table)
+            # Get the CDS regsions and write to a tab-separated file
+            self.__getGenePredCdsRegions()
