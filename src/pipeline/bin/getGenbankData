@@ -18,14 +18,23 @@ args = parser.parse_args()
 class getGenbankData(object):
     def __init__(self, args):
         # Object for parsing config file
-        self.cfgParse = ParseConfig(args.db, args.configFile) 
+        self.cfgParse = ParseConfig(args.configFile) 
         self.seqType = self.cfgParse.getSeqVar('mrna')
         # Pass in the ParseConfig object to SeqAndAlignData to access
         # the directory and file names
-        self.seqData = SeqAndAlignData(seqType, \
+        self.seqData = SeqAndAlignData(self.seqType, \
             self.cfgParse.getSeqVar('mrnaAlignTable'), self.cfgParse)
 
-getGenbank = getGenbankData(args)
-# This is called here as not all get programs for sequence data will use 
-# this function to get sequence data. Ensembl has a different method. 
-getGenbank.seqData.getGenbankSeqs(self.cfgParse.getSeqVar('gbMrnaSource'), seqType)
+    def getSequences(self):
+        """Get the sequences in FASTA format"""
+        tempDir = self.cfgParse.getTempDir()
+        seqFile = createPath(tempDir, self.cfgParse.getSeqFile(self.seqType))     
+        print "Seq file is ", seqFile
+        # This function is called here as not all get programs for sequence 
+        # data use this function to get sequence data. 
+        # Ensembl has a different method.
+        self.seqData.getGenbankSeqs(self.cfgParse.getSeqVar('gbMrnaSource'), \
+            seqFile)
+
+getGb = getGenbankData(args)
+getGb.getSequences()
