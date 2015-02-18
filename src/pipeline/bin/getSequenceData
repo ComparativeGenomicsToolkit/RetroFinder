@@ -36,7 +36,7 @@ class getSequenceData(object):
         # Get a list of general files
         # self.generalFiles = GeneralFiles(self.rootDir)
         # Get chromosome sizes
-        self.chromFile = self.getChromSizes()
+        self.getChromSizes()
         # Create SeqFiles objects for GenBank and RefSeq:
     #    self.genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
         # Can not pass a files object as this is a program so for now 
@@ -47,42 +47,51 @@ class getSequenceData(object):
         else:
             print "Ensembl version option is not set."
         # Get Genbank mRNA sequences and associated data
-        self.getMrnaSeqData('genbankData')
+        self.getMrnaSeqData('genbankData', args.configFile)
         # Get RefSeq mRNA transcript sequences and associated data
-        # self.getMrnaSeqData('refseqData')
+        self.getMrnaSeqData('refseqData', args.configFile)
  
     def getChromSizes(self):
         """Get chromosome sizes"""
-        print "Getting chrom sizes"
+        print "Getting chrom sizes and making root dir", self.rootDir
         makeDir(self.rootDir)
         chromStr = "select chrom, size from chromInfo;"
+        print "Query", chromStr
+        print "Database", self.database
         with open(self.cfgParse.chromFile, "w") as fh:
             queryDb(chromStr, self.database, fh)
         fh.close()
  
     def catSeqAndAlignDataFiles(self):
         """Cats together the FASTA, CDS and PSL files created"""
-        allPrefix = self.cfgParse.getSeqVar('allSeqs')
-        faList = makeFileList(self.seqDir, "fa")
-        catFiles(self.cfgParse.getSeqFile(allPrefix), faList)
-        pslList = makeFileList(self.seqDir, "psl")
-        catFiles(self.cfgParse.getPslFile(allPrefix), pslList)
-        cdsList = makeFileList(self.seqDir, "cds")
-        catFiles(self.cfgParse.getCdsFile(allPrefix), cdsList)
+        # Use the variable name in the config file to retrieve the prefix for 
+        # file names for concatenated files
+        allPrefix = 'allSeqs'
+        # Make the sequences data directory:
+        makeDir(self.cfgParse.getSeqDir())
+        # Get temp dir name
+        temp = self.cfgParse.getTempDir()
+        faList = makeFileList(temp, "fa")
+        catFiles(self.cfgParse.getSeqFileFullPath(allPrefix), faList)
+        pslList = makeFileList(temp, "psl")
+        catFiles(self.cfgParse.getPslFileFullPath(allPrefix), pslList)
+        cdsList = makeFileList(temp, "cds.tab")
+        print "CDS list is", cdsList
+        catFiles(self.cfgParse.getCdsFileFullPath(allPrefix), cdsList)
 
-    def getMrnaSeqData(self, seqProg):
+    def getMrnaSeqData(self, seqProg, cfgFile):
         """Gets Genbank or RefSeq mRNA sequences and related data""" 
         dir = self.cfgParse.getGenVar('scriptDir')
         seqProg = self.cfgParse.getProgVar(seqProg)
-        getSeqProg = self.cfgParse.createPath(dir, seqProg)
+        getSeqProg = createPath(dir, seqProg)
         print "getSeqProg", getSeqProg
-        subprocess.check_call([getSeqProg, self.database, self.rootDir])
+        subprocess.check_call([getSeqProg, cfgFile])
         
     def getEnsSeqData(self, seqProg):
         """Gets Ensembl mRNA sequences and related data"""
         dir = self.cfgParse.getGenVar('scriptDir')
         seqProg = self.cfgParse.getProgVar(seqProg)
-        getEnsSeqProg = self.cfgParse.createPath(dir, seqProg)
+        getEnsSeqProg = createPath(dir, seqProg)
         subprocess.check_call([getEnsSeqProg, self.database, self.ensDb, \
             self.chromFile, self.rootDir])
 
@@ -105,6 +114,31 @@ class getSequenceData(object):
             raise AssertionError, "Ensembl version in database does not match that provided by user"
         print "Ensembl versions match"
 
+    def moveFilesToSeqDir(self):
+        """Move files from temporary directory to the sequence data directory 
+           if they are needed later."""
+        makeDir(self.seqDir)
+        temp = self.cfgParse.getTempDir()
+        # Keep all FASTA sequence files
+        seqFiles = createPath(tempDir, "*fa")
+        moveFile(seqFiles, self.seqDir)
+        mrnaSeqType = self.cfgParse.getSeqVar('mrna')
+        mrnaPsl = createPath(temp, self.cfgParse.getPslFile(mrnaSeqType))
+        moveFile(mrnaPsl, self.seqDir)
+        # Also move genePred file if present
+        if self.ensDb != None:
+            seqType = self.cgParse.getSeqVar('ensembl')
+            gpFile = createPath(temp, self.cfgParse.getGenePredFile(seqType))
+            moveFile(gpFile, self.seqDir)
+
+        # Remove temporary directory
+#`    self.__cleanUpTempDir()
+    
+    def __cleanUpTempDir(self):
+        """Removes the temp directory"""
+        removeDir(self.cfgParse.getTempDir())
+
 getSeqsData = getSequenceData(args)
 getSeqsData.catSeqAndAlignDataFiles()
+getSeqsData.moveFilesToSeqDir()
 print "Organism name is %s here" % (getOrganismName(getSeqsData.database))
