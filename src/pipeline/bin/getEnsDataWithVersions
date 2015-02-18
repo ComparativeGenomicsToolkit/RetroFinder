@@ -67,7 +67,7 @@ class getEnsDataWithVersions(object):
             self.ensTbl.names[id].write(fh)
         fh.close()
         # Rename file to original genePred file name
-        renameFile(file, self.ensFile)
+        moveFile(file, self.ensFile)
 
 getEns = getEnsDataWithVersions(args)
 getEns.writeGpWithIdVersions()
