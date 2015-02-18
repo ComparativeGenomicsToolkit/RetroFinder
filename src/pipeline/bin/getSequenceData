@@ -120,7 +120,7 @@ class getSequenceData(object):
         makeDir(self.seqDir)
         temp = self.cfgParse.getTempDir()
         # Keep all FASTA sequence files
-        seqFiles = createPath(tempDir, "*fa")
+        seqFiles = createPath(temp, "*fa")
         moveFile(seqFiles, self.seqDir)
         mrnaSeqType = self.cfgParse.getSeqVar('mrna')
         mrnaPsl = createPath(temp, self.cfgParse.getPslFile(mrnaSeqType))
