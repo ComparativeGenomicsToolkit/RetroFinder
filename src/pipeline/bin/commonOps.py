@@ -5,7 +5,9 @@ import time
 def queryDb(query, db, fh=None):
     """Make a query to a local database and optionally save output to a file"""
     hgsqlCmd = ['hgsql', '-Ne', query, db]
+    print "Cmd is", hgsqlCmd
     if fh != None:
+        print "Querying database"
         subprocess.check_call(hgsqlCmd, stdout=fh)
     else:
         subprocess.check_call(hgsqlCmd)
@@ -15,6 +17,15 @@ def getDbQueryResult(query, db):
     hgsqlCmd = ['hgsql', '-Ne', query, db]
     # Returns result of query and removes newline at the end
     return (subprocess.check_output(hgsqlCmd)[0:-1])
+
+def createPath(dir, fileOrDir):
+    """Adds file or directory to path name to create a full file
+       or directory path"""
+    return dir + "/" + fileOrDir
+
+def createFilePath(dir, name, suffix):
+    """Creates the file name and path for output files."""
+    return dir + "/" + name + "." + suffix
 
 def makeFileList(path, fileExt):
     """Returns a list of files ending in file extension"""
@@ -37,25 +48,25 @@ def catFiles(outFile, fileList):
 def removeFile(file):
     subprocess.check_call(["rm", "-f", file])
 
-def renameFile(oldFile, newFile):
+def removeDir(dir):
+    subprocess.check_call(["rm", "-rf", dir])
+
+def moveFile(oldFile, newFile):
+    """Move oldfile to newFile. newFile can be file name or directory"""
     subprocess.check_call(["mv", oldFile, newFile])
 
 def getDate():
     return time.strftime("%Y-%m-%d") 
 
-def getOrganismName(database):
+def getOrganismName(assembly):
     """Give the name of the database return the common name."""
-    selectStr = "select organism from dbDb where name =" + "'" + database + "';" 
-    org = getDbQueryResult(selectStr, database):
+    selectStr = "select organism from dbDb where name =" + "'" + assembly + "';" 
+    org = getDbQueryResult(selectStr, "hgcentraltest")
     return org.lower()
 
 def makeDir(dir):
     subprocess.check_call(["mkdir", "-p", dir])
     
-def createFilePath(dir, name, suffix):
-    """Creates the file name and path for output files."""
-    return dir + "/" + name + "." + suffix
-
 def getChromSizes(database, chromFile):
     """Get chromosome sizes"""
     chromStr = "select chrom, size from chromInfo;" 
