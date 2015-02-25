@@ -18,6 +18,10 @@ def getDbQueryResult(query, db):
     # Returns result of query and removes newline at the end
     return (subprocess.check_output(hgsqlCmd)[0:-1])
 
+def fileExists(fileName):
+    """Checks that the file exists, returns True if it does"""
+    return os.path.exists(fileName)
+ 
 def createPath(dir, fileOrDir):
     """Adds file or directory to path name to create a full file
        or directory path"""
