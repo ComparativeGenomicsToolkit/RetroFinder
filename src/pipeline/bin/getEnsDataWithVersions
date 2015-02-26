@@ -13,8 +13,8 @@ from commonOps import *
 parser = argparse.ArgumentParser(description='Get Ensembl sequences as a FASTA file with id versions')
 parser.add_argument('ucscDb', metavar='UCSCDatabase', type=str, help='UCSC genome assembly database')
 parser.add_argument('ensDb', metavar='EnsemblDatabase', type=str, help='Ensembl genome assembly database')
-parser.add_argument('ensFile', metavar='ensemblFile', type=str, help='UCSC Ensembl genePred file')
-parser.add_argument('outDir', metavar='seqsDir', type=str, help='Directory for sequences and related info')
+parser.add_argument('ensFile', metavar='ensemblFile', type=str, help='UCSC Ensembl genePred file, full path')
+parser.add_argument('tempDir', metavar='tempDir', type=str, help='Directory for sequences and related info')
 args = parser.parse_args()
 
 class getEnsDataWithVersions(object):
@@ -25,12 +25,10 @@ class getEnsDataWithVersions(object):
         self.ensDb = args.ensDb
         # File of genePred sequences already downloaded
         self.ensFile = args.ensFile
-        # Sequence data directory
-        self.seqsDir = args.outDir
         # Read the Ensembl genePred file and store in a dictionary
         self.ensTbl = GenePredTbl(self.ensFile, buildUniqIdx=True)
         # Ensembl ids, tab-separated, id and version number
-        self.idsFile = self.seqsDir + "/ens.ids.txt"
+        self.idsFile = args.tempDir + "/ens.ids.txt"
         # Get the ids and write to file then read into a dictionary
         self.idsTbl = self.__storeIds()
  
