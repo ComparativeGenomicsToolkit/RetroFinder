@@ -11,9 +11,6 @@ from commonOps import *
 from ParseConfig import ParseConfig
 from SeqAndAlignData import SeqAndAlignData
 
-getGenbankSeqProg = "/cluster/data/genbank/bin/x86_64/gbGetSeqs"
-gbRoot = "/cluster/data/genbank"
-
 parser = argparse.ArgumentParser(description='Program to get sequence and associated data for RetroFinder')
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
 parser.add_argument('--ensDb', dest='ensDatabase', action='store', type=str, help='if Ensembl data required, provide the Ensembl database name')
@@ -24,8 +21,10 @@ class getSequenceData(object):
         # set variables for options
         # Ensembl genome assembly database
         self.ensDb = args.ensDatabase
-        # Config file
-        self.cfgFile = args.configFile
+        # Config file assignment, check it exists first, exits with an 
+        # Exception error if it does not. 
+        if fileExists(args.configFile):
+            self.cfgFile = args.configFile
         # Read and parse config file
         self.cfgParse = ParseConfig(args.configFile)
         # Get UCSC assembly database from config file
@@ -133,9 +132,11 @@ class getSequenceData(object):
             moveFile(gpFile, self.seqDir)
 
     def makeAllSeqsTwoBit(self):
-        """Creates a twoBit file from the mrna file"""
-        allMrna = self.cfgParse.getSeqFileFullPath('all')
-        twoBit = self.seqDir + self.cfgParse.getSeqVar('allTwoBit')
+        """Creates a twoBit file from the mrna file containing all mRNA 
+           transcripts e.g. GenBank mRNAs, RefSeq and optionally Ensembl or
+           other transcripts"""
+        allMrna = self.cfgParse.getSeqFileFullPath('allSeqs')
+        twoBit = createPath(self.seqDir, self.cfgParse.getSeqVar('allTwoBit'))
         subprocess.check_call(["faToTwoBit", allMrna, twoBit])
         # Remove temporary directory
 #`    self.__cleanUpTempDir()
