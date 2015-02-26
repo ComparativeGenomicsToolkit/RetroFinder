@@ -135,7 +135,7 @@ class getSequenceData(object):
     def makeAllSeqsTwoBit(self):
         """Creates a twoBit file from the mrna file"""
         allMrna = self.cfgParse.getSeqFileFullPath('all')
-        twoBit = self.seqDir + self.cfgParse.getSeqVar('mrnaTwoBit')
+        twoBit = self.seqDir + self.cfgParse.getSeqVar('allTwoBit')
         subprocess.check_call(["faToTwoBit", allMrna, twoBit])
         # Remove temporary directory
 #`    self.__cleanUpTempDir()
