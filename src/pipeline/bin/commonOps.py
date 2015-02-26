@@ -1,5 +1,5 @@
 # Set of common functions used throughout the RetroFinder pipeline
-import os,subprocess,re
+import os,sys,subprocess,re
 import time
 
 def queryDb(query, db, fh=None):
@@ -20,8 +20,24 @@ def getDbQueryResult(query, db):
 
 def fileExists(fileName):
     """Checks that the file exists, returns True if it does"""
-    return os.path.exists(fileName)
+    exists = os.path.exists(fileName)
+    if not exists:
+        raise Exception("The file, %s, does not exist.\n" % (fileName))
+    return exists
  
+def openReadFileHandle(fileName):
+    """Tries opening a file, if it does not exist, exits and if it does
+       then returns the filehandle for reading."""
+    fh = None
+    try:
+        fh = open(fileName, "r")
+    except IOError:
+        print "The file, %s, does not exist and can not be opened, \
+            exiting...\n" \
+            % (fileName)
+        sys.exit(0)
+    return fh
+
 def createPath(dir, fileOrDir):
     """Adds file or directory to path name to create a full file
        or directory path"""
@@ -59,6 +75,11 @@ def moveFile(oldFile, newFile):
     """Move oldfile to newFile. newFile can be file name or directory"""
     subprocess.check_call(["mv", oldFile, newFile])
 
+def moveMultFiles(filesPat, dir):
+    """Moves multiple files with pattern ending in "*" or just "*" to dir.
+       Full paths to files and directory should be provided. """
+    mvStr = "mv " + filesPat + " " + dir 
+    subprocess.check_call(mvStr, shell=True)
 def getDate():
     return time.strftime("%Y-%m-%d") 
 
