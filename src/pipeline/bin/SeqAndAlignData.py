@@ -4,7 +4,7 @@ from commonOps import *
 from Files import SeqFiles,GeneralFiles
 
 class SeqAndAlignData(object):
-    def __init__(self, seqType, alignTable, cfgParse, chromFile=None, isGenePred=False, ensembl=False, ensDb=None):
+    def __init__(self, seqType, alignTable, cfgParse, isGenePred=False, ensembl=False, ensDb=None):
         # Config file   
         self.cfg = cfgParse
         self.database = self.cfg.db
@@ -14,8 +14,10 @@ class SeqAndAlignData(object):
         self.ensembl = ensembl
         self.ensDb = ensDb
         self.tempDir = self.cfg.getTempDir()
+        print "temp dir is", self.tempDir
         self.gpFile = createPath(self.tempDir, \
             self.cfg.getGenePredFile(self.seqType))
+        print "genePred file is", self.gpFile
         self.cdsFile = createPath(self.tempDir, \
             self.cfg.getCdsFile(self.seqType))
         # Get the PSL alignment data for this dataset 
@@ -83,10 +85,11 @@ class SeqAndAlignData(object):
         if self.ensembl:
              # This program gets the version numbers for ids and re-writes 
              # the genePred with the ids with version numbers.
-             getEns = self.cfg.createPath(self.cfg.getGenVar('scriptDir'), \
+             getEnsGp = self.cfg.createPath(self.cfg.getGenVar('scriptDir'), \
                  self.cfg.getProgVar('ensGpWithIdVersions'))
-             subprocess.check_call([getEns, self.database, self.ensDb, \
-                 self.gpFile, self.cfg.getSeqDir()])
+             # genePred will initially be written to the temp directory
+             subprocess.check_call([getEnsGp, self.database, self.ensDb, \
+                 self.gpFile, self.tempDir])
     
     def __convertGenePredToPsl(self):
         """Converts annotation data from genePred to PSL format."""
@@ -107,7 +110,7 @@ class SeqAndAlignData(object):
         dir = self.cfg.getGenVar('scriptDir')
         seqProg = self.cfg.getProgVar('gpCdsRegions')
         getCds = self.cfg.createPath(dir, seqProg)
-        subprocess.check_call(["getCds", self.database, self.gpFile, self.cdsFile])  
+        subprocess.check_call([getCds,self.database,self.gpFile,self.cdsFile])  
         
     def __getCdsRegions(self):
         """Gets the CDS regions either for GenBank mRNAs and RefSeqs"""
