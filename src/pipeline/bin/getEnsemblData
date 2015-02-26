@@ -9,6 +9,7 @@ sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from Files import SeqFiles
 from SeqAndAlignData import SeqAndAlignData
+from ParseConfig import ParseConfig
 
 gpTable = "ensGene"
 seqType = "ensembl"
@@ -23,10 +24,14 @@ class getEnsemblData(object):
         # Object for parsing config file
         self.cfgParse = ParseConfig(args.configFile)
         # File of chromosome names and sizes
-        self.chromFile = self.cfgParse.chromSizes
+        self.chromFile = self.cfgParse.chromFile
+        # Ensembl database
+        self.ensDb = args.ensDb
         # Sequence type i.e. ensembl
         self.seqType = self.cfgParse.getSeqVar('ensembl')
-        seqData = SeqAndAlignData(self.seqType, self.cfg.getSeqVar('ensGpTable'), self.cfgParse, True, True, args.ensDb)
+        self.seqData = SeqAndAlignData(self.seqType, \
+            self.cfgParse.getSeqVar('ensGpTable'), self.cfgParse, True, \
+            True, args.ensDb)
         # This is called here as not all get programs for sequence data will
         # use this function to get sequence data. Ensembl has a different 
         # method. 
@@ -35,13 +40,14 @@ class getEnsemblData(object):
    
     def getSequences(self):
         """Gets the Ensembl sequences"""
-        tempDir =  self.cfgParse.getTempDir()
+        tempDir = self.cfgParse.getTempDir()
+        makeDir(tempDir)
         gpFile = createPath(tempDir, self.cfgParse.getGenePredFile(self.seqType))
-        seqFile = createPath(tempDir, self.cfgParse.getSeqFile(self.seqType)
+        seqFile = createPath(tempDir, self.cfgParse.getSeqFile(self.seqType))
         # This is called here as not all get programs for sequence data
         # use the same function to get sequence data. Genbank and Refseq 
         # sequences have a different method. 
         self.seqData.getSeqsFromGenePred(gpFile, seqFile)
 
 getEns = getEnsemblData(args)
-genEns.getSequences()
+getEns.getSequences()
