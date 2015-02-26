@@ -3,7 +3,6 @@
 from __future__ import with_statement
 
 import sys, os, subprocess
-import re
 import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
@@ -25,6 +24,8 @@ class getSequenceData(object):
         # set variables for options
         # Ensembl genome assembly database
         self.ensDb = args.ensDatabase
+        # Config file
+        self.cfgFile = args.configFile
         # Read and parse config file
         self.cfgParse = ParseConfig(args.configFile)
         # Get UCSC assembly database from config file
@@ -92,8 +93,7 @@ class getSequenceData(object):
         dir = self.cfgParse.getGenVar('scriptDir')
         seqProg = self.cfgParse.getProgVar(seqProg)
         getEnsSeqProg = createPath(dir, seqProg)
-        subprocess.check_call([getEnsSeqProg, self.database, self.ensDb, \
-            self.chromFile, self.rootDir])
+        subprocess.check_call([getEnsSeqProg, self.cfgFile, self.ensDb])
 
     def getCurrentDbEnsemblVersion(self):
         """Gets the current Ensembl version loaded into the database"""
@@ -111,7 +111,8 @@ class getSequenceData(object):
         # Ensembl or could check UCSC first then connect to correct archive. 
         # For now fail if versions are not the same: 
         if self.ensVer != ensVerOption:
-            raise AssertionError, "Ensembl version in database does not match that provided by user"
+            raise AssertionError, "Ensembl version in database does \
+                not match that provided by user"
         print "Ensembl versions match"
 
     def moveFilesToSeqDir(self):
@@ -121,16 +122,21 @@ class getSequenceData(object):
         temp = self.cfgParse.getTempDir()
         # Keep all FASTA sequence files
         seqFiles = createPath(temp, "*fa")
-        moveFile(seqFiles, self.seqDir)
+        moveMultFiles(seqFiles, self.seqDir)
         mrnaSeqType = self.cfgParse.getSeqVar('mrna')
         mrnaPsl = createPath(temp, self.cfgParse.getPslFile(mrnaSeqType))
         moveFile(mrnaPsl, self.seqDir)
         # Also move genePred file if present
         if self.ensDb != None:
-            seqType = self.cgParse.getSeqVar('ensembl')
+            seqType = self.cfgParse.getSeqVar('ensembl')
             gpFile = createPath(temp, self.cfgParse.getGenePredFile(seqType))
             moveFile(gpFile, self.seqDir)
 
+    def makeAllSeqsTwoBit(self):
+        """Creates a twoBit file from the mrna file"""
+        allMrna = self.cfgParse.getSeqFileFullPath('all')
+        twoBit = self.seqDir + self.cfgParse.getSeqVar('mrnaTwoBit')
+        subprocess.check_call(["faToTwoBit", allMrna, twoBit])
         # Remove temporary directory
 #`    self.__cleanUpTempDir()
     
@@ -141,4 +147,5 @@ class getSequenceData(object):
 getSeqsData = getSequenceData(args)
 getSeqsData.catSeqAndAlignDataFiles()
 getSeqsData.moveFilesToSeqDir()
+getSeqsData.makeAllSeqsTwoBit()
 print "Organism name is %s here" % (getOrganismName(getSeqsData.database))
