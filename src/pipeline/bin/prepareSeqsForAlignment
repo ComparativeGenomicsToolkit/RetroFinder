@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Program to align sequences to geno
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
 args = parser.parse_args()
        
-class AlignMrnas(object):
+class PrepareSeqsForAlignment(object):
     def __init__(self, args):
         # Config file assignment, check it exists first, exits with an 
         # Exception error if it does not. 
@@ -76,5 +76,5 @@ class AlignMrnas(object):
                     lengths file, %s\n" % (id, mrnaTrimLen))
         lFh.close()
 
-alignMrna = AlignMrnas(args)
-alignMrna.removePolyATails()
+prepSeqs = PrepareSeqsForAlignment(args)
+prepSeqs.removePolyATails()
