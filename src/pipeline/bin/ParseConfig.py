@@ -65,7 +65,7 @@ class ParseConfig:
         seqDir = self.createWorkingDirName(self.getSeqVar('seqDir'))
         return seqDir
 
-    def getAlignDir(self)
+    def getAlignDir(self):
         """Returns the full path of the mRNAs alignment directory"""
         alignDir = self.createWorkingDirName(self.getAlignVar('alignDir'))
         return alignDir
