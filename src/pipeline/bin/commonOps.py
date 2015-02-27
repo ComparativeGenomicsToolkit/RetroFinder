@@ -65,8 +65,11 @@ def catFiles(outFile, fileList):
         subprocess.check_call(catCmd, stdout=outFh)
     outFh.close()
 
-def removeFile(file):
-    subprocess.check_call(["rm", "-f", file])
+def removeFiles(fileList):
+    # removes file(s) in the list
+    remove = ["rm", "-f"]
+    rmCmd = remove + fileList
+    subprocess.check_call(rmCmd)
 
 def removeDir(dir):
     subprocess.check_call(["rm", "-rf", dir])
@@ -80,6 +83,7 @@ def moveMultFiles(filesPat, dir):
        Full paths to files and directory should be provided. """
     mvStr = "mv " + filesPat + " " + dir 
     subprocess.check_call(mvStr, shell=True)
+
 def getDate():
     return time.strftime("%Y-%m-%d") 
 
