@@ -1,7 +1,6 @@
 import os, sys, re, subprocess
 import time
 from commonOps import *
-from Files import SeqFiles,GeneralFiles
 
 class SeqAndAlignData(object):
     def __init__(self, seqType, alignTable, cfgParse, isGenePred=False, ensembl=False, ensDb=None):
@@ -61,9 +60,8 @@ class SeqAndAlignData(object):
         """Gets the sequences from a table or from a file in genePred format"""
         # Create the output directory for this program 
         makeDir(self.cfg.getTempDir()) 
-        rnaProg = self.cfg.getProgVar('getRnaProg') 
         # table can be a table or a file
-        subprocess.check_call([rnaProg, self.database, file, "all", outFile])
+        subprocess.check_call(["getRnaPred",self.database,file, "all", outFile])
 
     def __getPslAlignmentsFromTable(self, alignTable):
         """Gets PSL alignments from the database""" 
@@ -86,7 +84,7 @@ class SeqAndAlignData(object):
              # This program gets the version numbers for ids and re-writes 
              # the genePred with the ids with version numbers.
              getEnsGp = self.cfg.createPath(self.cfg.getGenVar('scriptDir'), \
-                 self.cfg.getProgVar('ensGpWithIdVersions'))
+                 "getEnsDataWithVersions")
              # genePred will initially be written to the temp directory
              subprocess.check_call([getEnsGp, self.database, self.ensDb, \
                  self.gpFile, self.tempDir])
@@ -94,9 +92,8 @@ class SeqAndAlignData(object):
     def __convertGenePredToPsl(self):
         """Converts annotation data from genePred to PSL format."""
         makeDir(self.cfg.getTempDir()) 
-        getPsl = self.cfg.getProgVar('gpToPsl')
-        subprocess.check_call([getPsl, self.cfg.chromFile, self.gpFile, \
-            self.cfg.getPslFile(self.seqType)])
+        subprocess.check_call(["genePredToPsl", self.cfg.chromFile, \
+            self.gpFile, self.cfg.getPslFile(self.seqType)])
    
     def __getPslFromGenePreds(self, gpTable):
         """Given a genePred table, creates a file of the data and 
@@ -107,9 +104,9 @@ class SeqAndAlignData(object):
     def __getGenePredCdsRegions(self):
         """Gets the CDS region for a genePred annotation table/file"""
         makeDir(self.cfg.getTempDir())
-        dir = self.cfg.getGenVar('scriptDir')
-        seqProg = self.cfg.getProgVar('gpCdsRegions')
-        getCds = self.cfg.createPath(dir, seqProg)
+        scripts = self.cfg.getGenVar('scriptDir')
+        # Get CDS regions for sequences with 1-based start coordinates
+        getCds = self.cfg.createPath(scripts, "getGenePredCdsRegions")
         subprocess.check_call([getCds,self.database,self.gpFile,self.cdsFile])  
         
     def __getCdsRegions(self):
