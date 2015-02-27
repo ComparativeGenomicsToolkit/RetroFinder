@@ -13,7 +13,6 @@ from SeqAndAlignData import SeqAndAlignData
 from ConvertCoords import ConvertCoords
 from optparse import OptionParser
 from pycbio.hgdata.GenePred import Range,GenePred,GenePredTbl,GenePredDbReader
-from pycbio.tsv.TabFile import TabFile,TabFileReader
 from pycbio.hgdata.HgDb import *
 
 # Gets the CDS regions for the transcript ids in the input list using the
