@@ -7,7 +7,6 @@ import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
-from Files import SeqFiles
 from SeqAndAlignData import SeqAndAlignData
 from ParseConfig import ParseConfig
 
