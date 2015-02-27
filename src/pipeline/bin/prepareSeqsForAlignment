@@ -28,8 +28,6 @@ class PrepareSeqsForAlignment(object):
         self.rootDir = self.cfg.rootRunDir
         # Get the temp directory
         self.tempDir = self.cfg.getTempDir()
-        # Get the alignment working directory from config file 
-        self.alignDir = self.cfg.getAlignDir()
         # all mRNA input sequences and all mRNA with no polyA tails
         # both in sequences directory
         self.allMrna = self.cfg.getSeqFileFullPath('allSeqs')
