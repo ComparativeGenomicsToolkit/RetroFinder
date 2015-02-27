@@ -10,6 +10,7 @@ from Files import *
 from commonOps import *
 from ParseConfig import ParseConfig
 from SeqAndAlignData import SeqAndAlignData
+from TabFile import TabFileTbl
 
 parser = argparse.ArgumentParser(description='Program to align sequences to genome after removing polyA tails')
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
@@ -17,15 +18,49 @@ args = parser.parse_args()
        
 class AlignMrnas(object):
     def __init__(self, args):
-        # set variables for options
         # Config file assignment, check it exists first, exits with an 
         # Exception error if it does not. 
         if fileExists(args.configFile):
             self.cfgFile = args.configFile
         # Read and parse config file
-        self.cfgParse = ParseConfig(args.configFile)
+        self.cfg = ParseConfig(args.configFile)
         # Get the root run directory
-        self.rootDir = self.cfgParse.rootRunDir
+        self.rootDir = self.cfg.rootRunDir
+        # Get the temp directory
+        self.tempDir = self.cfg.getTempDir()
         # Get the alignment working directory from config file 
-        self.alignDir = self.cfgParse.getAlignDir()
+        self.alignDir = self.cfg.getAlignDir()
+        # all mRNA input sequences and all mRNA with no polyA tails
+        # both in sequences directory
+        self.allMrna = self.cfg.getSeqFileFullPath('allSeqs')
+        # mRNA sequences with polyA tails removed
+        self.noPolyAMrna = self.cfg.getSeqFileFullPath('trimmedSeqs')
+        # file and path for sizes of untrimmed and trimmed (no polyA) mRNA
+        self.mrnaAndTrimLift = self.cfg.getSeqFileFullPath('mrnaAndTrimLift') 
 
+    def __removePolyATails(self):
+        """Removes the polyA tails from sequences to be aligned 
+           to the genome and creates a lift file to add them back later"""
+        subprocess.check_call("faTrimPolyA", self.allMrna, self.noPolyAMrna)
+        mrnaDetails = createPath(self.tempDir, "mrna.len")
+        mrnaTrimDetails = createPath(self.tempDir, "mrnaTrim.len")
+        bothDetails = createPath(self.tempDir, "both.len")
+        # get size details using faSize for both files
+        with open(mrnaDetails, "w") as mdFh:
+            subprocess.check_call(["faSize", "-detailed", self.allMrna], \
+                stdout=mdFh)   
+        with open(mrnaTrimDetails, "w") as mtdFh:
+            subprocess.check_call(["faSize", "-detailed", self.noPolyAMrna], \
+                stdout=mtdFh) 
+       # join the two files and create lift file in sequence data dir
+       with open(bothDetails, "w") as bFh:
+           subprocess.check_call(["join",mrnaDetails,mrnaTrimDetails], std=bFh)
+       self.__createPolyALiftFile(bothDetails)
+
+     def __createPolyALiftFile(self, mrnaLen, mrnaTrimLen):
+         """Creates a lift file for trimmed (no PolyA tail) sequence alignments 
+            to untrimmed sequence alignments"""
+         # Read in the tab-separated sequence length files 
+         # and select certain fields, the id in the first column is the key
+         mrnaLenTbl = TabFileTbl(mrnaLen, 0)
+         mrnaTrimLenTbl = TabFileTbl(mrnaTrimLen, 0)
