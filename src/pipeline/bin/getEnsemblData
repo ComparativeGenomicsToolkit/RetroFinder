@@ -11,9 +11,6 @@ from Files import SeqFiles
 from SeqAndAlignData import SeqAndAlignData
 from ParseConfig import ParseConfig
 
-gpTable = "ensGene"
-seqType = "ensembl"
-
 parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
 parser.add_argument('ensDb', metavar='ensemblDatabase', type=str, help='Ensembl genome assembly database')
