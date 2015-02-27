@@ -51,24 +51,24 @@ class AlignMrnas(object):
         with open(mrnaTrimDetails, "w") as mtdFh:
             subprocess.check_call(["faSize", "-detailed", self.noPolyAMrna], \
                 stdout=mtdFh) 
-        self.__createPolyALiftFile(bothDetails))
+        self.__createPolyALiftFile(bothDetails)
 
-     def __createPolyALiftFile(self, mrnaLen, mrnaTrimLen):
-         """Creates a lift file for trimmed (no PolyA tail) sequence alignments 
-            to untrimmed sequence alignments"""
-         # Read in the tab-separated sequence length files 
-         # and select certain fields, the id in the first column is the key
-         mrnaLenTbl = TabFileTbl(mrnaLen, 0)
-         mrnaTrimLenTbl = TabFileTbl(mrnaTrimLen, 0)
-         lFh = open(self.mrnaAndTrimLift, "w")
-         # Add code to raise exception if id not in second file
-         # Go through the read lines of the sequences sizes files 
-         # and print output for lift file in sequencesData directory
-         for id in mrnaLenTbl:
-             if id in mrnaTrimLenTbl:
-                 str = ["0", mrnaLenTbl[id][0], mrnaLenTbl[id][1] \
-                     mrnaTrimLenTbl[id][0], mrnaTrimLenTbl[id][1]]
-                 lFh("\t".join(str)+"\n")
-             else:
-                 raise Exception("Id %s is not in the the trimmed mRNA \
-                     lengths file, %s\n % (id, mrnaTrimLen)
+    def __createPolyALiftFile(self, mrnaLen, mrnaTrimLen):
+        """Creates a lift file for trimmed (no PolyA tail) sequence alignments 
+           to untrimmed sequence alignments"""
+        # Read in the tab-separated sequence length files 
+        # and select certain fields, the id in the first column is the key
+        mrnaLenTbl = TabFileTbl(mrnaLen, 0)
+        mrnaTrimLenTbl = TabFileTbl(mrnaTrimLen, 0)
+        lFh = open(self.mrnaAndTrimLift, "w")
+        # Add code to raise exception if id not in second file
+        # Go through the read lines of the sequences sizes files 
+        # and print output for lift file in sequencesData directory
+        for id in mrnaLenTbl:
+            if id in mrnaTrimLenTbl:
+                str = ["0", mrnaLenTbl[id][0], mrnaLenTbl[id][1], \
+                    mrnaTrimLenTbl[id][0], mrnaTrimLenTbl[id][1]]
+                lFh("\t".join(str)+"\n")
+            else:
+                raise Exception("Id %s is not in the the trimmed mRNA \
+                    lengths file, %s\n" % (id, mrnaTrimLen))

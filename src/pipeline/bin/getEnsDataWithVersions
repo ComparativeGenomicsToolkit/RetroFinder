@@ -9,6 +9,7 @@ sys.path.append(myBinDir + "/../lib")
 sys.path.append(myBinDir + "/../lib/pycbio/lib")
 from pycbio.hgdata.GenePred import GenePred,GenePredTbl
 from commonOps import *
+from TabFile import TabFileTbl
 
 parser = argparse.ArgumentParser(description='Get Ensembl sequences as a FASTA file with id versions')
 parser.add_argument('ucscDb', metavar='UCSCDatabase', type=str, help='UCSC genome assembly database')
