@@ -44,7 +44,6 @@ class AlignMrnas(object):
         subprocess.check_call("faTrimPolyA", self.allMrna, self.noPolyAMrna)
         mrnaDetails = createPath(self.tempDir, "mrna.len")
         mrnaTrimDetails = createPath(self.tempDir, "mrnaTrim.len")
-        bothDetails = createPath(self.tempDir, "both.len")
         # get size details using faSize for both files
         with open(mrnaDetails, "w") as mdFh:
             subprocess.check_call(["faSize", "-detailed", self.allMrna], \
@@ -52,10 +51,7 @@ class AlignMrnas(object):
         with open(mrnaTrimDetails, "w") as mtdFh:
             subprocess.check_call(["faSize", "-detailed", self.noPolyAMrna], \
                 stdout=mtdFh) 
-       # join the two files and create lift file in sequence data dir
-       with open(bothDetails, "w") as bFh:
-           subprocess.check_call(["join",mrnaDetails,mrnaTrimDetails], std=bFh)
-       self.__createPolyALiftFile(bothDetails)
+        self.__createPolyALiftFile(bothDetails))
 
      def __createPolyALiftFile(self, mrnaLen, mrnaTrimLen):
          """Creates a lift file for trimmed (no PolyA tail) sequence alignments 
@@ -64,9 +60,15 @@ class AlignMrnas(object):
          # and select certain fields, the id in the first column is the key
          mrnaLenTbl = TabFileTbl(mrnaLen, 0)
          mrnaTrimLenTbl = TabFileTbl(mrnaTrimLen, 0)
+         lFh = open(self.mrnaAndTrimLift, "w")
          # Add code to raise exception if id not in second file
+         # Go through the read lines of the sequences sizes files 
+         # and print output for lift file in sequencesData directory
          for id in mrnaLenTbl:
              if id in mrnaTrimLenTbl:
                  str = ["0", mrnaLenTbl[id][0], mrnaLenTbl[id][1] \
                      mrnaTrimLenTbl[id][0], mrnaTrimLenTbl[id][1]]
-                 "\t".join(str) 
+                 lFh("\t".join(str)+"\n")
+             else:
+                 raise Exception("Id %s is not in the the trimmed mRNA \
+                     lengths file, %s\n % (id, mrnaTrimLen)
