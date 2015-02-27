@@ -18,7 +18,6 @@ args = parser.parse_args()
        
 class getSequenceData(object):
     def __init__(self, args):
-        # set variables for options
         # Ensembl genome assembly database
         self.ensDb = args.ensDatabase
         # Config file assignment, check it exists first, exits with an 
@@ -34,18 +33,15 @@ class getSequenceData(object):
         # Get the sequences working directory from config file 
         self.seqDir = self.cfgParse.getSeqDir()
         # Get a list of general files
-        # self.generalFiles = GeneralFiles(self.rootDir)
         # Get chromosome sizes
         self.getChromSizes()
-        # Create SeqFiles objects for GenBank and RefSeq:
-    #    self.genbankFiles = SeqFiles(self.rootDir, self.database, "mrna")
-        # Can not pass a files object as this is a program so for now 
-        # make that object again in getGenbankData
+        # Get Ensembl sequences and data
         if self.ensDb != None:
+            print "Getting Ensembl sequences."
             # Get Ensembl sequences and data
             self.getEnsSeqData('ensemblData')
         else:
-            print "Ensembl version option is not set."
+            print "Getting only GenBank and RefSeq mRNAs.\t"
         # Get Genbank mRNA sequences and associated data
         self.getMrnaSeqData('genbankData', args.configFile)
         # Get RefSeq mRNA transcript sequences and associated data
