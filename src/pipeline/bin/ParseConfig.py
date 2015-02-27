@@ -48,6 +48,10 @@ class ParseConfig:
         """Returns variable value from SequenceData section of config file"""
         return self.getVar('SequenceData', var)
 
+    def getAlignVar(self, var):
+        """Returns variable value from Alignment section of config file"""
+        return self.getVar('Alignment', var)
+    
     def getTempDir(self):
         """Returns full path of temp directory"""
         return os.environ['TMPDIR'] + "/" + self.getGenVar('tempDirSuffix')
@@ -60,6 +64,11 @@ class ParseConfig:
         """Returns the full path of the sequences directory"""
         seqDir = self.createWorkingDirName(self.getSeqVar('seqDir'))
         return seqDir
+
+    def getAlignDir(self)
+        """Returns the full path of the mRNAs alignment directory"""
+        alignDir = self.createWorkingDirName(self.getAlignVar('alignDir'))
+        return alignDir
 
     def getFileName(self, seqType, ext):
         """Returns file name for sequence-related data""" 
