@@ -89,7 +89,7 @@ class genePredCdsRegions(object):
         """Passes the correct genePred storage object and gets the CDS 
            region coords for each genePred and writes them to a file"""
         # As appending to a file, remove any existing file of that name
-        removeFile(self.outFile)
+        removeFiles([self.outFile])
         fh = open(self.outFile, "a")
         if self.isTable:
             self.getCdsRegionsForGenePreds(self.gpDbReader, fh)
