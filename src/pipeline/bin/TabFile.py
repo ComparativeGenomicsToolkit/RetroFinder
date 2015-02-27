@@ -1,3 +1,4 @@
+import os, sys
 class TabFileTbl(object):
     """Read from a tabbed file and store in a dictionary keyed by specified
        column."""
