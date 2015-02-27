@@ -6,7 +6,6 @@ import sys, os, subprocess
 import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
-from Files import *
 from commonOps import *
 from ParseConfig import ParseConfig
 from SeqAndAlignData import SeqAndAlignData
@@ -39,13 +38,13 @@ class getSequenceData(object):
         if self.ensDb != None:
             print "Getting Ensembl sequences."
             # Get Ensembl sequences and data
-            self.getEnsSeqData('ensemblData')
+            self.getEnsSeqData('getEnsemblData')
         else:
             print "Getting only GenBank and RefSeq mRNAs.\t"
         # Get Genbank mRNA sequences and associated data
-        self.getMrnaSeqData('genbankData', args.configFile)
+        self.getMrnaSeqData('getGenbankData', args.configFile)
         # Get RefSeq mRNA transcript sequences and associated data
-        self.getMrnaSeqData('refseqData', args.configFile)
+        self.getMrnaSeqData('getRefseqData', args.configFile)
  
     def getChromSizes(self):
         """Get chromosome sizes"""
@@ -78,7 +77,6 @@ class getSequenceData(object):
     def getMrnaSeqData(self, seqProg, cfgFile):
         """Gets Genbank or RefSeq mRNA sequences and related data""" 
         dir = self.cfgParse.getGenVar('scriptDir')
-        seqProg = self.cfgParse.getProgVar(seqProg)
         getSeqProg = createPath(dir, seqProg)
         print "getSeqProg", getSeqProg
         subprocess.check_call([getSeqProg, cfgFile])
