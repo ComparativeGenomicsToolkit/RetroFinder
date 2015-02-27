@@ -64,3 +64,9 @@ class AlignMrnas(object):
          # and select certain fields, the id in the first column is the key
          mrnaLenTbl = TabFileTbl(mrnaLen, 0)
          mrnaTrimLenTbl = TabFileTbl(mrnaTrimLen, 0)
+         # Add code to raise exception if id not in second file
+         for id in mrnaLenTbl:
+             if id in mrnaTrimLenTbl:
+                 str = ["0", mrnaLenTbl[id][0], mrnaLenTbl[id][1] \
+                     mrnaTrimLenTbl[id][0], mrnaTrimLenTbl[id][1]]
+                 "\t".join(str) 
