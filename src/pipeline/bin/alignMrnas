@@ -35,13 +35,15 @@ class AlignMrnas(object):
         self.allMrna = self.cfg.getSeqFileFullPath('allSeqs')
         # mRNA sequences with polyA tails removed
         self.noPolyAMrna = self.cfg.getSeqFileFullPath('trimmedSeqs')
+        print "Files are %s and %s\n" % (self.allMrna, self.noPolyAMrna)
         # file and path for sizes of untrimmed and trimmed (no polyA) mRNA
-        self.mrnaAndTrimLift = self.cfg.getSeqFileFullPath('mrnaAndTrimLift') 
+        self.mrnaAndTrimLift = createPath(self.cfg.getSeqDir(), \
+            self.cfg.getSeqVar('mrnaAndTrimLift')) 
 
-    def __removePolyATails(self):
+    def removePolyATails(self):
         """Removes the polyA tails from sequences to be aligned 
            to the genome and creates a lift file to add them back later"""
-        subprocess.check_call("faTrimPolyA", self.allMrna, self.noPolyAMrna)
+        subprocess.check_call(["faTrimPolyA", self.allMrna, self.noPolyAMrna])
         mrnaDetails = createPath(self.tempDir, "mrna.len")
         mrnaTrimDetails = createPath(self.tempDir, "mrnaTrim.len")
         # get size details using faSize for both files
@@ -51,7 +53,7 @@ class AlignMrnas(object):
         with open(mrnaTrimDetails, "w") as mtdFh:
             subprocess.check_call(["faSize", "-detailed", self.noPolyAMrna], \
                 stdout=mtdFh) 
-        self.__createPolyALiftFile(bothDetails)
+        self.__createPolyALiftFile(mrnaDetails, mrnaTrimDetails)
 
     def __createPolyALiftFile(self, mrnaLen, mrnaTrimLen):
         """Creates a lift file for trimmed (no PolyA tail) sequence alignments 
@@ -64,11 +66,15 @@ class AlignMrnas(object):
         # Add code to raise exception if id not in second file
         # Go through the read lines of the sequences sizes files 
         # and print output for lift file in sequencesData directory
-        for id in mrnaLenTbl:
-            if id in mrnaTrimLenTbl:
-                str = ["0", mrnaLenTbl[id][0], mrnaLenTbl[id][1], \
-                    mrnaTrimLenTbl[id][0], mrnaTrimLenTbl[id][1]]
-                lFh("\t".join(str)+"\n")
+        for id in mrnaLenTbl.data:
+            if id in mrnaTrimLenTbl.data:
+                str = ["0", id, mrnaTrimLenTbl.data[id][1], \
+                    id, mrnaLenTbl.data[id][1]]
+                lFh.write("\t".join(str)+"\n")
             else:
                 raise Exception("Id %s is not in the the trimmed mRNA \
                     lengths file, %s\n" % (id, mrnaTrimLen))
+        lFh.close()
+
+alignMrna = AlignMrnas(args)
+alignMrna.removePolyATails()
