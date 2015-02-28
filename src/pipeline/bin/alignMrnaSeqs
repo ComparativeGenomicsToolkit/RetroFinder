@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from ParseConfig import ParseConfig
+
+parser = argparse.ArgumentParser(description='Program to align mRNA sequences (without polyA tails) to the genome')
+parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+args = parser.parse_args()
+       
+class AlignMrnas(object):
+    def __init__(self, args):
+        # Config file assignment, check it exists first, exits with an 
+        # Exception error if it does not. 
+        if fileExists(args.configFile):
+            self.cfgFile = args.configFile
+        # Read and parse config file
+        self.cfg = ParseConfig(args.configFile)
+        # Get the root run directory
+        self.rootDir = self.cfg.rootRunDir
+        # Get the alignment working directory from config file 
+        self.alignDir = self.cfg.getAlignDir()
+        # mRNA sequences with polyA tails removed
+        self.noPolyAMrna = self.cfg.getSeqFileFullPath('trimmedSeqs')
+        # file and path for sizes of untrimmed and trimmed (no polyA) mRNA
+        self.mrnaAndTrimLift = createPath(self.cfg.getSeqDir(), \
+            self.cfg.getSeqVar('mrnaAndTrimLift'))
+        self.splitDir = ""
+        self.runDir = ""
+        self.alignOutDir = ""
+
+    def createDirsForAlignment(self):
+        """Creates directories for the alignment process in the alignment
+           directory."""
+        # Need a directory for split mRNAs file (split), run (for the 
+        # alignment run setup and lastzAlign for alignment outpuit
+        # makeDir() using mkdir -p so all subdirectories in the path 
+        # will be created if they don't exist already. 
+        self.splitDir = self.alignDir + "/split"
+        self.runDir = self.alignDir + "/run"
+        self.alignOutDir = self.alignDir + "/" + \
+             self.cfg.getAlignVar('alignOutput')
+        makeDir(self.splitDir)
+        makeDir(self.runDir)
+        makeDir(self.alignOutDir) 
+
+    def getListSplitMrnas(self):
+        """Splits mRNA sequences files into smaller files and gets 
+           a list of those files for the alignment cluster jobs"""
+           self.__splitMrnas()
+
+    def __splitMrnas(self):
+        """Splits mRNA sequences file into smaller files of sequences
+           for alignment to the genome on the cluster"""
+        # Split trimmed polyA sequences file into files of sequences
+        # of about x bytes where x is defined in the config file.
+        seqBytes = self.cfg.getAlignVar('seqSplitBytes')
+        destRoot = self.splitDir + "/mrna"
+        subprocess.check_call(["faSplit", "about", self.noPolyAMrna, seqBytes, \
+            destRoot])
+
+    def createJobList(self):
+        """Creates a template and substitutes in variables to make the
+           list of alignment jobs to be run on the cluster"""
+        
+align = AlignMrnas(args)
+align.createDirsForAlignment()
+align.splitMrnas()
