@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from ParseConfig import ParseConfig
+from TabFile import TabFileReader
+from Cluster import ClusterJobs
+from pycbio.sys.procOps.py import *
+
+parser = argparse.ArgumentParser(description='Program to filter out duplicates and chain alignments')
+parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+args = parser.parse_args()
+       
+class ChainMrnas(object):
+    def __init__(self, args):
+        # Config file assignment, check it exists first, exits with an 
+        # Exception error if it does not. 
+        if fileExists(args.configFile):
+            self.cfgFile = args.configFile
+        # Read and parse config file
+        self.cfg = ParseConfig(args.configFile)
+        # Get the root run directory
+        self.rootDir = self.cfg.rootRunDir
+        # Get the alignment working directory from config file 
+        self.alignDir = self.cfg.getAlignDir()
+        # Tuple of pslFilter and psl directory paths
+        self.pslDirs = self.__makePslDirs()
+        # Alignments directory for split mRNA sequences files vs. genome
+        self.alignOutput = self.cfg.getAlignVar('alignOutput')
+        # mRNA sequences with polyA tails removed
+        self.noPolyAMrna = self.cfg.getSeqFileFullPath('trimmedSeqs')
+        # file and path for sizes of untrimmed and trimmed (no polyA) mRNA
+        self.mrnaAndTrimLift = createPath(self.cfg.getSeqDir(), \
+            self.cfg.getSeqVar('mrnaAndTrimLift'))
+
+    def __makePslDirs(self):
+        """Makes pslFilter and psl directories in the alignment directory
+           and returns a tuple of pslFilter and psl directory paths"""
+        pslFilt = makeDir(createPath(self.alignDir, "pslFilter")
+        psl = makeDir(createPath(self.alignDir, "psl")
+        return (pslFilt, psl)
+
+    def filterDuplicates(self):
+        """Filters out duplicates PSLs"""
+        # Create a list of lists of commands to be piped to one another
+        cmdList = []
+        # Go through each chromosome subdirectory
+        for (path, dirs, files) in os.walk(self.cfg.getAlignVar('alignOutput')
+            for d in dirs:
+                chromDir = createPath(path, d)
+        runProc(cmdList)
+    def doChaining(self):
+        """Chains alignments and outputs PSL format output"""
+        # Get the list of subdirectories in the alignments output directory 
+        return 1 
