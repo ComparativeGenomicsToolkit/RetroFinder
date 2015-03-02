@@ -6,10 +6,8 @@ import sys, os, subprocess
 import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
-from Files import *
 from commonOps import *
 from ParseConfig import ParseConfig
-from SeqAndAlignData import SeqAndAlignData
 from TabFile import TabFileTbl
 
 parser = argparse.ArgumentParser(description='Program to prepare mRNA sequences for alignment to the genome by removing polyA tails and creating a lift file to rmap alignments for sequences with polyA tails.')
@@ -73,6 +71,9 @@ class PrepareSeqsForAlignment(object):
                 raise Exception("Id %s is not in the the trimmed mRNA \
                     lengths file, %s\n" % (id, mrnaTrimLen))
         lFh.close()
+        # Move the mrnTrimLen file to the sequences directory as used
+        # later when creating mRNAs to genome alignment cluster jobs 
+        moveFile(mrnaTrimLen, self.cfg.getSeqDir())
 
 prepSeqs = PrepareSeqsForAlignment(args)
 prepSeqs.removePolyATails()
