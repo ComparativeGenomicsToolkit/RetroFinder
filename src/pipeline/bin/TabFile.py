@@ -1,4 +1,7 @@
 import os, sys
+
+# Classes for reading and storing information from a tab-separated file
+
 class TabFileTbl(object):
     """Read from a tabbed file and store in a dictionary keyed by specified
        column."""
