@@ -8,6 +8,8 @@ myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
+from TabFile import TabFileReader
+from Cluster import ClusterJobs
 
 parser = argparse.ArgumentParser(description='Program to align mRNA sequences (without polyA tails) to the genome')
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
@@ -30,29 +32,31 @@ class AlignMrnas(object):
         # file and path for sizes of untrimmed and trimmed (no polyA) mRNA
         self.mrnaAndTrimLift = createPath(self.cfg.getSeqDir(), \
             self.cfg.getSeqVar('mrnaAndTrimLift'))
-        self.splitDir = ""
-        self.runDir = ""
-        self.alignOutDir = ""
-
-    def createDirsForAlignment(self):
+        # make run and output directories and split directory for mRNA sequences
+        # split up into smaller files. Tuple of directory names is 
+        # (split, run, alignOut)
+        self.alignDirs = self.__createDirsForAlignment()
+        # Split mRNAs and get the list of files and paths in a file
+        self.mrnaList = self.__getListSplitMrnas()
+        # File of list of chromosomes
+        self.chromList = self.__getChromList()
+        print "chrom list type is", type(self.chromList)
+ 
+    def __createDirsForAlignment(self):
         """Creates directories for the alignment process in the alignment
-           directory."""
+           directory and returns a tuple of directory names."""
         # Need a directory for split mRNAs file (split), run (for the 
-        # alignment run setup and lastzAlign for alignment outpuit
+        # alignment run setup and alignOut for alignment outpuit
         # makeDir() using mkdir -p so all subdirectories in the path 
         # will be created if they don't exist already. 
-        self.splitDir = self.alignDir + "/split"
-        self.runDir = self.alignDir + "/run"
-        self.alignOutDir = self.alignDir + "/" + \
-             self.cfg.getAlignVar('alignOutput')
-        makeDir(self.splitDir)
-        makeDir(self.runDir)
-        makeDir(self.alignOutDir) 
-
-    def getListSplitMrnas(self):
-        """Splits mRNA sequences files into smaller files and gets 
-           a list of those files for the alignment cluster jobs"""
-           self.__splitMrnas()
+        splitDir = self.alignDir + "/split"
+        runDir = self.alignDir + "/run"
+        alignOutDir = self.alignDir + "/" + self.cfg.getAlignVar('alignOutput')
+        print "dirs: %s %s %s\n" % (splitDir, runDir, alignOutDir)
+        makeDir(splitDir)
+        makeDir(runDir)
+        makeDir(alignOutDir)
+        return (splitDir, runDir, alignOutDir)
 
     def __splitMrnas(self):
         """Splits mRNA sequences file into smaller files of sequences
@@ -60,14 +64,63 @@ class AlignMrnas(object):
         # Split trimmed polyA sequences file into files of sequences
         # of about x bytes where x is defined in the config file.
         seqBytes = self.cfg.getAlignVar('seqSplitBytes')
-        destRoot = self.splitDir + "/mrna"
+        print "Split dir is", self.alignDirs[0]
+        destRoot = self.alignDirs[0] + "/mrna"
         subprocess.check_call(["faSplit", "about", self.noPolyAMrna, seqBytes, \
             destRoot])
 
-    def createJobList(self):
+    def __getListSplitMrnas(self):
+        """Splits mRNA sequences files into smaller files and gets 
+           a list of those files for the alignment cluster jobs"""
+        self.__splitMrnas()
+        fileList = []
+        # get list of all mrna* files in directory with full paths
+        for file in os.listdir(self.alignDirs[0]):
+            if file.startswith("mrna"):
+                fileList.append(createPath(self.alignDirs[0], file))
+        # print these mrna file names to a file and return file name
+        mrnaListFile = createPath(self.alignDirs[1], "mrnaList.txt")
+        with open(mrnaListFile, "w") as fh:
+            for mrna in fileList: 
+                fh.write(mrna + "\n")
+        return mrnaListFile
+
+    def __getChromList(self):
+        """Read in file of chromosome sizes and parse out first column
+           and write to a file and return the file name"""
+        chromSizes = TabFileReader(self.cfg.chromFile)
+        chromListFile = createPath(self.alignDirs[1], "chromList.txt")
+        with open(chromListFile, "w") as fh:
+            for line in chromSizes:
+                fh.write(line[0] + "\n")
+        return chromListFile
+
+    def createJobListAndRun(self):
         """Creates a template and substitutes in variables to make the
-           list of alignment jobs to be run on the cluster"""
-        
+           list of alignment jobs and runs them on the cluster"""
+        # Create ClusterJobs object to hold information about the cluster run
+        clusterJobs = ClusterJobs(self.cfg, self.alignDirs[1], \
+             self.__templateText(), self.chromList, self.mrnaList)
+        # Create job list and run cluster jobs for lastz alignment of 
+        # mRNAs to the genome
+        clusterJobs.runJobs()
+    
+    def __templateText(self):
+        """Returns main string for template"""
+        # Templates are written to a file called template defined in Cluster.py
+        # Runs the lastz.sh script
+        lastzScript = createPath(self.cfg.getGenVar('scriptDir'), "lastz.sh")
+        genomeTwoBit = self.cfg.getGenVar('genomeTwoBit')
+        mrnaNoPolyALen = createPath(self.cfg.getSeqDir(), "mrnaTrim.len")
+        templateStr = lastzScript + " " + genomeTwoBit + \
+            "/$(path1) $(path2) 10 62 {check out line " + self.alignDirs[2] + \
+            "/$(root1)/$(root2).psl} " + self.alignDirs[2] + \
+            "/axt/$(root1) " + self.cfg.chromFile + " " + mrnaNoPolyALen \
+            + " " + self.cfg.getProgVar('alignProg')
+        print "Template string is", templateStr
+        return templateStr
+
+# Set up for creating list of jobs for cluster run
 align = AlignMrnas(args)
-align.createDirsForAlignment()
-align.splitMrnas()
+# Create the job list and run the jobs on the cluster
+align.createJobListAndRun()
