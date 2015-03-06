@@ -48,7 +48,7 @@ def createFilePath(dir, name, suffix):
     return dir + "/" + name + "." + suffix
 
 def makeFileList(path, fileExt):
-    """Returns a list of files ending in file extension"""
+    """Returns a list of full paths for files ending in file extension"""
     # return [fn for fn in os.listdir(path) if any([fn.endswith(fileExt)])]
     list = []
     for fn in os.listdir(path): 
@@ -83,6 +83,12 @@ def moveMultFiles(filesPat, dir):
        Full paths to files and directory should be provided. """
     mvStr = "mv " + filesPat + " " + dir 
     subprocess.check_call(mvStr, shell=True)
+
+def getSubDirsList(dir):
+    """Returns the list of subdirectories contained in dir assuming there 
+       is only a single level of subdirectories"""
+    return [name for name in os.listdir(dir)
+        if os.path.isdir(os.path.join(dir, name))]
 
 def getDate():
     return time.strftime("%Y-%m-%d") 
