@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from ParseConfig import ParseConfig
+
+# Values chosen for aliging mRNAs to find retrogenes and parents
+coverage=10
+identity=62
+
+parser = argparse.ArgumentParser(description='Program to run lastz and pass the correct input parameters to the program, runs each set of mRNAs against one chromosome so small jobs are run on the cluster')
+parser.add_argument('tempDir', metavar='tempDir', type=str, help='Temporary directory on local disk')
+parser.add_argument('target', metavar='target', type=str, help='Path to target chromosome in genome 2 bit file')
+parser.add_argument('query', metavar='query', type=str, help='Path to query file of mRNA sequences to align to genome')
+parser.add_argument('outPsl', metavar='outPsl', type=str, help='Lastz alignment output in PSL format')
+parser.add_argument('axtOutDir', metavar='axtOutDir', type=str, help='Lastz alignment output directory for AXT format files')
+parser.add_argument('chromLen', metavar='chromLen', type=str, help='Chromosome lengths file')
+parser.add_argument('mrnaLen', metavar='mrnaLen', type=str, help='PolyA trimmed mRNA sequences lengths file')
+parser.add_argument('lastzProg', metavar='lastzProg', type=str, help='Full path to lastz alignment program executable')
+args = parser.parse_args()
+       
+def main():
+    # Create an AXT output name and path in the temp dir
+    tempAxtOut = createPath(args.tempDir, query + ".axt")
+    # Create a temporary PSL output file name
+    tempPslOut = createPath(args.tempDir, outPsl + ".temp")
+    with open(args.axtOut, "w") as axtFh:
+        subprocess.check_call([lastzProg, target, query, "--ambiguous=iupac", \
+            --hspthresh=2000, --format=axt], stdout=axtFh)
+    # Convert the AXT output to PSL format
+    subprocess.checkCall("axtToPsl", args.axtOut, args.chromLen, \
+        args.mrnaLen, tempPslOut])
+    # Move the PSL file from the temp dir to the output PSL directory
+    moveFile(tempPslOut, args.outPsl)
+    # Make the axt output directory
+    makeDir(args.axtOutDir)
+    # Move the AXT file in the temp directory to the AXT file directory
+    moveFile(tempAxtOut, args.axtOutDir)
+     
+main()
