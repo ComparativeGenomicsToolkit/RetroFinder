@@ -35,12 +35,12 @@ knownGene.tab.gz
 net3.txt.gz
 
 Output: 
-mrna<id>.psl - best alignments with and without introns, OUTPUT 
-pseudo<id>.psl - retrogene/pseudogene PSL alignments, OUTPUT
-pseudoMrnaLink<id>.txt - stores link between pseudogene and gene (Parent?),
-is this the ucscRetroInfo table?
+mrna<id>.psl - best alignments with and without introns 
+pseudo<id>.psl - retrogene/pseudogene PSL alignments
+pseudoMrnaLink<id>.txt - stores link between pseudogene and parent gene, this
+is what goes into the ucscRetroInfo table.
 pseudo<id>.axt - axt output of retrogenes/pseudogenes
-ortho<id>.txt - break in orthology information for ucscRetroOrtho table
+ortho<id>.txt - break in orthology information for ucscRetroOrtho${VERSION} table
 
 PSLPSEUDO - what happens to pseudoMrnaLink*.txt files. 
 In doBuildpk.sh, if field32 is 1 or 2 then copy line to pseudoGeneLink<id>.bed
