@@ -38,8 +38,9 @@ class AlignMrnas(object):
         self.alignDirs = self.__createDirsForAlignment()
         # Split mRNAs and get the list of files and paths in a file
         self.mrnaList = self.__getListSplitMrnas()
-        # File of list of chromosomes
-        self.chromList = self.__getChromList()
+        # File of list of chromosomes, also makes a directory for 
+        # each chromosome in the output directory
+        self.chromList = self.__getChromListAndDirs()
         print "chrom list type is", type(self.chromList)
  
     def __createDirsForAlignment(self):
@@ -85,14 +86,18 @@ class AlignMrnas(object):
                 fh.write(mrna + "\n")
         return mrnaListFile
 
-    def __getChromList(self):
+    def __getChromListAndDirs(self):
         """Read in file of chromosome sizes and parse out first column
            and write to a file and return the file name"""
         chromSizes = TabFileReader(self.cfg.chromFile)
         chromListFile = createPath(self.alignDirs[1], "chromList.txt")
+        # write each chromosome to a file and also make a chrom directory in
+        # the alignment output directory
         with open(chromListFile, "w") as fh:
             for line in chromSizes:
                 fh.write(line[0] + "\n")
+                # Create chromosome directory in alignment output directory
+                makeDir(createPath(self.alignDirs[2], line[0]))
         return chromListFile
 
     def createJobListAndRun(self):
@@ -108,12 +113,13 @@ class AlignMrnas(object):
     def __templateText(self):
         """Returns main string for template"""
         # Templates are written to a file called template defined in Cluster.py
-        # Runs the lastz.sh script
-        lastzScript = createPath(self.cfg.getGenVar('scriptDir'), "lastz.sh")
+        # This template creates jobs to run the runLastz script
+        lastzScript = createPath(self.cfg.getGenVar('scriptDir'), "runLastz")
+        tempDir = self.cfg.getTempDir()
         genomeTwoBit = self.cfg.getGenVar('genomeTwoBit')
         mrnaNoPolyALen = createPath(self.cfg.getSeqDir(), "mrnaTrim.len")
-        templateStr = lastzScript + " " + genomeTwoBit + \
-            "/$(path1) $(path2) 10 62 {check out line " + self.alignDirs[2] + \
+        templateStr = lastzScript + " " + tempDir + " " + genomeTwoBit + \
+            "/$(path1) $(path2) {check out line " + self.alignDirs[2] + \
             "/$(root1)/$(root2).psl} " + self.alignDirs[2] + \
             "/axt/$(root1) " + self.cfg.chromFile + " " + mrnaNoPolyALen \
             + " " + self.cfg.getProgVar('alignProg')
