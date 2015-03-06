@@ -60,13 +60,15 @@ class ChainMrnas(object):
         # Get the list of subdirectories in this directory
         dirs = getSubDirsList(alignDirPath)
         print "Dirs are", dirs
+        # Go through the directories skipping the axt one
         for d in dirs:
-            # get path to PSL alignment output for this chromosome/contig
-            chromDir = createPath(path, d)
-            # filtered PSL is put in the pslFilter dir
-            outPsl = createPath(self.pslDirs[0], d + ".psl")
-            # Sort PSLs for this chromosome/contig and remove duplicates
-            self.__runFilterDupsPipeline(chromDir, outPsl)
+            if d != "axt":
+                # get path to PSL alignment output for this chromosome/contig
+                chromDir = createPath(alignDirPath, d)
+                # filtered PSL is put in the pslFilter dir
+                outPsl = createPath(self.pslDirs[0], d + ".psl")
+                # Sort PSLs for this chromosome/contig and remove duplicates
+                self.__runFilterDupsPipeline(chromDir, outPsl)
 
     def __runFilterDupsPipeline(self, chromDir, outPsl):
         """Sorts files on qSize and matches*3-mismatches and then filter 
@@ -101,7 +103,7 @@ class ChainMrnas(object):
         genome = self.cfg.getGenVar('genomeTwoBit')
         # Path and file name for chained alignments PSL output
         chainPslOut = createPath(self.pslDirs[1], psl)
-        chain = ["axtChain", "-linearGap=loose", "-verbose=0", "-psl", psl \
+        chain = ["axtChain", "-linearGap=loose", "-verbose=0", "-psl", psl, \
             genome, "-faQ", self.noPolyAMrna, "stdout"]
         chainFilt = ["chainFilter", "-minScore=4000", "stdin"]
         chainPsl = ["chainToPsl", "stdin", self.cfg.chromFile, \
