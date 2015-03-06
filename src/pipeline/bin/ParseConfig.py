@@ -7,7 +7,7 @@ class ParseConfig:
         self.config = ConfigParser.ConfigParser()
         self.config.read(configFile)
         self.db = self.getGenVar('database')
-        self.date = getDate()  
+        self.date = self.getGenVar('date') 
         self.version = self.getGenVar('version')
         # root of the directory for this RetroFinder pipeline run
         self.rootRunDir = self.createRootRunDirName()
@@ -109,3 +109,7 @@ class ParseConfig:
     def getCdsFileFullPath(self, seqType):
         """Returns file name and path to sequence directory"""
         return createPath(self.getSeqDir(), self.getCdsFile(seqType))
+
+    def getAlignFileFullPath(self, fileVar):
+        """Returns full path to file or directory in the alignments directory"""
+        return createPath(self.getAlignDir(), self.getAlignVar(fileVar))
