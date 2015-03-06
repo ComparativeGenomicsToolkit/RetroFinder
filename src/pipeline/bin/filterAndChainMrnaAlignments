@@ -8,9 +8,8 @@ myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
-from TabFile import TabFileReader
-from Cluster import ClusterJobs
-from pycbio.sys.procOps.py import *
+from glob import glob
+from pycbio.sys.procOps import *
 
 parser = argparse.ArgumentParser(description='Program to filter out duplicates and chain alignments')
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
@@ -30,31 +29,128 @@ class ChainMrnas(object):
         self.alignDir = self.cfg.getAlignDir()
         # Tuple of pslFilter and psl directory paths
         self.pslDirs = self.__makePslDirs()
+        print "PSL dirs", self.pslDirs
         # Alignments directory for split mRNA sequences files vs. genome
         self.alignOutput = self.cfg.getAlignVar('alignOutput')
         # mRNA sequences with polyA tails removed
         self.noPolyAMrna = self.cfg.getSeqFileFullPath('trimmedSeqs')
+        # Lengths for trimmed mRNA sequences
+        self.noPolyAMrnaLen = self.cfg.getSeqFileFullPath('mrnaTrimLen')
         # file and path for sizes of untrimmed and trimmed (no polyA) mRNA
-        self.mrnaAndTrimLift = createPath(self.cfg.getSeqDir(), \
-            self.cfg.getSeqVar('mrnaAndTrimLift'))
+        self.mrnaAndTrimLift = self.cfg.getSeqFileFullPath('mrnaAndTrimLift')
+        # filtered aligned mRNAs 
+        self.lastzMrnaPsl = self.cfg.getAlignFileFullPath('lastzPsl')
 
     def __makePslDirs(self):
         """Makes pslFilter and psl directories in the alignment directory
            and returns a tuple of pslFilter and psl directory paths"""
-        pslFilt = makeDir(createPath(self.alignDir, "pslFilter")
-        psl = makeDir(createPath(self.alignDir, "psl")
+        pslFilt = createPath(self.alignDir, "pslFilter")
+        psl = createPath(self.alignDir, "psl")
+        makeDir(pslFilt)
+        makeDir(psl)
         return (pslFilt, psl)
 
     def filterDuplicates(self):
         """Filters out duplicates PSLs"""
-        # Create a list of lists of commands to be piped to one another
-        cmdList = []
         # Go through each chromosome subdirectory
-        for (path, dirs, files) in os.walk(self.cfg.getAlignVar('alignOutput')
-            for d in dirs:
-                chromDir = createPath(path, d)
+        print "Filtering duplicates"
+        alignDirPath = \
+            createPath(self.alignDir,self.cfg.getAlignVar('alignOutput'))
+        print "Align dir path", alignDirPath
+        # Get the list of subdirectories in this directory
+        dirs = getSubDirsList(alignDirPath)
+        print "Dirs are", dirs
+        for d in dirs:
+            # get path to PSL alignment output for this chromosome/contig
+            chromDir = createPath(path, d)
+            # filtered PSL is put in the pslFilter dir
+            outPsl = createPath(self.pslDirs[0], d + ".psl")
+            # Sort PSLs for this chromosome/contig and remove duplicates
+            self.__runFilterDupsPipeline(chromDir, outPsl)
+
+    def __runFilterDupsPipeline(self, chromDir, outPsl):
+        """Sorts files on qSize and matches*3-mismatches and then filter 
+           PSLs to remove duplicates."""
+        cmdList = []
+        # Path to pslFilterDups program 
+        filtDupsProg = createPath(self.cfg.getGenVar('progBinDir'), \
+            "pslFilterDups")
+        # Create a list of lists of commands to be piped to one another
+        cat = ["cat"] + glob(chromDir + "/*psl")
+        awk = ['awk', 'BEGIN {OFS="\t"} {print $0, $1*3-$2}']
+        sort = ["sort", "-k10,10", "-k22nr", "-T", "/dev/shm/retroSort"]
+        cut = ["cut", "-f", "1-21"]
+        filtDups = [filtDupsProg, "stdin", outPsl]
+        cmdList = [cat, awk, sort, cut, filtDups]
+        print "CmdList", cmdList
         runProc(cmdList)
+ 
     def doChaining(self):
         """Chains alignments and outputs PSL format output"""
-        # Get the list of subdirectories in the alignments output directory 
-        return 1 
+        # Get the list of PSL files in the alignments output directory 
+        pslList = makeFileList(self.pslDirs[0], "psl") 
+        for p in pslList:
+            self.chainOnePsl(p)
+        self.liftChainedAlignments()
+            
+    def chainOnePsl(self, psl):
+        """Run chaining pipeline for one PSL. Alignments are chained 
+           filtered and converted back to PSL format from UCSC chain 
+           format. Output is in alignment psl directory."""
+        # Path for genome 2bit file
+        genome = self.cfg.getGenVar('genomeTwoBit')
+        # Path and file name for chained alignments PSL output
+        chainPslOut = createPath(self.pslDirs[1], psl)
+        chain = ["axtChain", "-linearGap=loose", "-verbose=0", "-psl", psl \
+            genome, "-faQ", self.noPolyAMrna, "stdout"]
+        chainFilt = ["chainFilter", "-minScore=4000", "stdin"]
+        chainPsl = ["chainToPsl", "stdin", self.cfg.chromFile, \
+            self.noPolyAMrnaLen, genome, self.noPolyAMrna, chainPslOut]
+        cmdList = [chain, chainFilt, chainPsl]
+
+    def liftChainedAlignments(self):
+        """Reattaches the polyA tails and fixes the alignments using the
+           lift file for the trimmed sequences and those with polyA tails."""
+        # Cat together the files in the pslFilter directory
+        fh = open(self.lastzMrnaPsl, "w")
+        pslFiles = self.pslDirs[1] + "/*psl"
+        subprocess.check_call(["pslCat", "nohead", pslFiles], shell=True, \
+            stdout=fh)
+        fh.close()
+        # Lift the chained alignments
+        liftAlignments(self.lastzMrnaPsl, self.mrnaAndTrimLift)
+        
+    def liftAlignments(self, psl, liftFile):
+        """Lift alignments"""
+        # Temporary file of lifted PSLs
+        liftedPsl = psl + ".lifted"
+        # Do the liftup
+        subprocess.check_call(["liftUp", psl, liftFile, "warn", liftedPsl, \
+            "-pslQ", "-nohead"])
+        # Move the lifted PSL to the original filename 
+        moveFile(liftedPsl, psl)
+
+    def sortAndFilterAlignment(self):
+        """Sorts the PSLs on qName, tName, tStart, qStart and filters to keep
+           only alignments with minimum coverage of at least 5% and 
+           minimum identity of 65%"""
+        # Temporary file for sorted PSLs
+        tempSortPsl = createPath(self.cfg.getTempDir(), \
+            self.cfg.getAlignVar('lastzPsl')) 
+        pFh = open(tempSortPsl, "w")
+        subprocess.check_call(["sort", "-k10,10", "-k14,14", "-k16,16n" \
+            "-k12,12n", self.lastzMrnaPsl], stdout=pFh)
+        pFh.close()
+        # Then filter the sorted PSL and write the output to the 
+        # PSL file in the alignment directory
+        subprocess.check_call(["pslCDnaFilter", "-minCover=0.05", \
+            "-minId=0.58", tempSortPsl, self.lastzMrnaPsl])
+    
+filtChainMrnas = ChainMrnas(args)
+# Remove duplicate PSLs
+filtChainMrnas.filterDuplicates() 
+# Chain the alignments and lift the results, reattaching polyA tails
+filtChainMrnas.doChaining()
+# Sort and filter the PSL alignments 
+filtChainMrnas.sortAndFilterAlignments()
+
