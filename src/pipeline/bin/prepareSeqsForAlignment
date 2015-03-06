@@ -41,7 +41,8 @@ class PrepareSeqsForAlignment(object):
            to the genome and creates a lift file to add them back later"""
         subprocess.check_call(["faTrimPolyA", self.allMrna, self.noPolyAMrna])
         mrnaDetails = createPath(self.tempDir, "mrna.len")
-        mrnaTrimDetails = createPath(self.tempDir, "mrnaTrim.len")
+        mrnaTrimDetails = createPath(self.tempDir, \
+            self.cfg.getSeqVar('mrnaTrimLen'))
         # get size details using faSize for both files
         with open(mrnaDetails, "w") as mdFh:
             subprocess.check_call(["faSize", "-detailed", self.allMrna], \
