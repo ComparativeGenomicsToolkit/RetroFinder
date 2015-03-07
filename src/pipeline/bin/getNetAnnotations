@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from ParseConfig import ParseConfig
+
+parser = argparse.ArgumentParser(description='Program to get repeat annotation for input to pslPseudo which predicts retrogenes')
+parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+args = parser.parse_args()
+       
+class NetAnnot(object):
+    def __init__(self, args):
+        # Config file assignment, check it exists first, exits with an 
+        # Exception error if it does not. 
+        if fileExists(args.configFile):
+            self.cfgFile = args.configFile
+        # Read and parse config file
+        self.cfg = ParseConfig(args.configFile)
+        # Get UCSC assembly database from config file
+        self.database = self.cfg.db
+        # Get the pslPseudo annotations directory 
+        self.pslPseudoAnnotDir = self.cfg.getRetroPredAnnotDir()
+        # Net1 annotations file, distant species
+        self.net1File = self.__getNetAnnot('net1')
+        # Net2 annotations file, distant species
+        self.net2File = self.__getNetAnnot('net2')
+        # Net3 annotations file, near species
+        self.net3File = self.__getNetAnnot('net3')
+
+    def __getNetAnnot(self, net):
+        """Gets the net annotations where net is the variable name in 
+           the config file"""
+        # Create the annotations directory
+        makeDir(self.pslPseudoAnnotDir)
+        # Get the net table name
+        netTable = self.cfg.getRetroPredVar(net)
+        # Get the name for the net annotations file
+        netFile = self.cfg.getRetroPredFullPath(net, "txt")
+        # Get annotations from the database
+        netQuery= "select tName, tStart, tEnd, level, qName, qStart, qEnd \
+            type, qN, tR+tTrf from " + self.netTable 
+        with open(netFile, "w") as fh:
+            queryDb(netQuery, self.database, fh) 
+        return netFile 
+
+    def __getSimpleRepeats(self):
+        """Get Simple Repeats annotations found by Tandem Repeat Finder (TRF)"""
+        # Create the annotations directory
+        makeDir(self.pslPseudoAnnotDir)
+        # Get the name for the Simple Repeats annotations file
+        simpleRepsFile = self.cfg.getRetroPredFullPath('trfTable', "bed")
+        # Get annotations from the database
+        simpleRepsQuery= "select chrom, chromStart, chromEnd from " \
+            + self.simpleRepsTable
+        # Get annotations from the database
+        with open(simpleRepsFile, "w") as fh:
+             queryDb(simpleRepsQuery, self.database, fh)
+        return simpleRepsFile
+
+netAnnot = NetAnnot(args)
