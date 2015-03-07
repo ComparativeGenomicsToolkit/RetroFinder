@@ -38,6 +38,10 @@ def openReadFileHandle(fileName):
         sys.exit(0)
     return fh
 
+def getListFromFileColumn(file, col):
+    """Returns a list of the items in column, col, in the file."""
+    return subprocess.check_output(["cut", "-f" + str(col), file])
+    
 def createPath(dir, fileOrDir):
     """Adds file or directory to path name to create a full file
        or directory path"""
@@ -86,7 +90,7 @@ def moveMultFiles(filesPat, dir):
 
 def getSubDirsList(dir):
     """Returns the list of subdirectories contained in dir assuming there 
-       is only a single level of subdirectories"""
+       is only a single level of subdirectories required"""
     return [name for name in os.listdir(dir)
         if os.path.isdir(os.path.join(dir, name))]
 
