@@ -51,7 +51,11 @@ class ParseConfig:
     def getAlignVar(self, var):
         """Returns variable value from Alignment section of config file"""
         return self.getVar('Alignment', var)
-    
+
+    def getRetroPredVar(self, var):
+        """Returns variable value from RetroPred section of config file"""    
+        return self.getVar('RetroPred', var)
+
     def getTempDir(self):
         """Returns full path of temp directory"""
         return os.environ['TMPDIR'] + "/" + self.getGenVar('tempDirSuffix')
@@ -69,6 +73,17 @@ class ParseConfig:
         """Returns the full path of the mRNAs alignment directory"""
         alignDir = self.createWorkingDirName(self.getAlignVar('alignDir'))
         return alignDir
+
+    def getRetroPredAnnotDir(self):
+        """Returns the full path of the directory of annotations for
+           input to pslPseudo"""
+        annotDir = \
+            self.createWorkingDirName(self.getRetroPredVar('retroPredAnnot'))
+        return annotDir
+
+    def getFileName(self, seqType, ext):
+        """Returns file name for sequence-related data""" 
+        return self.getSeqVar(seqType) + "." + ext
 
     def getFileName(self, seqType, ext):
         """Returns file name for sequence-related data""" 
@@ -113,3 +128,8 @@ class ParseConfig:
     def getAlignFileFullPath(self, fileVar):
         """Returns full path to file or directory in the alignments directory"""
         return createPath(self.getAlignDir(), self.getAlignVar(fileVar))
+    
+    def getRetroPredFullPath(self, fileVar, suffix):
+        """Returns full path to file or directory in the alignments directory"""
+        return createFilePath(self.getRetroPredAnnotDir(), \
+            self.getRetroPredVar(fileVar), suffix)
