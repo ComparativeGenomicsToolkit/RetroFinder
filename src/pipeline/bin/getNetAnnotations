@@ -43,7 +43,7 @@ class NetAnnot(object):
         netFile = self.cfg.getRetroPredFullPath(net, "txt")
         # Get annotations from the database
         netQuery= "select tName, tStart, tEnd, level, qName, qStart, qEnd \
-            type, qN, tR+tTrf from " + self.netTable 
+            type, qN, tR+tTrf from " + netTable 
         with open(netFile, "w") as fh:
             queryDb(netQuery, self.database, fh) 
         return netFile 
