@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from ParseConfig import ParseConfig
+
+parser = argparse.ArgumentParser(description='Program to get repeat annotation for input to pslPseudo which predicts retrogenes')
+parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+args = parser.parse_args()
+       
+class GetRepeatAnnot(object):
+    def __init__(self, args):
+        # Config file assignment, check it exists first, exits with an 
+        # Exception error if it does not. 
+        if fileExists(args.configFile):
+            self.cfgFile = args.configFile
+        # Read and parse config file
+        self.cfg = ParseConfig(args.configFile)
+        # Get UCSC assembly database from config file
+        self.database = self.cfg.db
+        # Get the root run directory
+        self.rootDir = self.cfg.rootRunDir
+        # Get the pslPseudo annotations directory 
+        self.pslPseudoAnnotDir = self.cfg.getRetroPredAnnotDir()
+        # Chromosomes name list
+        self.chromsList = getListFromFileColumn(self.cfg.chromFile, 0)
+        # RepeatMasker annotations table
+        self.rmskTable = self.cfg.getRetroPredVar('repeatMaskTable')
+        # RepeatMasker annotations file
+        self.rmskFile = self.__getRepeatMaskAnnot()
+        # Simple Repeats (TRF output) annotations table
+        self.simpleRepsTable = self.cfg.getRetroPredVar('trfTable')
+        # Simple Repeats annotations file
+        self.simpleRepsFile = self.__getSimpleRepeats()
+
+    def __getRepeatMaskAnnot(self):
+        """Get RepeatMasker annotations"""
+        # Create the annotations directory
+        makeDir(self.pslPseudoAnnotDir)
+        # Get the name for the RepeatMasker annotations file
+        rmskFile = self.cfg.getAlignFullPath('repeatMaskTable', ".bed")
+        # Get annotations from the database
+        rmskQuery= "select genoName, genoStart, genoEnd from " + self.rmskTable
+        with open(rmskFile, "w") as fh:
+            queryDb(rmskQuery, self.database, fh) 
+        return rmskFile 
+
+    def __getSimpleRepeats(self):
+        """Get Simple Repeats annotations found by Tandem Repeat Finder (TRF)"""
+        # Create the annotations directory
+        makeDir(self.pslPseudoAnnotDir)
+        # Get the name for the Simple Repeats annotations file
+        simpleRepsFile = self.cfg.getAlignFullPath('trfTable', ".bed")
+        # Get annotations from the database
+        simpleRepsQuery= "select chrom, chromStart, chromEnd from " \
+            + self.simpleRepsTable
+        # Get annotations from the database
+        with open(simpleRepsFile, "w") as fh:
+             queryDb(simpleRepsQuery, self.database, fh)
+        return simpleRepsFile
+
+rptAnnot = GetRepeatAnnot(args)
+rptAnnot.getRepeatMaskAnnot()
