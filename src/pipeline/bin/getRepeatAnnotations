@@ -23,12 +23,8 @@ class GetRepeatAnnot(object):
         self.cfg = ParseConfig(args.configFile)
         # Get UCSC assembly database from config file
         self.database = self.cfg.db
-        # Get the root run directory
-        self.rootDir = self.cfg.rootRunDir
         # Get the pslPseudo annotations directory 
         self.pslPseudoAnnotDir = self.cfg.getRetroPredAnnotDir()
-        # Chromosomes name list
-        self.chromsList = getListFromFileColumn(self.cfg.chromFile, 0)
         # RepeatMasker annotations table
         self.rmskTable = self.cfg.getRetroPredVar('repeatMaskTable')
         # RepeatMasker annotations file
@@ -39,13 +35,12 @@ class GetRepeatAnnot(object):
         self.simpleRepsFile = self.__getSimpleRepeats()
 
     def __getRepeatMaskAnnot(self):
-        """Get RepeatMasker annotations"""
         # Create the annotations directory
         makeDir(self.pslPseudoAnnotDir)
         # Get the name for the RepeatMasker annotations file
-        rmskFile = self.cfg.getAlignFullPath('repeatMaskTable', ".bed")
+        rmskFile = self.cfg.getRetroPredFullPath('repeatMaskTable', "bed")
         # Get annotations from the database
-        rmskQuery= "select genoName, genoStart, genoEnd from " + self.rmskTable
+        rmskQuery= "select genoName, genoStart, genoEnd from " + self.rmskTable 
         with open(rmskFile, "w") as fh:
             queryDb(rmskQuery, self.database, fh) 
         return rmskFile 
@@ -55,7 +50,7 @@ class GetRepeatAnnot(object):
         # Create the annotations directory
         makeDir(self.pslPseudoAnnotDir)
         # Get the name for the Simple Repeats annotations file
-        simpleRepsFile = self.cfg.getAlignFullPath('trfTable', ".bed")
+        simpleRepsFile = self.cfg.getRetroPredFullPath('trfTable', "bed")
         # Get annotations from the database
         simpleRepsQuery= "select chrom, chromStart, chromEnd from " \
             + self.simpleRepsTable
@@ -65,4 +60,3 @@ class GetRepeatAnnot(object):
         return simpleRepsFile
 
 rptAnnot = GetRepeatAnnot(args)
-rptAnnot.getRepeatMaskAnnot()
