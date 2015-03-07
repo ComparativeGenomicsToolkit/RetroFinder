@@ -9,7 +9,7 @@ sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
 
-parser = argparse.ArgumentParser(description='Program to get repeat annotation for input to pslPseudo which predicts retrogenes')
+parser = argparse.ArgumentParser(description='Program to get net alignment annotation for input to pslPseudo which predicts retrogenes')
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
 args = parser.parse_args()
        
@@ -47,19 +47,5 @@ class NetAnnot(object):
         with open(netFile, "w") as fh:
             queryDb(netQuery, self.database, fh) 
         return netFile 
-
-    def __getSimpleRepeats(self):
-        """Get Simple Repeats annotations found by Tandem Repeat Finder (TRF)"""
-        # Create the annotations directory
-        makeDir(self.pslPseudoAnnotDir)
-        # Get the name for the Simple Repeats annotations file
-        simpleRepsFile = self.cfg.getRetroPredFullPath('trfTable', "bed")
-        # Get annotations from the database
-        simpleRepsQuery= "select chrom, chromStart, chromEnd from " \
-            + self.simpleRepsTable
-        # Get annotations from the database
-        with open(simpleRepsFile, "w") as fh:
-             queryDb(simpleRepsQuery, self.database, fh)
-        return simpleRepsFile
 
 netAnnot = NetAnnot(args)
