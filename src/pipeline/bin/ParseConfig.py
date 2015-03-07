@@ -85,10 +85,6 @@ class ParseConfig:
         """Returns file name for sequence-related data""" 
         return self.getSeqVar(seqType) + "." + ext
 
-    def getFileName(self, seqType, ext):
-        """Returns file name for sequence-related data""" 
-        return self.getSeqVar(seqType) + "." + ext
-
     def getSeqFile(self, seqType):
         """Returns full path and file name of FASTA file for sequences"""
         # seqType can be mrna, refSeq, ensembl, all or anther type    
