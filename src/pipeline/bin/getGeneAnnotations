@@ -47,7 +47,7 @@ class GeneAnnot(object):
         # Get annotations from the database
         genesetQuery= "select name, chrom, strand, txStart, txEnd, cdsStart, \
             cdsEnd, exonCount, exonStarts, exonEnds from " + genesetTable \
-            " order by chrom, txStart, txEnd"
+            + " order by chrom, txStart, txEnd"
         with open(genesetFile, "w") as fh:
             queryDb(genesetQuery, self.database, fh) 
         return genesetFile 
