@@ -145,4 +145,4 @@ class ParseConfig:
            annotations directory"""
         # gene is the variable name for the geneset table in the config file
         geneTable = self.getRetroPredVar(gene)
-        return self.getRetroPredFullPath(geneTable, "tab")
+        return self.getRetroPredFullPath(geneTable, "gp")
