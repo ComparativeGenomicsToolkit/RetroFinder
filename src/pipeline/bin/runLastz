@@ -26,7 +26,9 @@ args = parser.parse_args()
        
 def main():
     # Create an AXT output name and path in the temp dir
-    tempAxtOut = createPath(args.tempDir, args.query + ".axt")
+    # Remove path and file extension from query name
+    queryPrefix = getFileNameNoExt(args.query)
+    tempAxtOut = createPath(args.tempDir, queryPrefix + ".axt")
     # Create a temporary PSL output file name
     tempPslOut = createPath(args.tempDir, args.outPsl + ".temp")
     with open(tempAxtOut, "w") as axtFh:
