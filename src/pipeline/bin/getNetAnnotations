@@ -25,14 +25,8 @@ class NetAnnot(object):
         self.database = self.cfg.db
         # Get the pslPseudo annotations directory 
         self.pslPseudoAnnotDir = self.cfg.getRetroPredAnnotDir()
-        # Net1 annotations file, distant species
-        self.net1File = self.__getNetAnnot('net1')
-        # Net2 annotations file, distant species
-        self.net2File = self.__getNetAnnot('net2')
-        # Net3 annotations file, near species
-        self.net3File = self.__getNetAnnot('net3')
 
-    def __getNetAnnot(self, net):
+    def getNetAnnot(self, net):
         """Gets the net annotations where net is the variable name in 
            the config file"""
         # Create the annotations directory
@@ -40,7 +34,7 @@ class NetAnnot(object):
         # Get the net table name
         netTable = self.cfg.getRetroPredVar(net)
         # Get the name for the net annotations file
-        netFile = self.cfg.getRetroPredFullPath(net, "txt")
+        netFile = self.cfg.getRetroPredNetFullPath(net)
         # Get annotations from the database
         netQuery= "select tName, tStart, tEnd, level, qName, qStart, qEnd \
             type, qN, tR+tTrf from " + netTable 
@@ -49,3 +43,9 @@ class NetAnnot(object):
         return netFile 
 
 netAnnot = NetAnnot(args)
+# Net1 annotations, distant species
+netAnnot.getNetAnnot('net1')
+# Net2 annotations, distant species
+netAnnot.getNetAnnot('net2')
+# Net3 annotations, near species
+netAnnot.getNetAnnot('net3')
