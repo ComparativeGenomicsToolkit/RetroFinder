@@ -33,7 +33,7 @@ def main():
         # Run lastz using IUPAC codes are these appear in some sequences
         # and would cause errors if this option is not used
         subprocess.check_call([lastzProg, target, query, "--ambiguous=iupac", \
-            --hspthresh=2000, --format=axt], stdout=axtFh)
+            "--hspthresh=2000", "--format=axt"], stdout=axtFh)
     # Convert the AXT output to PSL format
     subprocess.checkCall("axtToPsl", args.axtOut, args.chromLen, \
         args.mrnaLen, tempPslOut])
