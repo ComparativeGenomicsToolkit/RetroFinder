@@ -28,7 +28,7 @@ def main():
     # Create an AXT output name and path in the temp dir
     tempAxtOut = createPath(args.tempDir, args.query + ".axt")
     # Create a temporary PSL output file name
-    tempPslOut = createPath(args.tempDir, outPsl + ".temp")
+    tempPslOut = createPath(args.tempDir, args.outPsl + ".temp")
     with open(args.axtOut, "w") as axtFh:
         # Run lastz using IUPAC codes are these appear in some sequences
         # and would cause errors if this option is not used
