@@ -1,5 +1,6 @@
 # Set of common functions used throughout the RetroFinder pipeline
 import os,sys,subprocess,re
+from os.path import basename
 import time
 
 def queryDb(query, db, fh=None):
@@ -60,6 +61,14 @@ def makeFileList(path, fileExt):
             fn = path + "/" + fn
             list.append(fn)
     return list
+
+def getFileNameFromPath(path):
+    """Returns just the file name from the path"""
+    return os.path.basename(path)
+
+def getFileNameNoExt(file):
+    """Returns the file name without .ext and strips off path if present"""
+    return os.path.splitext(file)[0]
 
 def catFiles(outFile, fileList):
     """Cat files in list into outFile"""
