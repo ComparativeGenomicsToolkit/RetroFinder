@@ -27,11 +27,6 @@ class ParseConfig:
         """Creates path and name of directory in root dir"""
         return createPath(self.rootRunDir, dirPath)
 
-    def createPath(self, dir, fileOrDir):
-        """Adds file or directory to path name to create a full file
-           or directory path"""
-        return dir + "/" + fileOrDir
-
     def getVar(self, section, var):
         """Returns variable value from config file"""
         return self.config.get(section, var, 0) 
@@ -126,6 +121,28 @@ class ParseConfig:
         return createPath(self.getAlignDir(), self.getAlignVar(fileVar))
     
     def getRetroPredFullPath(self, fileVar, suffix):
-        """Returns full path to file or directory in the alignments directory"""
+        """Returns full path to file or directory in the pslPseudo
+           input annotations directory"""
         return createFilePath(self.getRetroPredAnnotDir(), \
             self.getRetroPredVar(fileVar), suffix)
+
+    def getRetroPredRepeatFullPath(self, repeat):
+        """Returns full path to Repeats file in the pslPseudo input 
+           annotations directory"""
+        # epeat is the variable name for the repeats table in the config file
+        repeatTable = self.getRetroPredVar(repeat)
+        return self.getRetroPredFullPath(repeatTable, "bed")
+     
+    def getRetroPredNetFullPath(self, net):
+        """Returns full path to Nets file in the pslPseudo input 
+           annotations directory"""
+        # net is the variable name for the net table in the config file
+        netTable = self.getRetroPredVar(net)
+        return self.getRetroPredFullPath(netTable, "txt")
+    
+    def getRetroPredGeneFullPath(self, gene):
+        """Returns full path to Geneset file in the pslPseudo input 
+           annotations directory"""
+        # gene is the variable name for the geneset table in the config file
+        geneTable = self.getRetroPredVar(gene)
+        return self.getRetroPredFullPath(geneTable, "tab")
