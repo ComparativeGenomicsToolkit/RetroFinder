@@ -26,14 +26,15 @@ args = parser.parse_args()
        
 def main():
     # Create an AXT output name and path in the temp dir
-    tempAxtOut = createPath(args.tempDir, query + ".axt")
+    tempAxtOut = createPath(args.tempDir, args.query + ".axt")
     # Create a temporary PSL output file name
     tempPslOut = createPath(args.tempDir, outPsl + ".temp")
     with open(args.axtOut, "w") as axtFh:
         # Run lastz using IUPAC codes are these appear in some sequences
         # and would cause errors if this option is not used
-        subprocess.check_call([lastzProg, target, query, "--ambiguous=iupac", \
-            "--hspthresh=2000", "--format=axt"], stdout=axtFh)
+        subprocess.check_call([lastzProg, target, args.query, \
+            "--ambiguous=iupac", "--hspthresh=2000", \
+            "--format=axt"], stdout=axtFh)
     # Convert the AXT output to PSL format
     subprocess.checkCall(["axtToPsl", args.axtOut, args.chromLen, \
         args.mrnaLen, tempPslOut])
