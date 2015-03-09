@@ -25,14 +25,8 @@ class GeneAnnot(object):
         self.database = self.cfg.db
         # Get the pslPseudo annotations directory 
         self.pslPseudoAnnotDir = self.cfg.getRetroPredAnnotDir()
-        # geneset1 annotations file
-        self.geneAnnot1File = self.__getGeneAnnot('gene1')
-        # geneset2 annotations file
-        self.geneAnnot2File = self.__getGeneAnnot('gene2')
-        # geneset1 annotations file
-        self.geneAnnot3File = self.__getGeneAnnot('gene3')
 
-    def __getGeneAnnot(self, geneset):
+    def getGeneAnnot(self, geneset):
         """Gets the geneset annotations where geneset is the variable name in 
            the config file"""
         # Create the annotations directory
@@ -43,7 +37,7 @@ class GeneAnnot(object):
         # geneset variable name to ensure file name uniqueness as if 
         # only 1 or 2 genesets available, these are repeated
         # pslPseudo requires three genesets as input
-        genesetFile = self.cfg.getRetroPredFullPath(geneset, geneset + ".tab")
+        genesetFile = self.cfg.getRetroPredGene,FullPath(geneset)
         # Get annotations from the database
         genesetQuery= "select name, chrom, strand, txStart, txEnd, cdsStart, \
             cdsEnd, exonCount, exonStarts, exonEnds from " + genesetTable \
@@ -53,3 +47,9 @@ class GeneAnnot(object):
         return genesetFile 
 
 geneAnnot = GeneAnnot(args)
+# geneset1 annotations file
+geneAnnot.getGeneAnnot('gene1')
+# geneset2 annotations file
+geneAnnot.getGeneAnnot('gene2')
+# geneset3 annotations file
+geneAnnot.getGeneAnnot('gene3')
