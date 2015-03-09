@@ -29,14 +29,14 @@ def main():
     tempAxtOut = createPath(args.tempDir, args.query + ".axt")
     # Create a temporary PSL output file name
     tempPslOut = createPath(args.tempDir, args.outPsl + ".temp")
-    with open(args.axtOut, "w") as axtFh:
+    with open(args.tempAxtOut, "w") as axtFh:
         # Run lastz using IUPAC codes are these appear in some sequences
         # and would cause errors if this option is not used
         subprocess.check_call([lastzProg, target, args.query, \
             "--ambiguous=iupac", "--hspthresh=2000", \
             "--format=axt"], stdout=axtFh)
     # Convert the AXT output to PSL format
-    subprocess.checkCall(["axtToPsl", args.axtOut, args.chromLen, \
+    subprocess.checkCall(["axtToPsl", tempAxtOut, args.chromLen, \
         args.mrnaLen, tempPslOut])
     # Move the PSL file from the temp dir to the output PSL directory
     moveFile(tempPslOut, args.outPsl)
