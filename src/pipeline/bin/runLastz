@@ -35,7 +35,7 @@ def main():
         subprocess.check_call([lastzProg, target, query, "--ambiguous=iupac", \
             "--hspthresh=2000", "--format=axt"], stdout=axtFh)
     # Convert the AXT output to PSL format
-    subprocess.checkCall("axtToPsl", args.axtOut, args.chromLen, \
+    subprocess.checkCall(["axtToPsl", args.axtOut, args.chromLen, \
         args.mrnaLen, tempPslOut])
     # Move the PSL file from the temp dir to the output PSL directory
     moveFile(tempPslOut, args.outPsl)
