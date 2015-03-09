@@ -29,7 +29,7 @@ def main():
     tempAxtOut = createPath(args.tempDir, args.query + ".axt")
     # Create a temporary PSL output file name
     tempPslOut = createPath(args.tempDir, args.outPsl + ".temp")
-    with open(args.tempAxtOut, "w") as axtFh:
+    with open(tempAxtOut, "w") as axtFh:
         # Run lastz using IUPAC codes are these appear in some sequences
         # and would cause errors if this option is not used
         subprocess.check_call([lastzProg, target, args.query, \
