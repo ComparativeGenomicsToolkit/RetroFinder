@@ -9,7 +9,7 @@ sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
 
-parser = argparse.ArgumentParser(description='Program to get repeats and net alignment annotation data for input to pslPseudo which predicts retrogenes')
+parser = argparse.ArgumentParser(description='Program to get repeats and net alignment annotation data for input to pslPseudo which predicts retrogenes and is the core program of RetroFinder')
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
 args = parser.parse_args()
        
