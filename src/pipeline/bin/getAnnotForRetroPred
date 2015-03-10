@@ -13,31 +13,13 @@ parser = argparse.ArgumentParser(description='Program to get repeats and net ali
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
 args = parser.parse_args()
        
-class AnnotForRetroPred(object):
-    def __init__(self, args):
-        # Config file assignment, check it exists first, exits with an 
-        # Exception error if it does not. 
-        if fileExists(args.configFile):
-            self.cfgFile = args.configFile
-        # Read and parse config file
-        self.cfgParse = ParseConfig(args.configFile)
-        # Get UCSC assembly database from config file
-        self.database = self.cfgParse.db
-        # Get the root run directory
-        self.rootDir = self.cfgParse.rootRunDir
- 
-    def getRepeatAnnot(self):
-        """Get RepeatMasker annotations"""
-        print "Getting chrom sizes and making root dir", self.rootDir
-        makeDir(self.rootDir)
-        chromStr = "select chrom, size from chromInfo;"
-        print "Query", chromStr
-        print "Database", self.database
-        with open(self.cfgParse.chromFile, "w") as fh:
-            queryDb(chromStr, self.database, fh)
-        fh.close()
-
-    def getNets
-
-
-    def getGenesets(self):
+def main():
+    # Config file assignment, check it exists first, exits with an 
+    # Exception error if it does not. 
+    if fileExists(args.configFile):
+        cfgFile = args.configFile
+    # Run the scripts that get repeats, nets and genesets annotations that
+    # are input for pslPseudo
+    subprocess.check_call(["getRepeatAnnotations", cfgFile)]
+    subprocess.check_call(["getNetAnnotations", cfgFile)]
+    subprocess.check_call(["getGeneAnnotations", cfgFile)]
