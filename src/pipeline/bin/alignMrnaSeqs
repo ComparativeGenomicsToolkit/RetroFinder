@@ -22,7 +22,7 @@ class AlignMrnas(object):
         if fileExists(args.configFile):
             self.cfgFile = args.configFile
         # Read and parse config file
-        self.cfg = ParseConfig(args.configFile)
+        self.cfg = ParseConfig(self.cfgFile)
         # Get the root run directory
         self.rootDir = self.cfg.rootRunDir
         # Get the alignment working directory from config file 
@@ -115,14 +115,12 @@ class AlignMrnas(object):
         # Templates are written to a file called template defined in Cluster.py
         # This template creates jobs to run the runLastz script
         lastzScript = createPath(self.cfg.getGenVar('scriptDir'), "runLastz")
-        tempDir = self.cfg.getTempDir()
         genomeTwoBit = self.cfg.getGenVar('genomeTwoBit')
-        mrnaNoPolyALen = createPath(self.cfg.getSeqDir(), "mrnaTrim.len")
-        templateStr = lastzScript + " " + tempDir + " " + genomeTwoBit + \
+        #mrnaNoPolyALen = createPath(self.cfg.getSeqDir(), "mrnaTrim.len")
+        templateStr = lastzScript + " " + self.cfgFile + " " + genomeTwoBit + \
             "/$(path1) $(path2) {check out line " + self.alignDirs[2] + \
             "/$(root1)/$(root2).psl} " + self.alignDirs[2] + \
-            "/axt/$(root1) " + self.cfg.chromFile + " " + mrnaNoPolyALen \
-            + " " + self.cfg.getProgVar('alignProg')
+            "/axt/$(root1)"
         print "Template string is", templateStr
         return templateStr
 
