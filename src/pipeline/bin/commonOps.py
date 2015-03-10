@@ -68,7 +68,8 @@ def getFileNameFromPath(path):
 
 def getFileNameNoExt(file):
     """Returns the file name without .ext and strips off path if present"""
-    return os.path.splitext(file)[0]
+    base = getFileNameFromPath(file)
+    return os.path.splitext(base)[0]
 
 def catFiles(outFile, fileList):
     """Cat files in list into outFile"""
