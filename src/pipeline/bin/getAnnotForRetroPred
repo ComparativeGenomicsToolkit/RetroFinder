@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from ParseConfig import ParseConfig
+
+parser = argparse.ArgumentParser(description='Program to get repeats and net alignment annotation data for input to pslPseudo which predicts retrogenes')
+parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+args = parser.parse_args()
+       
+class AnnotForRetroPred(object):
+    def __init__(self, args):
+        # Config file assignment, check it exists first, exits with an 
+        # Exception error if it does not. 
+        if fileExists(args.configFile):
+            self.cfgFile = args.configFile
+        # Read and parse config file
+        self.cfgParse = ParseConfig(args.configFile)
+        # Get UCSC assembly database from config file
+        self.database = self.cfgParse.db
+        # Get the root run directory
+        self.rootDir = self.cfgParse.rootRunDir
+ 
+    def getRepeatAnnot(self):
+        """Get RepeatMasker annotations"""
+        print "Getting chrom sizes and making root dir", self.rootDir
+        makeDir(self.rootDir)
+        chromStr = "select chrom, size from chromInfo;"
+        print "Query", chromStr
+        print "Database", self.database
+        with open(self.cfgParse.chromFile, "w") as fh:
+            queryDb(chromStr, self.database, fh)
+        fh.close()
+
+    def getNets
+
+
+    def getGenesets(self):
