@@ -43,11 +43,11 @@ A default parameter file (DEF) is located in the scripts directory and this
 should be passed as the first parameter to all of the step scripts in the 
 pipeline. Example DEF files are in the 
 retroFinder/branches/version2/src/pipeline directory and are named as
-DEF.<db> where db is the UCSC assembly database name e.g. hg38, mm10.
+DEF.<DB> where DB is the UCSC assembly database name e.g. hg38, mm10.
 Variables used in the DEF file are documented in the separate README_DEF.txt 
 file.
 
-<B>4. Setup before running the pipeline</B>
+4. Setup before running the pipeline
 Set up the working directory:
 mkdir -p /hive/groups/gencode/pseudogenes/retroFinder/$DB.$DATE 
 where date is in format 
