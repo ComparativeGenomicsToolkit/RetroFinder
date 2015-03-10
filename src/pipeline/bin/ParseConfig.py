@@ -88,7 +88,12 @@ class ParseConfig:
     def getSeqFileFullPath(self, seqType):
         """Returns file name and path to sequence directory"""
         return createPath(self.getSeqDir(), self.getSeqFile(seqType))
-    
+   
+    def getSeqVarFullPath(self, var):
+        """Returns file name and path to sequence directory. Looks up 
+           file name in config file using var."""
+        return createPath(self.getSeqDir(), self.getSeqVar(var))
+ 
     def getPslFile(self, seqType):
         """Returns file name of PSL file for sequences"""
         # seqType can be mrna, refSeq, ensembl, all or anther type    
