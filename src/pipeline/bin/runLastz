@@ -14,31 +14,36 @@ coverage=10
 identity=62
 
 parser = argparse.ArgumentParser(description='Program to run lastz and pass the correct input parameters to the program, runs each set of mRNAs against one chromosome so small jobs are run on the cluster')
-parser.add_argument('tempDir', metavar='tempDir', type=str, help='Temporary directory on local disk')
+parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
 parser.add_argument('target', metavar='target', type=str, help='Path to target chromosome in genome 2 bit file')
 parser.add_argument('query', metavar='query', type=str, help='Path to query file of mRNA sequences to align to genome')
 parser.add_argument('outPsl', metavar='outPsl', type=str, help='Lastz alignment output in PSL format')
 parser.add_argument('axtOutDir', metavar='axtOutDir', type=str, help='Lastz alignment output directory for AXT format files')
 parser.add_argument('chromLen', metavar='chromLen', type=str, help='Chromosome lengths file')
 parser.add_argument('mrnaLen', metavar='mrnaLen', type=str, help='PolyA trimmed mRNA sequences lengths file')
-parser.add_argument('lastzProg', metavar='lastzProg', type=str, help='Full path to lastz alignment program executable')
 args = parser.parse_args()
        
 def main():
+    cfg = ParseConfig(args.configFile)
+    # get temporary directory name
+    tempDir = cfg.getTempDir()
+    # get lastz program path
+    lastzProg = cfg.getProgVar('alignProg') 
     # Create an AXT output name and path in the temp dir
     # Remove path and file extension from query name
     queryPrefix = getFileNameNoExt(args.query)
-    tempAxtOut = createPath(args.tempDir, queryPrefix + ".axt")
+    tempAxtOut = createPath(tempDir, queryPrefix + ".axt")
     # Create a temporary PSL output file name
-    tempPslOut = createPath(args.tempDir, args.outPsl + ".temp")
+    tempPslOut = createPath(tempDir, args.outPsl + ".temp")
+    
     with open(tempAxtOut, "w") as axtFh:
         # Run lastz using IUPAC codes are these appear in some sequences
         # and would cause errors if this option is not used
-        subprocess.check_call([lastzProg, target, args.query, \
+        subprocess.check_call([lastzProg, args.target, args.query, \
             "--ambiguous=iupac", "--hspthresh=2000", \
             "--format=axt"], stdout=axtFh)
     # Convert the AXT output to PSL format
-    subprocess.checkCall(["axtToPsl", tempAxtOut, args.chromLen, \
+    subprocess.check_call(["axtToPsl", tempAxtOut, args.chromLen, \
         args.mrnaLen, tempPslOut])
     # Move the PSL file from the temp dir to the output PSL directory
     moveFile(tempPslOut, args.outPsl)
@@ -46,5 +51,5 @@ def main():
     makeDir(args.axtOutDir)
     # Move the AXT file in the temp directory to the AXT file directory
     moveFile(tempAxtOut, args.axtOutDir)
-     
+ 
 main()
