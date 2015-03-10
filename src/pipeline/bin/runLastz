@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/hive/groups/gencode/local/bin/python
 
 from __future__ import with_statement
 
@@ -33,7 +33,7 @@ def main():
     queryPrefix = getFileNameNoExt(args.query)
     tempAxtOut = createPath(tempDir, queryPrefix + ".axt")
     # Create a temporary PSL output file name
-    tempPslOut = createPath(tempDir, args.outPsl + ".temp")
+    tempPslOut = createPath(tempDir, getFileNameNoExt(args.outPsl) + ".temp")
     
     with open(tempAxtOut, "w") as axtFh:
         # Run lastz using IUPAC codes are these appear in some sequences
