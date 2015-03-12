@@ -134,7 +134,7 @@ class ParseConfig:
     def getRetroPredRepeatFullPath(self, repeat):
         """Returns full path to Repeats file in the pslPseudo input 
            annotations directory"""
-        # epeat is the variable name for the repeats table in the config file
+        # repeat is the variable name for the repeats table in the config file
         repeatTable = self.getRetroPredVar(repeat)
         return self.getRetroPredFullPath(repeatTable, "bed")
      
