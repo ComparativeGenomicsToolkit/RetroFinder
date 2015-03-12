@@ -1,0 +1,74 @@
+#!/hive/groups/gencode/local/bin/python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from ParseConfig import ParseConfig
+from pycbio.sys.fileOps import *
+
+parser = argparse.ArgumentParser(description='Program to run pslPseudo which predicts retrogenes and is the core program of RetroFinder')
+parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
+args = parser.parse_args()
+       
+def doRetroGenePred():
+    def __init__(self, args):
+        # Config file assignment, check it exists first, exits with an 
+        # Exception error if it does not. 
+        if fileExists(args.configFile):
+            cfgFile = args.configFile
+        # Get the pslPseudo annotations directory
+        self.pslPseudoAnnotDir = self.cfg.getRetroPredAnnotDir()
+        # Creates the run and output directories for pslPseudo, returns
+        # directory names in a tuple (run, result, result/axt, log, out)
+        self.pslPseudoDirs = self.__createPslPseudoDirs()
+        # Lastz mRNA alignments in PSL format
+        self.lastzMrnaPsl = self.cfg.getAlignFileFullPath('lastzPsl')
+        # Rewrite lastz PSL with unique query names by adding -1,-2 etc.
+        self.uniqQueryNamePsl = self.__uniqQueryNames()
+        # Directory of split PSLs, PSLs are split
+        self.splitPslDir = self.__splitPsl()
+        # List of PSL files in split directory
+        self.pslList = self.__getPslList()
+       
+    def __createPslPseudoDirs(self):
+        """Creates the directories for inputs and outputs to pslPseudo."""
+        runDir = createPath(self.pslPseudoAnnotDir, "run")
+        resultDir = createPath(self.pslPseudoAnnotDir, "result")
+        axtDir = createPath(self.pslPseudoAnnotDir, "result/axt")
+        logDir = createPath(self.pslPseudoAnnotDir, "log")
+        outDir = createPath(self.pslPseudoAnnotDir, "out")
+        # Creates directories and all subdirectories in path
+        ensureDir(axtDir)    
+        ensureDir(logDir)    
+        ensureDir(outDir)
+        return (runDir, resultDir, axtDir, logDir, outDir)
+
+    def __uniqQueryNames(self):
+        """Create unique qNames by adding -1,-2 as suffixes. 
+           Assumes the PSL file is sorted by qName"""
+        uniqQueryNamePsl = self.lastzMrnaPsl + ".uniq.psl" 
+        with open(uniqQueryNamePsl, "w") as fh:
+            subprocess.check_call(["pslQueryUniq", self.lastzMrnaPsl], \
+                stdout=fh)
+        return uniqQueryNamePsl
+
+    def __splitPsl(self):
+        """Splits the PSL into smaller files. Since qNames are already 
+           unique, then change the chunkSize to xx. This determines the 
+           maximum number of unique qNames per file."""
+        # Create directory for split PSL files
+        splitDir = createPath(self.pslPseudoAnnotDir, "pslSplit")
+        ensureDir(splitDir)
+        pslSplitProg = createPath(self.cfg.getGenVar('progBinDir'), "pslSplit")
+        subprocess([pslSplitProg, "nohead", self.splitPslDir, \
+            self.uniqQueryNamePsl, "-chunkSize=10000"])
+        return splitDir
+
+    def __getPslList(self):
+        """Get list of PSL files in the split PSL directory"""
+        pslList = makeFileList(self.splitPslDir)
+        pslListFile = createPath(self.pslPseudoDirs[0], 
