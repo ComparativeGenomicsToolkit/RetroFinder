@@ -10,7 +10,7 @@ from commonOps import *
 from ParseConfig import ParseConfig
 
 parser = argparse.ArgumentParser(description='Program to get repeat annotation for input to pslPseudo which predicts retrogenes')
-parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
 args = parser.parse_args()
        
 class RepeatAnnot(object):
