@@ -1,0 +1,33 @@
+#!/hive/groups/gencode/local/bin/python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from ParseConfig import ParseConfig
+from TabFile import TabFileReader
+
+parser = argparse.ArgumentParser(description='Program to create uniq qNames for PSL file by adding -1, -2 etc. suffixes')
+parser.add_argument('pslFile', metavar='pslFile', type=str, help='full path of PSL file')
+args = parser.parse_args()
+
+def main():
+    # Create a hash to count how many times each qName has been read
+    qNameCnt = {} 
+    # qName is the 10th field of the file
+    tabFileRdr = TabFileReader(args.pslFile)
+    for psl in tabFileRdr:
+         qName = psl[9]
+         if qName in qNameCnt:
+             qNameCnt[qName] = qNameCnt[qName] + 1
+         else:
+             qNameCnt[qName] = 1
+         # Then add id
+         acc = qName + "-" + str(qNameCnt[qName])
+         psl[9] = acc
+         print "\t".join(psl)
+
+main()
