@@ -12,7 +12,7 @@ from TabFile import TabFileReader
 from Cluster import ClusterJobs
 
 parser = argparse.ArgumentParser(description='Program to align mRNA sequences (without polyA tails) to the genome')
-parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
 args = parser.parse_args()
        
 class AlignMrnas(object):
@@ -20,11 +20,10 @@ class AlignMrnas(object):
         # Config file assignment, check it exists first, exits with an 
         # Exception error if it does not. 
         if fileExists(args.configFile):
+            # Add full path to config file
             self.cfgFile = args.configFile
         # Read and parse config file
         self.cfg = ParseConfig(self.cfgFile)
-        # Get the root run directory
-        self.rootDir = self.cfg.rootRunDir
         # Get the alignment working directory from config file 
         self.alignDir = self.cfg.getAlignDir()
         # mRNA sequences with polyA tails removed
@@ -50,9 +49,10 @@ class AlignMrnas(object):
         # alignment run setup and alignOut for alignment outpuit
         # makeDir() using mkdir -p so all subdirectories in the path 
         # will be created if they don't exist already. 
-        splitDir = self.alignDir + "/split"
-        runDir = self.alignDir + "/run"
-        alignOutDir = self.alignDir + "/" + self.cfg.getAlignVar('alignOutput')
+        splitDir = createPath(self.alignDir + "split")
+        runDir = createPath(self.alignDir + "run")
+        alignOutDir = createPath(self.alignDir, \
+            self.cfg.getAlignVar('alignOutput'))
         print "dirs: %s %s %s\n" % (splitDir, runDir, alignOutDir)
         makeDir(splitDir)
         makeDir(runDir)
