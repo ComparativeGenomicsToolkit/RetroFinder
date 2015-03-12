@@ -12,7 +12,7 @@ from glob import glob
 from pycbio.sys.procOps import *
 
 parser = argparse.ArgumentParser(description='Program to filter out duplicates and chain alignments')
-parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
 args = parser.parse_args()
        
 class ChainMrnas(object):
