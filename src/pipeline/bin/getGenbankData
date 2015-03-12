@@ -11,7 +11,7 @@ from ParseConfig import ParseConfig
 from SeqAndAlignData import SeqAndAlignData
 
 parser = argparse.ArgumentParser(description='Get GenBank mRNA sequence data, PSL alignments and CDS region file')
-parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')  
+parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
 args = parser.parse_args()
 
 class getGenbankData(object):
