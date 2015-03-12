@@ -23,7 +23,7 @@ def fileExists(fileName):
     """Checks that the file exists, returns True if it does"""
     exists = os.path.exists(fileName)
     if not exists:
-        raise Exception("The file, %s, does not exist.\n" % (fileName))
+        raise Exception("The file, %s, does not exist. Check spelling and/or add full path\n" % (fileName))
     return exists
  
 def openReadFileHandle(fileName):
