@@ -8,6 +8,7 @@ myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
+from pycbio.sys.fileOps import *
 
 parser = argparse.ArgumentParser(description='Program to run lastz and pass the correct input parameters to the program, runs each set of mRNAs against one chromosome so small jobs are run on the cluster')
 parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
@@ -18,9 +19,15 @@ parser.add_argument('axtOutDir', metavar='axtOutDir', type=str, help='Lastz alig
 args = parser.parse_args()
        
 def main():
-    cfg = ParseConfig(args.configFile)
+    # Check config file exists before trying to parse it, 
+    # exits with an Exception error if it does not. 
+    if fileExists(args.configFile):
+        cfg = ParseConfig(args.configFile)
     # get temporary directory name
     tempDir = cfg.getTempDir()
+    # make this directory. On the cluster the temp directory
+    # is different than on hgwdev.
+    #makeDir(tempDir)
     # get lastz program path
     lastzProg = cfg.getProgVar('alignProg')
     # get alignment parameter values, values chosen for 
@@ -31,25 +38,31 @@ def main():
     # Create an AXT output name and path in the temp dir
     # Remove path and file extension from query name
     queryPrefix = getFileNameNoExt(args.query)
-    tempAxtOut = createPath(tempDir, queryPrefix + ".axt")
+    tempAxtOut = tmpFileGet(prefix=queryPrefix + ".axt")
     # Create a temporary PSL output file name
-    tempPslOut = createPath(tempDir, getFileNameNoExt(args.outPsl) + ".temp")
-    
+    tempPslOut = tmpFileGet(prefix=getFileNameNoExt(args.outPsl))
+
+    # Create directory for temp AXT file if it does not exist
+    ensureFileDir(tempAxtOut)
     with open(tempAxtOut, "w") as axtFh:
         # Run lastz using IUPAC codes are these appear in some sequences
         # and would cause errors if this option is not used
         subprocess.check_call([lastzProg, args.target, args.query, \
             "--ambiguous=iupac", "--hspthresh=2000", \
             "--format=axt"], stdout=axtFh)
+    # Create directory for temp PSL file if it does not exist
+    ensureFileDir(tempPslOut)
     # Convert the AXT output to PSL format, chromosome lengths file 
     # and the trimmed mRNA lengths file are defined in the config file
     subprocess.check_call(["axtToPsl", tempAxtOut, cfg.chromFile, \
         cfg.getSeqVarFullPath('mrnaTrimLen'), tempPslOut])
+    # Make sure output directory for PSL files exists
+    ensureFileDir(args.outPsl)
     # Move the PSL file from the temp dir to the output PSL directory
     moveFile(tempPslOut, args.outPsl)
     # Make the axt output directory
-    makeDir(args.axtOutDir)
+    ensureDir(args.axtOutDir)
     # Move the AXT file in the temp directory to the AXT file directory
     moveFile(tempAxtOut, args.axtOutDir)
- 
+    
 main()
