@@ -11,7 +11,7 @@ from ParseConfig import ParseConfig
 from TabFile import TabFileTbl
 
 parser = argparse.ArgumentParser(description='Program to prepare mRNA sequences for alignment to the genome by removing polyA tails and creating a lift file to rmap alignments for sequences with polyA tails.')
-parser.add_argument('configFile', metavar='configFile', type=str, help='config file of variables global to the pipeline')
+parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
 args = parser.parse_args()
        
 class PrepareSeqsForAlignment(object):
