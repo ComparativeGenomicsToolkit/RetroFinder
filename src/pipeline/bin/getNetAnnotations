@@ -8,6 +8,7 @@ myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
+from pycbio.sys.fileOps import *
 
 parser = argparse.ArgumentParser(description='Program to get net alignment annotation for input to pslPseudo which predicts retrogenes')
 parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
@@ -30,7 +31,7 @@ class NetAnnot(object):
         """Gets the net annotations where net is the variable name in 
            the config file"""
         # Create the annotations directory
-        makeDir(self.pslPseudoAnnotDir)
+        ensureDir(self.pslPseudoAnnotDir)
         # Get the net table name
         netTable = self.cfg.getRetroPredVar(net)
         # Get the name for the net annotations file
