@@ -18,8 +18,16 @@ def main():
     # Exception error if it does not. 
     if fileExists(args.configFile):
         cfgFile = args.configFile
+
+    cfg = ParseConfig(cfgFile)
     # Run the scripts that get repeats, nets and genesets annotations that
     # are input for pslPseudo
-    subprocess.check_call(["getRepeatAnnotations", cfgFile)]
-    subprocess.check_call(["getNetAnnotations", cfgFile)]
-    subprocess.check_call(["getGeneAnnotations", cfgFile)]
+    scriptDir = cfg.getGenVar('scriptDir')
+    getRep = createPath(scriptDir, "getRepeatAnnotations")
+    getNet = createPath(scriptDir, "getNetAnnotations")
+    getGene = createPath(scriptDir, "getGeneAnnotations")
+    subprocess.check_call([getRep, cfgFile])
+    subprocess.check_call([getNet, cfgFile])
+    subprocess.check_call([getGene, cfgFile])
+
+main()
