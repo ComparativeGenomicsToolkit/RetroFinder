@@ -1,6 +1,7 @@
 import os, sys, re, subprocess
 import time
 from commonOps import *
+from pycbio.sys.fileOps import *
 
 class SeqAndAlignData(object):
     def __init__(self, seqType, alignTable, cfgParse, isGenePred=False, ensembl=False, ensDb=None):
@@ -39,7 +40,7 @@ class SeqAndAlignData(object):
         gbR = "-gbRoot=" + self.cfg.getGenVar('gbRoot')
 
         # Create the output directory for this program 
-        makeDir(self.cfg.getTempDir())
+        ensureDir(self.cfg.getTempDir())
         outFile = createPath(self.tempDir, self.cfg.getSeqFile(self.seqType))
         # Program to get GenBank mRNa and RefSeq sequences
         gbSeqProg = self.cfg.getProgVar('genbankSeqProg')
@@ -48,7 +49,7 @@ class SeqAndAlignData(object):
     def getEnsemblSeqs(self, outFile):
         """Gets the Ensembl sequences"""
         # Create the output directory for this program 
-        makeDir(self.cfg.getTempDir())  
+        ensureDir(self.cfg.getTempDir())  
         org = getOrganismName(self.database)
         dir = self.cfgParse.getGenVar('scriptDir')
         seqProg = self.cfg.getProgVar('ensemblSeqProg')
@@ -59,14 +60,14 @@ class SeqAndAlignData(object):
     def getSeqsFromGenePred(self, file, outFile):
         """Gets the sequences from a table or from a file in genePred format"""
         # Create the output directory for this program 
-        makeDir(self.cfg.getTempDir()) 
+        ensureDir(self.cfg.getTempDir()) 
         # table can be a table or a file
         subprocess.check_call(["getRnaPred",self.database,file, "all", outFile])
 
     def __getPslAlignmentsFromTable(self, alignTable):
         """Gets PSL alignments from the database""" 
         # Create the output directory for this data 
-        makeDir(self.cfg.getTempDir())
+        ensureDir(self.cfg.getTempDir())
         pslSelect = "select matches,misMatches,repMatches,nCount,qNumInsert,qBaseInsert,tNumInsert,tBaseInsert,strand,qName,qSize,qStart,qEnd,tName,tSize,tStart,tEnd,blockCount,blockSizes,qStarts,tStarts from " + alignTable + ";"
         outFile = createPath(self.tempDir, self.cfg.getPslFile(self.seqType))
         with open(outFile, "w") as fh:
@@ -76,7 +77,7 @@ class SeqAndAlignData(object):
     def __getGenePredAnnots(self, gpTable):
         """Gets genePred annotations from the database"""
         # Create the output directory for this data 
-        makeDir(self.cfg.getTempDir())
+        ensureDir(self.cfg.getTempDir())
         genePredSelect = "select name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds from " + gpTable + ";"
         with open(self.gpFile, "w") as fh:
             queryDb(genePredSelect, self.database, fh)
@@ -91,7 +92,7 @@ class SeqAndAlignData(object):
     
     def __convertGenePredToPsl(self):
         """Converts annotation data from genePred to PSL format."""
-        makeDir(self.cfg.getTempDir()) 
+        ensureDir(self.cfg.getTempDir()) 
         subprocess.check_call(["genePredToPsl", self.cfg.chromFile, \
             self.gpFile, self.cfg.getPslFile(self.seqType)])
    
@@ -103,7 +104,7 @@ class SeqAndAlignData(object):
 
     def __getGenePredCdsRegions(self):
         """Gets the CDS region for a genePred annotation table/file"""
-        makeDir(self.cfg.getTempDir())
+        ensureDir(self.cfg.getTempDir())
         scripts = self.cfg.getGenVar('scriptDir')
         # Get CDS regions for sequences with 1-based start coordinates
         getCds = self.cfg.createPath(scripts, "getGenePredCdsRegions")
@@ -111,7 +112,7 @@ class SeqAndAlignData(object):
         
     def __getCdsRegions(self):
         """Gets the CDS regions either for GenBank mRNAs and RefSeqs"""
-        makeDir(self.cfg.getTempDir()) 
+        ensureDir(self.cfg.getTempDir()) 
         cdsSelStr = "select acc, version, name, type from " + self.alignTable \
             + " as a, gbCdnaInfo as g, cds as c where qName = acc and \
             cds = c.id"
