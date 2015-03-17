@@ -27,7 +27,7 @@ def main():
     tempDir = cfg.getTempDir()
     # make this directory. On the cluster the temp directory
     # is different than on hgwdev.
-    #makeDir(tempDir)
+    ensureDir(tempDir)
     # get lastz program path
     lastzProg = cfg.getProgVar('alignProg')
     # get alignment parameter values, values chosen for 
