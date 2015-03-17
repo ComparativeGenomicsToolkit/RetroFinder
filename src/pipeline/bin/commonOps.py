@@ -52,13 +52,14 @@ def createFilePath(dir, name, suffix):
     """Creates the file name and path for output files."""
     return dir + "/" + name + "." + suffix
 
-def makeFileList(path, fileExt):
+def makeFileList(path, fileExt, keepPath=True):
     """Returns a list of full paths for files ending in file extension"""
     # return [fn for fn in os.listdir(path) if any([fn.endswith(fileExt)])]
     list = []
     for fn in os.listdir(path): 
         if fn.endswith(fileExt): 
-            fn = path + "/" + fn
+            if keepPath:
+                fn = path + "/" + fn
             list.append(fn)
     return list
 
