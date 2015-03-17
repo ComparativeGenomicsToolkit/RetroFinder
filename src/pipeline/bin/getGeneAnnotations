@@ -8,6 +8,7 @@ myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
+from pycbio.sys.fileOps import *
 
 parser = argparse.ArgumentParser(description='Program to get gene annotation for input to pslPseudo which predicts retrogenes')
 parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
@@ -30,14 +31,14 @@ class GeneAnnot(object):
         """Gets the geneset annotations where geneset is the variable name in 
            the config file"""
         # Create the annotations directory
-        makeDir(self.pslPseudoAnnotDir)
+        ensureDir(self.pslPseudoAnnotDir)
         # Get the geneset table name
         genesetTable = self.cfg.getRetroPredVar(geneset)
         # Get the name for the geneset annotations file and add in the 
         # geneset variable name to ensure file name uniqueness as if 
         # only 1 or 2 genesets available, these are repeated
         # pslPseudo requires three genesets as input
-        genesetFile = self.cfg.getRetroPredGene,FullPath(geneset)
+        genesetFile = self.cfg.getRetroPredGeneFullPath(geneset)
         # Get annotations from the database
         genesetQuery= "select name, chrom, strand, txStart, txEnd, cdsStart, \
             cdsEnd, exonCount, exonStarts, exonEnds from " + genesetTable \
