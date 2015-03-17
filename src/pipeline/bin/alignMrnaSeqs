@@ -10,6 +10,7 @@ from commonOps import *
 from ParseConfig import ParseConfig
 from TabFile import TabFileReader
 from Cluster import ClusterJobs
+from pycbio.sys.fileOps import *
 
 parser = argparse.ArgumentParser(description='Program to align mRNA sequences (without polyA tails) to the genome')
 parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
@@ -47,16 +48,16 @@ class AlignMrnas(object):
            directory and returns a tuple of directory names."""
         # Need a directory for split mRNAs file (split), run (for the 
         # alignment run setup and alignOut for alignment outpuit
-        # makeDir() using mkdir -p so all subdirectories in the path 
+        # ensureDir() using mkdir -p so all subdirectories in the path 
         # will be created if they don't exist already. 
         splitDir = createPath(self.alignDir + "split")
         runDir = createPath(self.alignDir + "run")
         alignOutDir = createPath(self.alignDir, \
             self.cfg.getAlignVar('alignOutput'))
         print "dirs: %s %s %s\n" % (splitDir, runDir, alignOutDir)
-        makeDir(splitDir)
-        makeDir(runDir)
-        makeDir(alignOutDir)
+        ensureDir(splitDir)
+        ensureDir(runDir)
+        ensureDir(alignOutDir)
         return (splitDir, runDir, alignOutDir)
 
     def __splitMrnas(self):
@@ -97,7 +98,7 @@ class AlignMrnas(object):
             for line in chromSizes:
                 fh.write(line[0] + "\n")
                 # Create chromosome directory in alignment output directory
-                makeDir(createPath(self.alignDirs[2], line[0]))
+                ensureDir(createPath(self.alignDirs[2], line[0]))
         return chromListFile
 
     def createJobListAndRun(self):
@@ -116,7 +117,6 @@ class AlignMrnas(object):
         # This template creates jobs to run the runLastz script
         lastzScript = createPath(self.cfg.getGenVar('scriptDir'), "runLastz")
         genomeTwoBit = self.cfg.getGenVar('genomeTwoBit')
-        #mrnaNoPolyALen = createPath(self.cfg.getSeqDir(), "mrnaTrim.len")
         templateStr = lastzScript + " " + self.cfgFile + " " + genomeTwoBit + \
             "/$(path1) $(path2) {check out line " + self.alignDirs[2] + \
             "/$(root1)/$(root2).psl} " + self.alignDirs[2] + \
