@@ -9,6 +9,7 @@ sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
 from SeqAndAlignData import SeqAndAlignData
+from pycbio.sys.fileOps import *
 
 parser = argparse.ArgumentParser(description='Program to get sequence and associated data for RetroFinder')
 parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
@@ -49,7 +50,7 @@ class getSequenceData(object):
     def getChromSizes(self):
         """Get chromosome sizes"""
         print "Getting chrom sizes and making root dir", self.rootDir
-        makeDir(self.rootDir)
+        ensureDir(self.rootDir)
         chromStr = "select chrom, size from chromInfo;"
         print "Query", chromStr
         print "Database", self.database
@@ -63,7 +64,7 @@ class getSequenceData(object):
         # file names for concatenated files
         allPrefix = 'allSeqs'
         # Make the sequences data directory:
-        makeDir(self.cfgParse.getSeqDir())
+        ensureDir(self.cfgParse.getSeqDir())
         # Get temp dir name
         temp = self.cfgParse.getTempDir()
         faList = makeFileList(temp, "fa")
@@ -111,8 +112,10 @@ class getSequenceData(object):
     def moveFilesToSeqDir(self):
         """Move files from temporary directory to the sequence data directory 
            if they are needed later."""
-        makeDir(self.seqDir)
         temp = self.cfgParse.getTempDir()
+        # Make the sequences and temp directories if they don't exist already
+        ensureDir(self.seqDir)
+        ensureDir(temp)
         # Keep all FASTA sequence files
         seqFiles = createPath(temp, "*fa")
         moveMultFiles(seqFiles, self.seqDir)
