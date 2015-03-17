@@ -135,19 +135,16 @@ class ParseConfig:
         """Returns full path to Repeats file in the pslPseudo input 
            annotations directory"""
         # repeat is the variable name for the repeats table in the config file
-        repeatTable = self.getRetroPredVar(repeat)
-        return self.getRetroPredFullPath(repeatTable, "bed")
+        return self.getRetroPredFullPath(repeat, "bed")
      
     def getRetroPredNetFullPath(self, net):
         """Returns full path to Nets file in the pslPseudo input 
            annotations directory"""
         # net is the variable name for the net table in the config file
-        netTable = self.getRetroPredVar(net)
-        return self.getRetroPredFullPath(netTable, "txt")
+        return self.getRetroPredFullPath(net, "txt")
     
-    def getRetroPredGeneFullPath(self, gene):
+    def getRetroPredGeneFullPath(self, geneset):
         """Returns full path to Geneset file in the pslPseudo input 
            annotations directory"""
-        # gene is the variable name for the geneset table in the config file
-        geneTable = self.getRetroPredVar(gene)
-        return self.getRetroPredFullPath(geneTable, "gp")
+        # geneset is the variable name for the geneset table in the config file
+        return self.getRetroPredFullPath(geneset, "gp")
