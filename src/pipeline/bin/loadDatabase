@@ -1,0 +1,131 @@
+#!/hive/groups/gencode/local/bin/python
+
+from __future__ import with_statement
+
+import sys, os, subprocess
+import argparse
+myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
+sys.path.append(myBinDir + "/../lib")
+from commonOps import *
+from ParseConfig import ParseConfig
+from pycbio.sys.fileOps import *
+
+parser = argparse.ArgumentParser(description='Program to get repeats and net alignment annotation data for input to pslPseudo which predicts retrogenes')
+parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
+args = parser.parse_args()
+       
+class loadDatabase(object):
+    def __init__(self, args):
+        # Config file assignment, check it exists first, exits with an 
+        # Exception error if it does not. 
+        if fileExists(args.configFile):
+            self.cfgFile = args.configFile
+        # Read and parse config file
+        self.cfgParse = ParseConfig(args.configFile)
+        # Get UCSC assembly database from config file
+        self.database = self.cfgParse.db
+        # Get the root run directory
+        self.rootDir = self.cfgParse.rootRunDir
+ 
+    def loadTables(self):
+        """Get RepeatMasker annotations"""
+        print "Getting chrom sizes and making root dir", self.rootDir
+        ensureDir(self.rootDir)
+        chromStr = "select chrom, size from chromInfo;"
+        print "Query", chromStr
+        print "Database", self.database
+        with open(self.cfgParse.chromFile, "w") as fh:
+            queryDb(chromStr, self.database, fh)
+        fh.close()
+ 
+    def linkSeqFilesToGbdb(self):
+        """Copies sequence data files to the genomes bed directory and
+           symlinks then to gbdb"""
+
+    def catSeqAndAlignDataFiles(self):
+        """Cats together the FASTA, CDS and PSL files created"""
+        # Use the variable name in the config file to retrieve the prefix for 
+        # file names for concatenated files
+        allPrefix = 'allSeqs'
+        # Make the sequences data directory:
+        ensureDir(self.cfgParse.getSeqDir())
+        # Get temp dir name
+        temp = self.cfgParse.getTempDir()
+        faList = makeFileList(temp, "fa")
+        catFiles(self.cfgParse.getSeqFileFullPath(allPrefix), faList)
+        pslList = makeFileList(temp, "psl")
+        catFiles(self.cfgParse.getPslFileFullPath(allPrefix), pslList)
+        cdsList = makeFileList(temp, "cds.tab")
+        print "CDS list is", cdsList
+        catFiles(self.cfgParse.getCdsFileFullPath(allPrefix), cdsList)
+
+    def getMrnaSeqData(self, seqProg, cfgFile):
+        """Gets Genbank or RefSeq mRNA sequences and related data""" 
+        dir = self.cfgParse.getGenVar('scriptDir')
+        getSeqProg = createPath(dir, seqProg)
+        print "getSeqProg", getSeqProg
+        subprocess.check_call([getSeqProg, cfgFile])
+        
+    def getEnsSeqData(self, seqProg):
+        """Gets Ensembl mRNA sequences and related data"""
+        dir = self.cfgParse.getGenVar('scriptDir')
+        seqProg = self.cfgParse.getProgVar(seqProg)
+        getEnsSeqProg = createPath(dir, seqProg)
+        subprocess.check_call([getEnsSeqProg, self.cfgFile, self.ensDb])
+
+    def getCurrentDbEnsemblVersion(self):
+        """Gets the current Ensembl version loaded into the database"""
+        queryStr = "select max(version) from trackVersion where db = " + "'" \
+            + self.database + "';"
+        ensRel = getDbQueryResult(sqlCmd, 'hgFixed')
+        print "Ensembl release is %s here." % (ensRel[0:-1])
+        # Ensembl release value is a string so cast to an integer
+        return int(ensRel)
+    
+    def checkEnsemblVersion(self, ensVerOption):
+        """Checks the current UCSC database Ensembl version against the 
+           current one at Ensembl from which sequences were retrieved."""
+        # NOTE: later write program to check the version being used at
+        # Ensembl or could check UCSC first then connect to correct archive. 
+        # For now fail if versions are not the same: 
+        if self.ensVer != ensVerOption:
+            raise AssertionError, "Ensembl version in database does \
+                not match that provided by user"
+        print "Ensembl versions match"
+
+    def moveFilesToSeqDir(self):
+        """Move files from temporary directory to the sequence data directory 
+           if they are needed later."""
+        ensureDir(self.seqDir)
+        temp = self.cfgParse.getTempDir()
+        # Keep all FASTA sequence files
+        seqFiles = createPath(temp, "*fa")
+        moveMultFiles(seqFiles, self.seqDir)
+        mrnaSeqType = self.cfgParse.getSeqVar('mrna')
+        mrnaPsl = createPath(temp, self.cfgParse.getPslFile(mrnaSeqType))
+        moveFile(mrnaPsl, self.seqDir)
+        # Also move genePred file if present
+        if self.ensDb != None:
+            seqType = self.cfgParse.getSeqVar('ensembl')
+            gpFile = createPath(temp, self.cfgParse.getGenePredFile(seqType))
+            moveFile(gpFile, self.seqDir)
+
+    def makeAllSeqsTwoBit(self):
+        """Creates a twoBit file from the mrna file containing all mRNA 
+           transcripts e.g. GenBank mRNAs, RefSeq and optionally Ensembl or
+           other transcripts"""
+        allMrna = self.cfgParse.getSeqFileFullPath('allSeqs')
+        twoBit = createPath(self.seqDir, self.cfgParse.getSeqVar('allTwoBit'))
+        subprocess.check_call(["faToTwoBit", allMrna, twoBit])
+        # Remove temporary directory
+#`    self.__cleanUpTempDir()
+    
+    def __cleanUpTempDir(self):
+        """Removes the temp directory"""
+        removeDir(self.cfgParse.getTempDir())
+
+getSeqsData = getSequenceData(args)
+getSeqsData.catSeqAndAlignDataFiles()
+getSeqsData.moveFilesToSeqDir()
+getSeqsData.makeAllSeqsTwoBit()
+print "Organism name is %s here" % (getOrganismName(getSeqsData.database))
