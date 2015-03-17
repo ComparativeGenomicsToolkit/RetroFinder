@@ -8,6 +8,7 @@ myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
+from pycbio.sys.fileOps import *
 
 parser = argparse.ArgumentParser(description='Program to get repeat annotation for input to pslPseudo which predicts retrogenes')
 parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
@@ -32,9 +33,9 @@ class RepeatAnnot(object):
 
     def getRepeatMaskAnnot(self):
         # Create the annotations directory
-        makeDir(self.pslPseudoAnnotDir)
+        ensureDir(self.pslPseudoAnnotDir)
         # Get the name for the RepeatMasker annotations file
-        rmskFile = self.cfg.getRetroPredRepeatsFullPath('repeatMaskTable')
+        rmskFile = self.cfg.getRetroPredRepeatFullPath('repeatMaskTable')
         # Get annotations from the database
         rmskQuery= "select genoName, genoStart, genoEnd from " + self.rmskTable 
         with open(rmskFile, "w") as fh:
@@ -44,9 +45,9 @@ class RepeatAnnot(object):
     def getSimpleRepeatsAnnot(self):
         """Get Simple Repeats annotations found by Tandem Repeat Finder (TRF)"""
         # Create the annotations directory
-        makeDir(self.pslPseudoAnnotDir)
+        ensureDir(self.pslPseudoAnnotDir)
         # Get the name for the Simple Repeats annotations file
-        simpleRepsFile = self.cfg.getRetroPredRepeatsFullPath('trfTable')
+        simpleRepsFile = self.cfg.getRetroPredRepeatFullPath('trfTable')
         # Get annotations from the database
         simpleRepsQuery= "select chrom, chromStart, chromEnd from " \
             + self.simpleRepsTable
