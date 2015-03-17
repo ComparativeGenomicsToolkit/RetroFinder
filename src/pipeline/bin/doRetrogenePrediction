@@ -3,11 +3,13 @@
 from __future__ import with_statement
 
 import sys, os, subprocess
+import re
 import argparse
 myBinDir = os.path.normpath(os.path.dirname(sys.argv[0]))
 sys.path.append(myBinDir + "/../lib")
 from commonOps import *
 from ParseConfig import ParseConfig
+from Cluster import ClusterJobs
 from pycbio.sys.fileOps import *
 
 parser = argparse.ArgumentParser(description='Program to run pslPseudo which predicts retrogenes and is the core program of RetroFinder')
@@ -19,7 +21,8 @@ def doRetroGenePred():
         # Config file assignment, check it exists first, exits with an 
         # Exception error if it does not. 
         if fileExists(args.configFile):
-            cfgFile = args.configFile
+            self.cfgFile = args.configFile
+        self.cfg = ParseConfig(self.cfgFile)
         # Get the pslPseudo annotations directory
         self.pslPseudoAnnotDir = self.cfg.getRetroPredAnnotDir()
         # Creates the run and output directories for pslPseudo, returns
@@ -31,8 +34,8 @@ def doRetroGenePred():
         self.uniqQueryNamePsl = self.__uniqQueryNames()
         # Directory of split PSLs, PSLs are split
         self.splitPslDir = self.__splitPsl()
-        # List of PSL files in split directory
-        self.pslList = self.__getPslList()
+        # List of PSL numbers for files in split directory
+        self.pslNumList = self.__getPslNumList()
        
     def __createPslPseudoDirs(self):
         """Creates the directories for inputs and outputs to pslPseudo."""
@@ -52,7 +55,7 @@ def doRetroGenePred():
            Assumes the PSL file is sorted by qName"""
         uniqQueryNamePsl = self.lastzMrnaPsl + ".uniq.psl" 
         with open(uniqQueryNamePsl, "w") as fh:
-            subprocess.check_call(["pslQueryUniq", self.lastzMrnaPsl], \
+            subprocess.check_call(["pslQNameUniq", self.lastzMrnaPsl], \
                 stdout=fh)
         return uniqQueryNamePsl
 
@@ -68,7 +71,40 @@ def doRetroGenePred():
             self.uniqQueryNamePsl, "-chunkSize=10000"])
         return splitDir
 
-    def __getPslList(self):
-        """Get list of PSL files in the split PSL directory"""
+    def __getPslNumList(self):
+        """Get list of PSL file numbers from the split PSL directory. 
+           Each file has a number e.g. tmp102.psl is 102."""
         pslList = makeFileList(self.splitPslDir)
-        pslListFile = createPath(self.pslPseudoDirs[0], 
+        pslNumListFile = createPath(self.pslPseudoDirs[0], "list")
+        nFh = open(pslNumListFile, "w")
+        for f in pslList: 
+            # get just the file name without the extension 
+            fileName = getFileNameNoExt(f) 
+            # Then remove the "tmp" suffix and write the number to a file
+            i = re.match(r'^tmp(\d+)', fileName)
+            if i: 
+                fh.write(i.group(1) + "\n")
+        nFh.close()
+        return pslNumListFile
+
+    def createRetroPredJobListAndRun(self):
+        """Creates the job list to call the script that runs pslPseudo to do the 
+           retrogene scoring and collect information associated with retrogene 
+           predictions"""
+        # Create ClusterJobs object to hold information about the cluster run
+        # passing in config file, run directory, template and the lists to use
+        # for substitution. There is only one list so single is the second list parameter.
+        clusterJobs = ClusterJobs(self.cfg, self.pslPseudoDirs[0], \
+            self.__templateText(), self.pslNumList, "single")
+        # Create job list and run
+        clusterJobs.runJobs()
+  
+    def __templateText(self):
+        """Returns main string for template"""
+        runPslPseudo = createPath(self.cfg.getGenVar('scriptDir'), \
+            "runPslPseudo")
+        templateStr = runPslPseudo + " $(path1) " + self.cfgFile + " " \
+            + self.splitPslDir + " " + self.pslPseudoDirs[1] + " " \
+            + self.pslPseudoDirs[4] + " " + self.pslPseudoDirs[3] + \
+            + "{check out exists " + createPath(self.pslPseudoDirs[1], pseudoGeneLink$(path1).bed) + "}"
+  
