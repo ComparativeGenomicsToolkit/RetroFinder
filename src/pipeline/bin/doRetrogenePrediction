@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Program to run pslPseudo which pre
 parser.add_argument('configFile', metavar='configFile', type=str, help='full path of config file of variables global to the pipeline')
 args = parser.parse_args()
        
-def doRetroGenePred():
+class RetroGenePred():
     def __init__(self, args):
         # Config file assignment, check it exists first, exits with an 
         # Exception error if it does not. 
@@ -53,9 +53,13 @@ def doRetroGenePred():
     def __uniqQueryNames(self):
         """Create unique qNames by adding -1,-2 as suffixes. 
            Assumes the PSL file is sorted by qName"""
-        uniqQueryNamePsl = self.lastzMrnaPsl + ".uniq.psl" 
+        uniqQueryNamePsl = self.lastzMrnaPsl + ".uniq.psl"
+        print "uniqQueryNamePsl", uniqQueryNamePsl
+        print "lastz PSL", self.lastzMrnaPsl
+        # Add path to script to make unique qNames
+        qNameUniq = createPath(self.cfg.getGenVar('scriptDir'), "pslQNameUniq") 
         with open(uniqQueryNamePsl, "w") as fh:
-            subprocess.check_call(["pslQNameUniq", self.lastzMrnaPsl], \
+            subprocess.check_call([qNameUniq, self.lastzMrnaPsl], \
                 stdout=fh)
         return uniqQueryNamePsl
 
@@ -67,7 +71,7 @@ def doRetroGenePred():
         splitDir = createPath(self.pslPseudoAnnotDir, "pslSplit")
         ensureDir(splitDir)
         pslSplitProg = createPath(self.cfg.getGenVar('progBinDir'), "pslSplit")
-        subprocess([pslSplitProg, "nohead", self.splitPslDir, \
+        subprocess([pslSplitProg, "nohead", splitDir, \
             self.uniqQueryNamePsl, "-chunkSize=10000"])
         return splitDir
 
@@ -93,7 +97,8 @@ def doRetroGenePred():
            predictions"""
         # Create ClusterJobs object to hold information about the cluster run
         # passing in config file, run directory, template and the lists to use
-        # for substitution. There is only one list so single is the second list parameter.
+        # for substitution. There is only one list so single is the second 
+        # list parameter.
         clusterJobs = ClusterJobs(self.cfg, self.pslPseudoDirs[0], \
             self.__templateText(), self.pslNumList, "single")
         # Create job list and run
@@ -106,5 +111,8 @@ def doRetroGenePred():
         templateStr = runPslPseudo + " $(path1) " + self.cfgFile + " " \
             + self.splitPslDir + " " + self.pslPseudoDirs[1] + " " \
             + self.pslPseudoDirs[4] + " " + self.pslPseudoDirs[3] + \
-            + "{check out exists " + createPath(self.pslPseudoDirs[1], pseudoGeneLink$(path1).bed) + "}"
-  
+            + "{check out exists " + createPath(self.pslPseudoDirs[1], \
+            "pseudoGeneLink$(path1).bed") + "}"
+
+retroPred = RetroGenePred(args)
+retroPred.createRetroPredJobListAndRun()  
