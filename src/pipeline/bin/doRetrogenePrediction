@@ -45,6 +45,7 @@ class RetroGenePred():
         logDir = createPath(self.pslPseudoAnnotDir, "log")
         outDir = createPath(self.pslPseudoAnnotDir, "out")
         # Creates directories and all subdirectories in path
+        ensureDir(runDir)
         ensureDir(axtDir)    
         ensureDir(logDir)    
         ensureDir(outDir)
@@ -71,14 +72,14 @@ class RetroGenePred():
         splitDir = createPath(self.pslPseudoAnnotDir, "pslSplit")
         ensureDir(splitDir)
         pslSplitProg = createPath(self.cfg.getGenVar('progBinDir'), "pslSplit")
-        subprocess([pslSplitProg, "nohead", splitDir, \
+        subprocess.check_call([pslSplitProg, "nohead", splitDir, \
             self.uniqQueryNamePsl, "-chunkSize=10000"])
         return splitDir
 
     def __getPslNumList(self):
         """Get list of PSL file numbers from the split PSL directory. 
            Each file has a number e.g. tmp102.psl is 102."""
-        pslList = makeFileList(self.splitPslDir)
+        pslList = makeFileList(self.splitPslDir, "psl")
         pslNumListFile = createPath(self.pslPseudoDirs[0], "list")
         nFh = open(pslNumListFile, "w")
         for f in pslList: 
@@ -87,7 +88,7 @@ class RetroGenePred():
             # Then remove the "tmp" suffix and write the number to a file
             i = re.match(r'^tmp(\d+)', fileName)
             if i: 
-                fh.write(i.group(1) + "\n")
+                nFh.write(i.group(1) + "\n")
         nFh.close()
         return pslNumListFile
 
