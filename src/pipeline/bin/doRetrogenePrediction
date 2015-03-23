@@ -109,11 +109,16 @@ class RetroGenePred():
         """Returns main string for template"""
         runPslPseudo = createPath(self.cfg.getGenVar('scriptDir'), \
             "runPslPseudo")
+        pseudoGeneLink = createPath(self.pslPseudoDirs[1], \
+            "pseudoGeneLink$(path1).bed")
         templateStr = runPslPseudo + " $(path1) " + self.cfgFile + " " \
+            + runPslPseudo + " $(path1) " + self.cfgFile + " " \
             + self.splitPslDir + " " + self.pslPseudoDirs[1] + " " \
-            + self.pslPseudoDirs[4] + " " + self.pslPseudoDirs[3] + \
-            + "{check out exists " + createPath(self.pslPseudoDirs[1], \
-            "pseudoGeneLink$(path1).bed") + "}"
-
+            + self.pslPseudoDirs[4] + " " + self.pslPseudoDirs[3] \
+            + "{check out exists " + pseudoGeneLink + " }"
+        
+        print "Template string type", type(templateStr)
+        return templateStr
+  
 retroPred = RetroGenePred(args)
 retroPred.createRetroPredJobListAndRun()  
