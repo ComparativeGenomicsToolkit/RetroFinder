@@ -93,9 +93,9 @@ class RetroGenePred():
         return pslNumListFile
 
     def createRetroPredJobListAndRun(self):
-        """Creates the job list to call the script that runs pslPseudo to do the 
-           retrogene scoring and collect information associated with retrogene 
-           predictions"""
+        """Creates the job list to call the script that runs pslPseudo to do 
+           the retrogene scoring and collect information associated with 
+           retrogene predictions"""
         # Create ClusterJobs object to hold information about the cluster run
         # passing in config file, run directory, template and the lists to use
         # for substitution. There is only one list so single is the second 
@@ -109,10 +109,12 @@ class RetroGenePred():
         """Returns main string for template"""
         runPslPseudo = createPath(self.cfg.getGenVar('scriptDir'), \
             "runPslPseudo")
+        print "runPslPseudo:", runPslPseudo
         pseudoGeneLink = createPath(self.pslPseudoDirs[1], \
             "pseudoGeneLink$(path1).bed")
-        templateStr = runPslPseudo + " $(path1) " + self.cfgFile + " " \
-            + runPslPseudo + " $(path1) " + self.cfgFile + " " \
+        print "pseudoGeneLink:", pseudoGeneLink
+
+        templateStr = runPslPseudo + " " + self.cfgFile + " $(path1) " \
             + self.splitPslDir + " " + self.pslPseudoDirs[1] + " " \
             + self.pslPseudoDirs[4] + " " + self.pslPseudoDirs[3] \
             + "{check out exists " + pseudoGeneLink + " }"
