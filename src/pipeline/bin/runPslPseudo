@@ -32,7 +32,7 @@ def main():
     pslPseudoProg = createPath(cfg.getGenVar('progBinDir'), "pslPseudo")
     # Get pslPseudo options
     options = cfg.getRetroPredVar('pslPseudoOptions')
-    cdsFileOption = "-cdsFile=" + cfg.getCdsFileFullPath('all')
+    cdsFileOption = "-cdsFile=" + cfg.getCdsFileFullPath('allSeqs')
     # Directory for annotations for input to pslPseudo
     annotsDir = cfg.getRetroPredAnnotDir() 
     # Genome 2bit file
