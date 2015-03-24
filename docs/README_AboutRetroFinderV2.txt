@@ -311,16 +311,8 @@ table. Sequences are in FASTA format and the files reside in the
 /hive/data/genomes/<db>/bed/mrnaBlastz.$VERSION directory.
 
 UCSCRETROINFO TABLE:
-The ucscRetroInfo$VERSION table (extended BED12 format) contains both the B
-ED format of the retrogene locations on the genome (from the lastz alignments 
+The ucscRetroInfo$VERSION table (extended BED12 format) contains both the 
+BED format of the retrogene locations on the genome (from the lastz alignments 
 of the parent genes to the genome) from the ucscRetroAli$VERSION table and 
-additional features of the retrogenes as listed below:
-
-columns 1-12: BED12 format annotation of retrogene on the genome
-column 13: retroExonCount - number of exons in retrogene
-column 14: axtScore - lastz score, parent mRNA aligned to pseudogene
-column 15: type - type of evidence (e.g. expressed weak noOrf)
-column 16: gChrom - chromosome name (parent gene)
-column 17: gStart - parent gene alignment start position
-column 18: gEnd - parent gene alignment end position
-
+additional features of the retrogenes as defined in the UCSC Genome Browser 
+kent source tree: kent/src/hg/lib/ucscRetroInfo.as
