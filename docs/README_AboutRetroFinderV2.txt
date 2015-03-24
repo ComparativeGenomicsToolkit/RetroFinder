@@ -224,7 +224,8 @@ Alignments of mRNA and EST to the genome of interest are used for expression
 analysis and those are normally extracted from the the UCSC mySQL database as BLAT alignments. Alternatively, the user can provide zipped PSL files called all_mrna.psl and estfilter.psl. In order to resolve the best match for ESTs and mRNAs that align to multiple locations in the genome, the pipeline performs a stricter scoring of these alignments using a 
 utility called pslCDnaGenomeMatch. It works by counting the number of alignments positions that differ between the two loci. If more than four positions in one loci score better than the other, that loci is picked as the location of the transcript. If there are fewer than four diagnostic positions, then the transcript is discarded.
 
-Each of the predicted retrogenes is classified as one of two types. Type one is exon shuffling or chimeric retrogene, which is defined as a retrogene overlapping at least one exon of a multi-exon gene. Type two is the set of retrogenes that are inserted into locations that previously had no gene. Next, the retros are aged; ancient retrogenes are defined as those that do not have a break in orthology as defined by the UCSC net alignments. Recent retrogenes are ones that were inserted after the speciation event. The main feature table is called ucscRetroInfo while ucscRetroAli contains the alignment to the parent gene. The version number (VERSION) in the DEF parameter file is appended to the table names.
+Each of the predicted retrogenes is classified as one of two types. Type one is exon shuffling or chimeric retrogene, which is defined as a retrogene overlapping at least one exon of a multi-exon gene. Type two is the set of retrogenes that are inserted into locations that previously had no gene. Next, the retros are aged; ancient retrogenes are defined as those that do not have a break in orthology as defined by the UCSC net alignments. Recent retrogenes are ones that were inserted after the speciation event. The main feature table is called ucscRetroInfo (extended BED format) while ucscRetroAli contains the alignment to the 
+parent gene. The version number (VERSION) in the DEF parameter file is appended to the table names.
 
 NOTE: Only steps 1-5 are required to generate data for Genome Browser tracks. 
 Step6 is an optional extra to generate additional data if it is required 
@@ -270,19 +271,56 @@ The following tables are loaded by the RetroFinder pipeline and each are
 suffixed with $VERSION as defined in the DEF file:
 
 ucscRetroAli - PSL lastz alignments of the predicted retrogenes
+
 ucscRetroCds - CDS regions for parent mRNAs from GenBank (or other source if
 input mRNAs are from another source). NOTE: not all GenBank mRNAs have a CDS
 defined and some will be wrong.  
-ucscRetroCount - 
-ucscRetroExpressed
-ucscRetroSeq 
-ucscRetroExtFile
-ucscRetroInfo
-ucscRetroOrtho
+
+ucscRetroCount - contains the parent gene symbol with >1 retrogene and the 
+count of the number of retrogenes for that parent gene, ordered by count in 
+ascending order. 
+
+ucscRetroExpressed - genePred format of retrogenes with evidence of expression
+ that do not overlap annotated multi-exonic genes and have no evidence of
+exon shuffling. 
+
+ucscRetroSeq - sequences tables listing the input mRNA sequence ids, a number
+referring to the sequences file in the ExtFile table (extFile column) and 
+the offset for the start of the sequence in that file.
+
+ucscRetroExtFile - lists the file ids (extFile field in the Seq table), file 
+names, file paths and file sizes for input sequences files.
+
+ucscRetroInfo - retrogene BED format of the PSL lastz alignments and other 
+information associated with each retrogene. See below for full description of 
+the fields in this table. 
+
+ucscRetroOrtho - for each retrogene id (name column) the nets are listed and
+the overlap for that net (this is the break in orthology score displayed in
+the "Break in Orthology" table on the Retrogenes track details page for each
+retrogene item in the track. For more details on how this score is calculated,
+see the netOverlap() function in the
+retroFinder/branches/version2/src/pslPseudo/pslPseudo.c source code.
 
 Tables are loaded by the ucscRetroStep5.sh script with the exception of the 
 Seq and ExtFile tables which are loaded by the ucscRetroStep2.sh script.
 Additionally the input mRNA sequences (e.g. GenBank mRNAs and RefSeq mRNAs), 
 aligned by lastz, are symlinked to the /gbdb/<db>/blastzRetro$VERSION
-directory. Sequences are in FASTA format and the files reside in the 
-/hive/data/genomes/<db>/bed/mrnaBlastz.$VERSION directory. 
+directory. These gbdb directory files are referenced in the ucscRetroExtFile
+table. Sequences are in FASTA format and the files reside in the 
+/hive/data/genomes/<db>/bed/mrnaBlastz.$VERSION directory.
+
+UCSCRETROINFO TABLE:
+The ucscRetroInfo$VERSION table (extended BED12 format) contains both the B
+ED format of the retrogene locations on the genome (from the lastz alignments 
+of the parent genes to the genome) from the ucscRetroAli$VERSION table and 
+additional features of the retrogenes as listed below:
+
+columns 1-12: BED12 format annotation of retrogene on the genome
+column 13: retroExonCount - number of exons in retrogene
+column 14: axtScore - lastz score, parent mRNA aligned to pseudogene
+column 15: type - type of evidence (e.g. expressed weak noOrf)
+column 16: gChrom - chromosome name (parent gene)
+column 17: gStart - parent gene alignment start position
+column 18: gEnd - parent gene alignment end position
+
