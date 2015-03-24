@@ -81,3 +81,15 @@ class loadDatabase(object):
        pseudoExp = "pseudoExpressed.gp"
        subprocess.check_call(["ldHgGene", self.database, tableName, \
            pseudoExp, "-genePredExt", "-predTab"])
+
+   def createCountTable(self):
+       """Table is created from other tables so should be created last. 
+          It lists parent gene symbols with more than one retrogene and 
+          provides a retrogene count for each parent in ascending order 
+          of the count."""
+       table = "ucscRetroCount" + self.version
+       infoTable = "ucscRetroInfo" + self.version
+       countQuery = "create table " + table + " select geneSymbol, count(*) \ 
+           as retroCount, avg(score), as averageScore from " + infoTable \
+           + ", kgXref where kgName = kgID and kgName <> 'noKg' and \
+           score > 650  group by geneSymbol having count(*) > 1 order by 2 desc"       queryDb(countQuery, self.database) 
