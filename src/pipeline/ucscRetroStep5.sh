@@ -166,7 +166,7 @@ awk '{printf("%s\t%s\t%s\n", $4,$1,$2)}' $OUTDIR/$TABLE.bed > $OUTDIR/pseudoGene
 # pseudoGeneLinkSelect.tab and therefore create the ucscRetroAli$VERSION.psl
 # PSL file that corresponds to records in ucscRetroInfo$VERSION.bed. 
 pslSelect -qtStart=$OUTDIR/pseudoGeneLinkSelect.tab $OUTDIR/pseudo.psl $OUTDIR/$ALIGN.psl
-# Get count of lines in ucscRetroAli$VERSION.pls and pseudoGeneLinkSelect.tab -
+# Get count of lines in ucscRetroAli$VERSION.psl and pseudoGeneLinkSelect.tab -
 # these should be the same. 
 wc -l $OUTDIR/$ALIGN.psl $OUTDIR/pseudoGeneLinkSelect.tab
 # Load the BED file ucscRetroInfo$VERSION.bed in to the temporary table, 
