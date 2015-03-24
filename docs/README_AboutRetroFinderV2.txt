@@ -1,4 +1,6 @@
 ﻿Instructions for running the RetroFinder pipeline
+RetroFinder predicts retrogenes including processed pseudogenes. 
+
 1.     Data Prerequisites
 In order to run the retroFinder pipeline, the following data files are 
 mandatory: 1) set of mRNA sequences (actual or predicted); 2) repeatMasker 
@@ -26,7 +28,7 @@ The RetroFinder pipeline obtains the required data from a combination of flat fi
 (http://www.genome.ucsc.edu/FAQ/FAQformat.html). The input parent gene annotation is obtained either from GenBank the user can provide TransMap annotations any other source of mRNA sequences. If mySQL is not available, the scripts can be easily modified to read 
 from flat files instead.
 
-<B>2.     Source code and bash scripts</B>
+2.     Source code and bash scripts
 Source code and scripts are in an SVN repository and can be obtained using this command: 
 svn co svn+ssh://riverdance.soe.ucsc.edu/projects/compbiousr/svnroot/hausslerlab/retroFinder. The scripts are in branches/version2/src/pipeline directory and 
 the C code programs are under retroFinder/branches/version2/src. There 
@@ -38,7 +40,7 @@ make clean
 make all
 The executables are in the retroFinder/branches/version2/bin directory.
 
-<B>3.     Setting up the Parameter file</B>
+3.     Setting up the Parameter file
 A default parameter file (DEF) is located in the scripts directory and this 
 should be passed as the first parameter to all of the step scripts in the 
 pipeline. Example DEF files are in the 
@@ -224,8 +226,9 @@ utility called pslCDnaGenomeMatch. It works by counting the number of alignments
 
 Each of the predicted retrogenes is classified as one of two types. Type one is exon shuffling or chimeric retrogene, which is defined as a retrogene overlapping at least one exon of a multi-exon gene. Type two is the set of retrogenes that are inserted into locations that previously had no gene. Next, the retros are aged; ancient retrogenes are defined as those that do not have a break in orthology as defined by the UCSC net alignments. Recent retrogenes are ones that were inserted after the speciation event. The main feature table is called ucscRetroInfo while ucscRetroAli contains the alignment to the parent gene. The version number (VERSION) in the DEF parameter file is appended to the table names.
 
-#MAKE A LIST OF FEATURES IN THE INFO TABLE
-
+NOTE: Only steps 1-5 are required to generate data for Genome Browser tracks. 
+Step6 is an optional extra to generate additional data if it is required 
+for analysis.
 
 10.    Step 6 - Web pages for displaying analysis results (optional step)
 The final step, ucscRetroStep6.sh, generates web pages for both duplicated 
@@ -243,15 +246,43 @@ through to each individual example.
 
 filterMrna.sh and filterEst.sh extract both mRNAs and ESTs alignments in PSL 
 format from the mySQL database for expression analysis. The parameter file 
-contains variable settings to define whether or not the alignment tables are split by chromosome. 
+contains variable settings to define whether or not the alignment tables are
+split by chromosome (recent assemblies are not). 
 The prerequisite data can be downloaded from the UCSC Genome 
 Browser website (See http://genome.ucsc.edu/FAQ/FAQdownloads.html#download1). 
 If there are no MYSQL tables for this data, those steps can be skipped and 
-gzipped flat files of the mRNA and EST alignment data in PSL format can be utilised by the scripts instead. 
-anlayseExpress.sh is run afterwards to 
-After running filterMrna.sh and filterEst.sh to prepare the 
-expression data and the optional ucscTransMap.sh, the six main scripts 
-ucscRetroStep1.sh through ucscRetroStep6.sh should be run in numerical order. 
-NOTE: Only steps 1-5 are required to generate data for Genome Browser tracks. 
-Step6 is an optional extra to generate additional data if it is required 
-for analysis.
+gzipped flat files of the mRNA and EST alignment data in PSL format can be 
+utilised by the scripts instead. 
+
+The scripts, filterMrna.sh and filterEst.sh, create sets of filtered BLAT 
+alignments of mRNAs and ESTs respectively by picking the best hits. The 
+analyseExpress.sh script then finds expressed retrogenes. Those retrogenes 
+with at least 5 supporting ESTs and 1 spliced mRNA that do not overlap an 
+annotated gene (multi-exonic genes from GENE1 and GENE2, typically UCSC Genes 
+(knownGene table) and RefSeqs (refGene table) and have no shuffle events are 
+selected.
+orfBatch is used to find an ORF and those with a good ORF (as found by 
+gene-check) are selected. The resulting genePred is loaded into the 
+ucscRetroExpressed$VERSION table.
+
+RETROFINDER DATABASE TABLES:
+The following tables are loaded by the RetroFinder pipeline and each are
+suffixed with $VERSION as defined in the DEF file:
+
+ucscRetroAli - PSL lastz alignments of the predicted retrogenes
+ucscRetroCds - CDS regions for parent mRNAs from GenBank (or other source if
+input mRNAs are from another source). NOTE: not all GenBank mRNAs have a CDS
+defined and some will be wrong.  
+ucscRetroCount - 
+ucscRetroExpressed
+ucscRetroSeq 
+ucscRetroExtFile
+ucscRetroInfo
+ucscRetroOrtho
+
+Tables are loaded by the ucscRetroStep5.sh script with the exception of the 
+Seq and ExtFile tables which are loaded by the ucscRetroStep2.sh script.
+Additionally the input mRNA sequences (e.g. GenBank mRNAs and RefSeq mRNAs), 
+aligned by lastz, are symlinked to the /gbdb/<db>/blastzRetro$VERSION
+directory. Sequences are in FASTA format and the files reside in the 
+/hive/data/genomes/<db>/bed/mrnaBlastz.$VERSION directory. 
