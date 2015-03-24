@@ -193,7 +193,7 @@ cp -p $OUTDIR/$ALIGN.psl $RETRODIR
 # Load the filtered ortho file, ortho.filter.txt, into a 
 # ucscRetroOrtho$VERSION table
 hgLoadSqlTab $DB ${ORTHOTABLE} $KENTDIR/src/hg/lib/ucscRetroOrtho.sql $OUTDIR/ortho.filter.txt
-# Create the ucscRetroCds$VERSION.tab file from cds.tag.gz extracting
+# Create the ucscRetroCds$VERSION.tab file from cds.tab.gz extracting
 # id.version and CDS range.
 zcat $OUTDIR/cds.tab.gz |tawk '{print $1"."$2,$3}' | sort | uniq > $OUTDIR/ucscRetroCds${VERSION}.tab 
 # Load the ucscRetroCds$VERSION.tab file into a ucscRetroCds$VERSION table. 
