@@ -25,7 +25,7 @@ def main():
     if fileExists(args.configFile):
         cfg = ParseConfig(args.configFile)
     # get temporary directory name and create that directory
-    tempDir = tempFileGet(prefix="retro")
+    tempDir = tmpFileGet(prefix="retro")
     ensureDir(tempDir)
 
     # Get pslPseudo program path
