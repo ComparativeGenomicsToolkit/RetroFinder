@@ -276,9 +276,10 @@ ucscRetroCds - CDS regions for parent mRNAs from GenBank (or other source if
 input mRNAs are from another source). NOTE: not all GenBank mRNAs have a CDS
 defined and some will be wrong.  
 
-ucscRetroCount - contains the parent gene symbol with >1 retrogene and the 
-count of the number of retrogenes for that parent gene, ordered by count in 
-ascending order. 
+ucscRetroCount - contains the parent gene symbol for parents with >1 retrogene 
+and the count of the number of retrogenes for that parent gene and their 
+average score, ordered by count in ascending order. NOTE: this is not required
+for the track, Robert asked for this table to be created.  
 
 ucscRetroExpressed - genePred format of retrogenes with evidence of expression
  that do not overlap annotated multi-exonic genes and have no evidence of
