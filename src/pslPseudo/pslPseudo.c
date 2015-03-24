@@ -976,7 +976,11 @@ if (nHash != NULL)
         percentBreak = 0;
     /* case 3: partial break, retro smaller than break in orthology */
     else if (maxlevel==1)
+        {
         percentBreak = (float)overlapSize[maxlevel]*100/(float)netSize[maxlevel];
+        verbose(4, "Partial orthology break, case 3: overlap size  %d / net %d percent break %d netSize[%d]=%d Retrogene id: %s\n",
+                overlapSize[maxlevel], netSize[maxlevel], percentBreak, maxlevel, netSize[maxlevel], psl->qName);
+        }
     /* sequence gaps should not be treated as breaks in orthology */
 //    else if (2*gapSize[maxlevel-1] < netSize[maxlevel])
 //        {
@@ -988,8 +992,7 @@ if (nHash != NULL)
     else if (gapSize[maxlevel-1] < 100000)
         {
         percentBreak = (float)retroSize*100/(float)gapSize[maxlevel-1];
-        verbose(4, "NET retro %d / gap %d  break %d netSize[%d]=%d\n",
-                retroSize, gapSize[maxlevel-1], percentBreak, maxlevel, netSize[maxlevel]);
+        verbose(4, "Case 4: Retro id: %s NET retro %d / gap %d  break %d netSize[%d]=%d\n", psl->qName, retroSize, gapSize[maxlevel-1], percentBreak, maxlevel, netSize[maxlevel]);
         if (percentBreak >= 130) percentBreak = 120;
         }
     /* case 5: for larger breaks in orthology (> 100k), don't use the usual ratio becuase it will be a very small number,
@@ -997,12 +1000,13 @@ if (nHash != NULL)
     else if (gapSize[maxlevel-1] >= 100000)
         {
         percentBreak = (float)overlapSize[maxlevel]*100/(float)retroSize;
+        verbose(4, "Case 5: Retro id: %s NET overlapSize %d / retro %d  break %d overlapSize[%d]=%d\n",
+                psl->qName, overlapSize[maxlevel], retroSize, percentBreak, maxlevel, overlapSize[maxlevel]);
         if (percentBreak > 100)
             percentBreak = 101;
         }
     verbose(3,"NET AFTER #score %s %s:%d maxlevel %d  overlap %d percentBreak=%d netSize[max] = %d \n",
-            psl->qName, psl->tName, psl->tStart+1, maxlevel, overlapSize[maxlevel] , 
-            percentBreak, netSize[maxlevel]);
+            psl->qName, psl->tName, psl->tStart+1, maxlevel, overlapSize[maxlevel], percentBreak, netSize[maxlevel]);
     //slFreeList(&elist);
     }
 assert (percentBreak < 130);
