@@ -1,4 +1,7 @@
 # STEPS FOR RUNNING THE RETROFINDER PIPELINE V2 - 2015-02-10, Rachel Harte
+# For more details on RetroFinder and what each step does, see 
+# retroFinder/trunk/docs/README_AboutRetroFinderV2.txt
+#
 # NOTE: do not use -skipBlatMerge which assumes this step was done manually
 # and generally it isn't.
 # Variables below are defined in the DEF file.
