@@ -11,6 +11,12 @@ RetroFinder (for Mark):
 - Fix links on RetroFinder track details page so makes appropriate links to parent gene if the parent annotation is not PSL but genePred or other format. 
 
 RetroFinder code (for Ian and Mark): 
+   - runPslPseudo (called by doRetrogenePrediction) is failing when
+     subprocess.check_call runs pslPseudo in main(). If I run only pslPseudo
+with only the options and no input files, then it is being called and the help
+message is being displayed - FIX
+   - split runPslPseudo into more functions as main() is too long
+   
    - Change getSequenceData options so can run with Ensembl only or other genePred annotation only. 
    - Alter code so that anywhere data is obtained by a mySQL query to the UCSC (or other) databases, it can also be provided in a file (for assemblies without a database at UCSC). 
 - Work on making nets from HAL alignments as input for RetroFinder. One problem found was that the retrogenes were missing in the alignments (CHECK THAT)
@@ -28,4 +34,3 @@ RetroFinder code (for Ian and Mark):
 retroFinder/branches/version2/src/pipeline/makeTrackDb.sh, that creates a file with the track and search entries. This can be appended by the script to the appropriate trackDb.ra file but it may be safer to give the user a message to check it and insert it manually and tell the user to do make in the trackDb directory to make the insertion into the trackDb table so the track is displayed in the Genome Browser.
 - loadDatabase script needs the addition of paths to data once decided where it will be. 
 -loadDatabase script - add paths to mySQL table definitions to the config file and read from there. These are in the Genome Browser kent source tree.
-- split runPslPseudo into more functions as main() is too long
