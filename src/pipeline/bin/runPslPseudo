@@ -31,7 +31,8 @@ def main():
     # Get pslPseudo program path
     pslPseudoProg = createPath(cfg.getGenVar('progBinDir'), "pslPseudo")
     # Get pslPseudo options
-    options = cfg.getRetroPredVar('pslPseudoOptions')
+    optionsStr = cfg.getRetroPredVar('pslPseudoOptions')
+    options = optionsStr.split(',')
     cdsFileOption = "-cdsFile=" + cfg.getCdsFileFullPath('allSeqs')
     # Directory for annotations for input to pslPseudo
     annotsDir = cfg.getRetroPredAnnotDir() 
@@ -49,11 +50,11 @@ def main():
     logFile = createPath(tempDir, "pseudo" + args.fileNum + ".log")
 
     # pslPseudo options and inputs
-    pslPseudoCmd = [pslPseudoProg, options, cdsFileOption, cfg.database, \
-        inputPsl, cfg.chromfile, \
+    pslPseudoCmd = [pslPseudoProg] + options + [cdsFileOption, cfg.db, \
+        inputPsl, cfg.chromFile, \
         cfg.getRetroPredRepeatFullPath('repeatMaskTable'), \
         cfg.getRetroPredNetFullPath('net1'), cfg.getRetroPredNetFullPath('net2'), \
-        cfg.getRetorPredRepeatFullPath('trfTable'), cfg.getPslFileFullPath('all'), \
+        cfg.getRetroPredRepeatFullPath('trfTable'), cfg.getPslFileFullPath('allSeqs'), \
         outMrnaPsl, outPsl, pseudoMrnaLink, pseudoAxt, genomeTwoBit, \
         cfg.getSeqVarFullPath('allTwoBit'), cfg.getRetroPredGeneFullPath('gene2'), \
         cfg.getRetroPredGeneFullPath('gene3'), \
