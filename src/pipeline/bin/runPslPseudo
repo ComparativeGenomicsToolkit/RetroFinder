@@ -32,6 +32,7 @@ def main():
     pslPseudoProg = createPath(cfg.getGenVar('progBinDir'), "pslPseudo")
     # Get pslPseudo options
     optionsStr = cfg.getRetroPredVar('pslPseudoOptions')
+    # Split up string to create a list to pass to subprocess.check_call
     options = optionsStr.split(',')
     cdsFileOption = "-cdsFile=" + cfg.getCdsFileFullPath('allSeqs')
     # Directory for annotations for input to pslPseudo
