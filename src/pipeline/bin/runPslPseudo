@@ -38,7 +38,7 @@ def main():
     # Genome 2bit file
     genomeTwoBit = cfg.getGenVar('genomeTwoBit')
     # Split directory PSL
-    inputPsl = createPath(inputPslDir, "tmp" + args.fileNum + ".psl")
+    inputPsl = createPath(args.inputPslDir, "tmp" + args.fileNum + ".psl")
     # Output files
     outMrnaPsl = createPath(tempDir, "mrna" + args.fileNum + ".psl") 
     outPsl = createPath(tempDir, "pseudo" + args.fileNum + ".psl") 
