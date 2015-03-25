@@ -1,0 +1,31 @@
+RETROFINDER TO DO LIST
+
+RetroFinder (for Mark):
+- Possibly remove blacklisted mRNAs from input - Mark suggests that these should be left in, I can see the argument for that.
+- Fix links on details pages for when a set of mRNAs other than GenBank or RefSeq are used for input to RetroFinder. The details page shows a link to the parent gene location and the PSL alignment but this is assuming the parent gene tables are in PSL format. So need to fix this to figure out the format of the parent gene annotation and then add a link to the browser position for the parent gene with no alignment link unless the parent gene table is in PSL format.
+- Re-run RetroFinder for human using GENCODE as input
+   - for certain gene families, use this to get UTR retrogenes, not all Genbank mRNAs have the CDS annotated so using GENCODE would allow this to be done, work with Yale and HAVANA on this. 
+   - compare RetroFinder output to lncRNAs and see if lncRNA pseudogenes are being predicted. How to define such pseudogenes? Work with Yale and HAVANA looking at examples and use their feedback to refine the pipeline. 
+- Use a gold standard set such as HAVANA processed pseudogenes to determine score threshold for RetroFinder for mouse and human. Robert did this previously but it was a long time ago and the annotations have improved a lot since then. This is a bit circular as RetroFinder feeds into HAVANA but the HAVANA pseudogene annotations have been inspected manually.
+- Find pseudogene orthologs using UCSC comparative data
+- Fix links on RetroFinder track details page so makes appropriate links to parent gene if the parent annotation is not PSL but genePred or other format. 
+
+RetroFinder code (for Ian and Mark): 
+   - Change getSequenceData options so can run with Ensembl only or other genePred annotation only. 
+   - Alter code so that anywhere data is obtained by a mySQL query to the UCSC (or other) databases, it can also be provided in a file (for assemblies without a database at UCSC). 
+- Work on making nets from HAL alignments as input for RetroFinder. One problem found was that the retrogenes were missing in the alignments (CHECK THAT)
+- Figure out what code in the original RetroFinder pipeline is not needed. some files were created for testing or analysis purposes and are not used again. ucscRetroStep6.sh can be omitted in the refactoring. 
+- Test sets for refactored RetroFinder pipeline
+- Fix pslPseudo so it does not requires 3 genesets and can handle having 0-3 genesets as input. Also fix the RetroFinder code to fetch data for the specified number of genesets from the config file.
+- Create a top level script that creates the chrom sizes file.
+- Compare this RetroFinder output to original RetroFinder's output on the same data
+- Create set of unit tests for testing programs, pslPseudo needs this too. 
+- Write code to do ucscRetroStep4.sh, ucscRetroStep5.sh, filterMrna.sh, filterEst.sh and analyseExpress.sh
+- Modify pslCDnaGenomeMatch.c to remove id version numbers internally rather than having to remove them from input file. This program is used by filterMrna.sh and its source is in this is in the kent source tree. kent/src/hg/pslCDnaGenomeMatch/pslCDnaGenomeMatch.c
+- chaining, filtering and chainToPsl step (doChaining() function) in filterAndChainMrnaAlignments takes a long time. Could speed it up by running jobs on the cluster in parallel. 
+- Add support for checking if data already exists if a step needs to be re-run. Perhaps have a master script that runs the other scripts and can check if each step has been completed and then start from the appropriate step or let the user select to start the pipeline from a specific step. 
+- loadDatabase script should also create the trackDb entry. There is a shell script,
+retroFinder/branches/version2/src/pipeline/makeTrackDb.sh, that creates a file with the track and search entries. This can be appended by the script to the appropriate trackDb.ra file but it may be safer to give the user a message to check it and insert it manually and tell the user to do make in the trackDb directory to make the insertion into the trackDb table so the track is displayed in the Genome Browser.
+- loadDatabase script needs the addition of paths to data once decided where it will be. 
+-loadDatabase script - add paths to mySQL table definitions to the config file and read from there. These are in the Genome Browser kent source tree.
+- split runPslPseudo into more functions as main() is too long
