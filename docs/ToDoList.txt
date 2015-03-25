@@ -11,22 +11,21 @@ RetroFinder (for Mark):
 - Fix links on RetroFinder track details page so makes appropriate links to parent gene if the parent annotation is not PSL but genePred or other format. 
 
 RetroFinder code (for Ian and Mark): 
-   - runPslPseudo (called by doRetrogenePrediction) is failing when
+   - FIX FIRST: runPslPseudo (called by doRetrogenePrediction) is failing when
      subprocess.check_call runs pslPseudo in main(). If I run only pslPseudo
 with only the options and no input files, then it is being called and the help
-message is being displayed - FIX
+message is being displayed 
    - split runPslPseudo into more functions as main() is too long
-   
+   - Fix pslPseudo so it does not requires 3 genesets and can handle having 0-3 genesets as input. Also fix the RetroFinder code to fetch data for the specified number of genesets from the config file.
    - Change getSequenceData options so can run with Ensembl only or other genePred annotation only. 
    - Alter code so that anywhere data is obtained by a mySQL query to the UCSC (or other) databases, it can also be provided in a file (for assemblies without a database at UCSC). 
 - Work on making nets from HAL alignments as input for RetroFinder. One problem found was that the retrogenes were missing in the alignments (CHECK THAT)
 - Figure out what code in the original RetroFinder pipeline is not needed. some files were created for testing or analysis purposes and are not used again. ucscRetroStep6.sh can be omitted in the refactoring. 
-- Test sets for refactored RetroFinder pipeline
-- Fix pslPseudo so it does not requires 3 genesets and can handle having 0-3 genesets as input. Also fix the RetroFinder code to fetch data for the specified number of genesets from the config file.
+- Create test sets for refactored RetroFinder pipeline. Create set of unit tests for testing 
+all scripts and the pipeline in general, pslPseudo needs this too. 
 - Create a top level script that creates the chrom sizes file.
 - Compare this RetroFinder output to original RetroFinder's output on the same data
-- Create set of unit tests for testing programs, pslPseudo needs this too. 
-- Write code to do ucscRetroStep4.sh, ucscRetroStep5.sh, filterMrna.sh, filterEst.sh and analyseExpress.sh
+- Write code to do these steps: ucscRetroStep4.sh, ucscRetroStep5.sh, filterMrna.sh, filterEst.sh and analyseExpress.sh
 - Modify pslCDnaGenomeMatch.c to remove id version numbers internally rather than having to remove them from input file. This program is used by filterMrna.sh and its source is in this is in the kent source tree. kent/src/hg/pslCDnaGenomeMatch/pslCDnaGenomeMatch.c
 - chaining, filtering and chainToPsl step (doChaining() function) in filterAndChainMrnaAlignments takes a long time. Could speed it up by running jobs on the cluster in parallel. 
 - Add support for checking if data already exists if a step needs to be re-run. Perhaps have a master script that runs the other scripts and can check if each step has been completed and then start from the appropriate step or let the user select to start the pipeline from a specific step. 
