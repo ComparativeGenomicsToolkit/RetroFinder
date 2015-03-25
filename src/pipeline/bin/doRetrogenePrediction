@@ -55,8 +55,6 @@ class RetroGenePred():
         """Create unique qNames by adding -1,-2 as suffixes. 
            Assumes the PSL file is sorted by qName"""
         uniqQueryNamePsl = self.lastzMrnaPsl + ".uniq.psl"
-        print "uniqQueryNamePsl", uniqQueryNamePsl
-        print "lastz PSL", self.lastzMrnaPsl
         # Add path to script to make unique qNames
         qNameUniq = createPath(self.cfg.getGenVar('scriptDir'), "pslQNameUniq") 
         with open(uniqQueryNamePsl, "w") as fh:
@@ -109,17 +107,13 @@ class RetroGenePred():
         """Returns main string for template"""
         runPslPseudo = createPath(self.cfg.getGenVar('scriptDir'), \
             "runPslPseudo")
-        print "runPslPseudo:", runPslPseudo
         pseudoGeneLink = createPath(self.pslPseudoDirs[1], \
             "pseudoGeneLink$(path1).bed")
-        print "pseudoGeneLink:", pseudoGeneLink
-
         templateStr = runPslPseudo + " " + self.cfgFile + " $(path1) " \
             + self.splitPslDir + " " + self.pslPseudoDirs[1] + " " \
             + self.pslPseudoDirs[4] + " " + self.pslPseudoDirs[3] \
             + "{check out exists " + pseudoGeneLink + " }"
         
-        print "Template string type", type(templateStr)
         return templateStr
   
 retroPred = RetroGenePred(args)
