@@ -1,4 +1,4 @@
-Running the Python RetroFinder pipeline:
+Running the Python RetroFinder pipeline (03/25/15):
 
 NOTE: Provide full path to config file as some scripts rely on that as can 
 not assume it is in the same directory from which the script is being run.
@@ -15,3 +15,8 @@ alignMrnaSeqs <path>/configFile.cfg
 filterAndChainMrnaAlignments <path>/configFile.cfg
 getAnnotForRetroPred <path>/configFile.cfg
 doRetrogenePrediction <path>/configFile.cfg
+
+etc.
+# At the end, need to call or run the database loading script, still needs
+# work on it. 
+loadDatabase <path>/configFile.cfg
