@@ -86,7 +86,7 @@ class loadDatabase(object):
        """Table is created from other tables so should be created last. 
           It lists parent gene symbols with more than one retrogene and 
           provides a retrogene count for each parent in ascending order 
-          of the count."""
+          of the count. Table is not required for the track."""
        table = "ucscRetroCount" + self.version
        infoTable = "ucscRetroInfo" + self.version
        countQuery = "create table " + table + " select geneSymbol, count(*) \ 
