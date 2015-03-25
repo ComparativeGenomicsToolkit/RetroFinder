@@ -37,7 +37,7 @@ class NetAnnot(object):
         # Get the name for the net annotations file
         netFile = self.cfg.getRetroPredNetFullPath(net)
         # Get annotations from the database
-        netQuery= "select tName, tStart, tEnd, level, qName, qStart, qEnd \
+        netQuery= "select tName, tStart, tEnd, level, qName, qStart, qEnd, \
             type, qN, tR+tTrf from " + netTable 
         with open(netFile, "w") as fh:
             queryDb(netQuery, self.database, fh) 
